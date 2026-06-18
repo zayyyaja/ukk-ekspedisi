@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model branches {
+  id                                                  BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                                                String      @db.VarChar(255)
+  city                                                String      @db.VarChar(255)
+  address                                             String      @db.VarChar(255)
+  phone                                               String      @db.VarChar(25)
+  created_at                                          DateTime    @default(now()) @db.Timestamp(0)
+  updated_at                                          DateTime    @default(now()) @db.Timestamp(0)
+  shipments_shipments_destination_branch_idTobranches shipments[] @relation("shipments_destination_branch_idTobranches")
+  shipments_shipments_origin_branch_idTobranches      shipments[] @relation("shipments_origin_branch_idTobranches")
+  users                                               users[]
+
+  @@index([city], map: "idx_branches_city")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model customers {
+  id                                         BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                                       String      @db.VarChar(50)
+  email                                      String      @unique(map: "uq_customers_email") @db.VarChar(255)
+  email_verified_at                          DateTime?   @db.Timestamp(0)
+  password                                   String      @db.VarChar(255)
+  address                                    String      @db.Text
+  city                                       String      @db.VarChar(255)
+  phone                                      String      @db.VarChar(15)
+  photo                                      String?     @db.VarChar(255)
+  is_verified                                Boolean     @default(false)
+  remember_token                             String?     @db.VarChar(100)
+  created_at                                 DateTime    @default(now()) @db.Timestamp(0)
+  updated_at                                 DateTime    @default(now()) @db.Timestamp(0)
+  shipments_shipments_receiver_idTocustomers shipments[] @relation("shipments_receiver_idTocustomers")
+  shipments_shipments_sender_idTocustomers   shipments[] @relation("shipments_sender_idTocustomers")
+
+  @@index([city], map: "idx_customers_city")
+  @@index([phone], map: "idx_customers_phone")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model payments {
+  id                    BigInt                  @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id           BigInt                  @unique(map: "uq_payments_shipment_id") @db.UnsignedBigInt
+  amount                Decimal                 @db.Decimal(15, 2)
+  payment_method        payments_payment_method
+  payment_status        payments_payment_status @default(pending)
+  payment_date          DateTime?               @db.Date
+  transaction_reference String?                 @db.VarChar(255)
+  created_at            DateTime                @default(now()) @db.Timestamp(0)
+  updated_at            DateTime                @default(now()) @db.Timestamp(0)
+  shipments             shipments               @relation(fields: [shipment_id], references: [id], map: "fk_payments_shipment_id")
+
+  @@index([payment_method], map: "idx_payments_payment_method")
+  @@index([payment_status], map: "idx_payments_payment_status")
+  @@index([transaction_reference], map: "idx_payments_transaction_reference")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model rates {
+  id               BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  origin_city      String      @db.VarChar(255)
+  destination_city String      @db.VarChar(255)
+  price_per_kg     Decimal     @db.Decimal(15, 2)
+  estimated_days   Int
+  created_at       DateTime    @default(now()) @db.Timestamp(0)
+  updated_at       DateTime    @default(now()) @db.Timestamp(0)
+  shipments        shipments[]
+
+  @@unique([origin_city, destination_city], map: "uq_rates_origin_destination")
+  @@index([destination_city], map: "idx_rates_destination_city")
+  @@index([origin_city], map: "idx_rates_origin_city")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model shipment_items {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id BigInt    @db.UnsignedBigInt
+  item_name   String    @db.VarChar(255)
+  quantity    Int
+  weight      Decimal   @db.Decimal(10, 2)
+  photo       String?   @db.VarChar(255)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime  @default(now()) @db.Timestamp(0)
+  shipments   shipments @relation(fields: [shipment_id], references: [id], onDelete: Cascade, map: "fk_shipment_items_shipment_id")
+
+  @@index([shipment_id], map: "idx_shipment_items_shipment_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model shipment_trackings {
+  id          BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipment_id BigInt                    @db.UnsignedBigInt
+  location    String                    @db.VarChar(255)
+  description String                    @db.Text
+  status      shipment_trackings_status
+  tracked_at  DateTime                  @default(now()) @db.Timestamp(0)
+  created_at  DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime                  @default(now()) @db.Timestamp(0)
+  shipments   shipments                 @relation(fields: [shipment_id], references: [id], onDelete: Cascade, map: "fk_shipment_trackings_shipment_id")
+
+  @@index([shipment_id], map: "idx_shipment_trackings_shipment_id")
+  @@index([status], map: "idx_shipment_trackings_status")
+  @@index([tracked_at], map: "idx_shipment_trackings_tracked_at")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model shipments {
+  id                                                 BigInt                    @id @default(autoincrement()) @db.UnsignedBigInt
+  tracking_number                                    String                    @unique(map: "uq_shipments_tracking_number") @db.VarChar(255)
+  sender_id                                          BigInt                    @db.UnsignedBigInt
+  receiver_id                                        BigInt                    @db.UnsignedBigInt
+  origin_branch_id                                   BigInt                    @db.UnsignedBigInt
+  destination_branch_id                              BigInt                    @db.UnsignedBigInt
+  courier_id                                         BigInt?                   @db.UnsignedBigInt
+  rate_id                                            BigInt                    @db.UnsignedBigInt
+  handover_method                                    shipments_handover_method
+  total_weight                                       Decimal                   @db.Decimal(10, 2)
+  total_price                                        Decimal                   @db.Decimal(15, 2)
+  status                                             shipments_status          @default(pending)
+  shipment_date                                      DateTime                  @db.Date
+  paid_at                                            DateTime?                 @db.Timestamp(0)
+  delivered_at                                       DateTime?                 @db.Timestamp(0)
+  photo                                              String?                   @db.VarChar(255)
+  created_at                                         DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at                                         DateTime                  @default(now()) @db.Timestamp(0)
+  payments                                           payments?
+  shipment_items                                     shipment_items[]
+  shipment_trackings                                 shipment_trackings[]
+  users                                              users?                    @relation(fields: [courier_id], references: [id], map: "fk_shipments_courier_id")
+  branches_shipments_destination_branch_idTobranches branches                  @relation("shipments_destination_branch_idTobranches", fields: [destination_branch_id], references: [id], map: "fk_shipments_destination_branch_id")
+  branches_shipments_origin_branch_idTobranches      branches                  @relation("shipments_origin_branch_idTobranches", fields: [origin_branch_id], references: [id], map: "fk_shipments_origin_branch_id")
+  rates                                              rates                     @relation(fields: [rate_id], references: [id], map: "fk_shipments_rate_id")
+  customers_shipments_receiver_idTocustomers         customers                 @relation("shipments_receiver_idTocustomers", fields: [receiver_id], references: [id], map: "fk_shipments_receiver_id")
+  customers_shipments_sender_idTocustomers           customers                 @relation("shipments_sender_idTocustomers", fields: [sender_id], references: [id], map: "fk_shipments_sender_id")
+
+  @@index([courier_id], map: "idx_shipments_courier_id")
+  @@index([destination_branch_id], map: "idx_shipments_destination_branch_id")
+  @@index([origin_branch_id], map: "idx_shipments_origin_branch_id")
+  @@index([rate_id], map: "idx_shipments_rate_id")
+  @@index([receiver_id], map: "idx_shipments_receiver_id")
+  @@index([sender_id], map: "idx_shipments_sender_id")
+  @@index([shipment_date], map: "idx_shipments_shipment_date")
+  @@index([status], map: "idx_shipments_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  name              String      @db.VarChar(255)
+  email             String      @unique(map: "uq_users_email") @db.VarChar(255)
+  email_verified_at DateTime?   @db.Timestamp(0)
+  password          String      @db.VarChar(255)
+  role              users_role
+  branch_id         BigInt?     @db.UnsignedBigInt
+  remember_token    String?     @db.VarChar(100)
+  is_active         Boolean     @default(true)
+  created_at        DateTime    @default(now()) @db.Timestamp(0)
+  updated_at        DateTime    @default(now()) @db.Timestamp(0)
+  shipments         shipments[]
+  branches          branches?   @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_branch_id")
+  vehicles          vehicles[]
+
+  @@index([branch_id], map: "idx_users_branch_id")
+  @@index([role], map: "idx_users_role")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model vehicles {
+  id           BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  plate_number String        @unique(map: "uq_vehicles_plate_number") @db.VarChar(255)
+  type         vehicles_type
+  courier_id   BigInt        @db.UnsignedBigInt
+  created_at   DateTime      @default(now()) @db.Timestamp(0)
+  updated_at   DateTime      @default(now()) @db.Timestamp(0)
+  users        users         @relation(fields: [courier_id], references: [id], map: "fk_vehicles_courier_id")
+
+  @@index([courier_id], map: "idx_vehicles_courier_id")
+}
+
+enum vehicles_type {
+  motor
+  mobil
+  truck
+}
+
+enum payments_payment_method {
+  cash
+  qris
+  gopay
+  shopeepay
+  bca_va
+  bni_va
+  bri_va
+  mandiri_va
+}
+
+enum payments_payment_status {
+  pending
+  paid
+  failed
+}
+
+enum users_role {
+  admin
+  cashier
+  courier
+  manager
+}
+
+enum shipments_handover_method {
+  drop_off
+  pickup
+}
+
+enum shipments_status {
+  pending
+  picked_up
+  in_transit
+  arrived_at_branch
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum shipment_trackings_status {
+  picked_up
+  in_transit
+  arrived_at_branch
+  out_for_delivery
+  delivered
+  cancelled
+}

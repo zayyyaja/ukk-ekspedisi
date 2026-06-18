@@ -1,0 +1,24 @@
+
+> ekspedisi---copy@1.0.0 dev
+> next dev --hostname 127.0.0.1 --port 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+   - Environments: .env
+
+ ✓ Starting...
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ✓ Ready in 7.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 1862ms (594 modules)
+ GET / 200 in 2888ms
+ GET / 200 in 250ms
+ ✓ Compiled in 444ms (225 modules)
+ ✓ Compiled in 9s (608 modules)
+ GET / 200 in 4513ms
+ ✓ Compiled in 1007ms (239 modules)
+ ✓ Compiled in 601ms (239 modules)
+ GET / 200 in 277ms
+ GET / 200 in 134ms

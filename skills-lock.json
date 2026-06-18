@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "business-model": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-strategy/skills/business-model/SKILL.md",
+      "computedHash": "bedee52fe485016e2810ec4327ea0282679fb4a6bf20603b393f6ee867f2b810"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
+    "fullstack-developer": {
+      "source": "shubhamsaboo/awesome-llm-apps",
+      "sourceType": "github",
+      "skillPath": "awesome_agent_skills/fullstack-developer/SKILL.md",
+      "computedHash": "92f6f4f9bbdde529237f1840d94c4269abb62ad1d5e41d9c76bd14266001cbe8"
+    },
+    "prisma-database-setup": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-database-setup/SKILL.md",
+      "computedHash": "0d6f44ac34b1ed3f8ed2970ecf90483d0f658fd1d204458f62bfefa28f31b095"
+    }
+  }
+}

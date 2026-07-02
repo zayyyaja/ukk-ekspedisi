@@ -12,7 +12,6 @@ const publicCustomerSelect = {
   city: true,
   phone: true,
   photo: true,
-  is_verified: true,
   created_at: true,
   updated_at: true,
 } satisfies Prisma.customersSelect;
@@ -43,7 +42,6 @@ export function setCustomerVerified(id: number, isVerified: boolean) {
   return prisma.customers.update({
     where: { id: BigInt(id) },
     data: {
-      is_verified: isVerified,
       email_verified_at: isVerified ? new Date() : null,
     },
     select: publicCustomerSelect,

@@ -27,9 +27,9 @@ model branches {
 model customers {
   id                                         BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
   name                                       String      @db.VarChar(50)
-  email                                      String      @unique(map: "uq_customers_email") @db.VarChar(255)
+  email                                      String?     @unique(map: "uq_customers_email") @db.VarChar(255)
   email_verified_at                          DateTime?   @db.Timestamp(0)
-  password                                   String      @db.VarChar(255)
+  password                                   String?     @db.VarChar(255)
   address                                    String      @db.Text
   city                                       String      @db.VarChar(255)
   phone                                      String      @db.VarChar(15)
@@ -57,11 +57,13 @@ model payments {
   transaction_reference String?                 @db.VarChar(255)
   created_at            DateTime                @default(now()) @db.Timestamp(0)
   updated_at            DateTime                @default(now()) @db.Timestamp(0)
+  expired_at            DateTime?               @db.Timestamp(0)
   shipments             shipments               @relation(fields: [shipment_id], references: [id], map: "fk_payments_shipment_id")
 
   @@index([payment_method], map: "idx_payments_payment_method")
   @@index([payment_status], map: "idx_payments_payment_status")
   @@index([transaction_reference], map: "idx_payments_transaction_reference")
+  @@index([expired_at], map: "idx_payments_expired_at")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -135,6 +137,8 @@ model shipments {
   photo                                              String?                   @db.VarChar(255)
   created_at                                         DateTime                  @default(now()) @db.Timestamp(0)
   updated_at                                         DateTime                  @default(now()) @db.Timestamp(0)
+  created_by_user_id                                 BigInt?                   @db.UnsignedBigInt
+  created_source                                     shipments_created_source  @default(customer)
   payments                                           payments?
   shipment_items                                     shipment_items[]
   shipment_trackings                                 shipment_trackings[]
@@ -153,6 +157,8 @@ model shipments {
   @@index([sender_id], map: "idx_shipments_sender_id")
   @@index([shipment_date], map: "idx_shipments_shipment_date")
   @@index([status], map: "idx_shipments_status")
+  @@index([created_source], map: "idx_shipments_created_source")
+  @@index([created_by_user_id], map: "idx_shipments_created_by_user_id")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -161,6 +167,7 @@ model users {
   id                BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
   name              String      @db.VarChar(255)
   email             String      @unique(map: "uq_users_email") @db.VarChar(255)
+  courier_code      String?     @unique(map: "uq_users_courier_code") @db.VarChar(5)
   email_verified_at DateTime?   @db.Timestamp(0)
   password          String      @db.VarChar(255)
   role              users_role
@@ -218,11 +225,17 @@ enum users_role {
   cashier
   courier
   manager
+  owner
 }
 
 enum shipments_handover_method {
   drop_off
   pickup
+}
+
+enum shipments_created_source {
+  customer
+  cashier
 }
 
 enum shipments_status {

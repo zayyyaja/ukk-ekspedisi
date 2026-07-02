@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const staffRoleSchema = z.enum(["admin", "cashier", "courier", "manager"]);
+const staffRoleSchema = z.enum(["admin", "cashier", "courier", "manager", "owner"]);
 
 const userBaseSchema = z
   .object({
@@ -14,7 +14,7 @@ const userBaseSchema = z
 export const createUserSchema = userBaseSchema
   .refine(
     (data) =>
-      data.role === "admin" || data.role === "manager" || data.branchId != null,
+      data.role === "admin" || data.role === "manager" || data.role === "owner" || data.branchId != null,
     {
       message: "Cashier and courier must have branchId.",
       path: ["branchId"],

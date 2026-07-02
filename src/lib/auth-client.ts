@@ -5,11 +5,13 @@ import { apiGet, apiPost } from "@/lib/api-client";
 export type CustomerAuthInput = {
   email: string;
   password: string;
-  captchaToken: string;
+  captchaInput: string;
 };
 
-export type CustomerRegisterInput = CustomerAuthInput & {
+export type CustomerRegisterInput = {
   name: string;
+  email: string;
+  password: string;
   passwordConfirmation: string;
   address: string;
   city: string;
@@ -27,7 +29,10 @@ export function customerLogin(input: CustomerAuthInput) {
 }
 
 export function customerRegister(input: CustomerRegisterInput) {
-  return apiPost<Record<string, unknown>>("/api/v1/customer/auth/register", input);
+  return apiPost<{
+    email: string;
+    expiresIn: number;
+  }>("/api/v1/customer/auth/register", input);
 }
 
 export function customerLogout() {
@@ -43,14 +48,14 @@ export function logout() {
 }
 
 export function verifyEmail(token: string) {
-  return apiPost<Record<string, unknown>>("/api/v1/customer/auth/verify-email", {
+  return apiPost<null>("/api/v1/customer/auth/verify-email", {
     token,
   });
 }
 
-export function resendVerification(email: string, captchaToken: string) {
-  return apiPost<Record<string, unknown>>(
-    "/api/v1/customer/auth/resend-verification",
-    { email, captchaToken },
-  );
+export function resendVerification(input: CustomerRegisterInput) {
+  return apiPost<{
+    email: string;
+    expiresIn: number;
+  }>("/api/v1/customer/auth/resend-verification", input);
 }

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole("admin");
+    await requireRole("admin", "manager");
     const input = validateRequest(createBranchSchema, await request.json());
     const branch = await createBranchData(input);
 

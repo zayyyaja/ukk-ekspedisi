@@ -8,6 +8,7 @@ export const USER_ROLES = {
   cashier: "cashier",
   courier: "courier",
   manager: "manager",
+  owner: "owner",
 } as const;
 
 export const STAFF_ROLES = [
@@ -15,6 +16,7 @@ export const STAFF_ROLES = [
   USER_ROLES.cashier,
   USER_ROLES.courier,
   USER_ROLES.manager,
+  USER_ROLES.owner,
 ] as const;
 
 export const CUSTOMER_ROLE = "customer";
@@ -25,6 +27,7 @@ export const ALL_ROLES = [
   USER_ROLES.cashier,
   USER_ROLES.courier,
   USER_ROLES.manager,
+  USER_ROLES.owner,
 ] as const;
 
 export const PERMISSIONS = {
@@ -32,5 +35,6 @@ export const PERMISSIONS = {
   cashier: [],
   courier: [],
   manager: [],
+  owner: [],
   customer: [],
 } as const satisfies Record<(typeof ALL_ROLES)[number], readonly string[]>;

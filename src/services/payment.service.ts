@@ -5,7 +5,6 @@ import {
   shipments_handover_method,
 } from "@prisma/client";
 
-import { PAYMENT_METHODS } from "@/constants/payment";
 import {
   findBranchesByIds,
   findAllPayments,
@@ -18,7 +17,7 @@ import {
   updatePaymentStatus,
   updatePaymentTransactionReference,
 } from "@/repositories/payment.repository";
-import { createSnapTransaction, verifyMidtransSignature } from "@/lib/midtrans";
+import { createSnapTransaction, getMidtransTransactionStatus, verifyMidtransSignature } from "@/lib/midtrans";
 import {
   ForbiddenError,
   NotFoundError,
@@ -44,6 +43,11 @@ type MidtransWebhookPayload = {
     | "expire"
     | "cancel"
     | "failure";
+};
+
+type MidtransStatusPayload = Pick<MidtransWebhookPayload, "order_id" | "transaction_status"> & {
+  status_code?: string;
+  gross_amount?: string;
 };
 
 function toJsonSafe<T>(value: T) {
@@ -170,6 +174,36 @@ function mapMidtransStatus(status: MidtransWebhookPayload["transaction_status"])
   return payments_payment_status.failed;
 }
 
+function normalizeMidtransStatus(status: unknown): MidtransWebhookPayload["transaction_status"] {
+  if (
+    status === "settlement" ||
+    status === "capture" ||
+    status === "pending" ||
+    status === "deny" ||
+    status === "expire" ||
+    status === "cancel" ||
+    status === "failure"
+  ) {
+    return status;
+  }
+
+  return "failure";
+}
+
+function mapEnabledPayments(paymentMethod: CreateOnlinePaymentInput["paymentMethod"]) {
+  const mapping: Record<CreateOnlinePaymentInput["paymentMethod"], string[]> = {
+    qris: ["other_qris"],
+    gopay: ["gopay"],
+    shopeepay: ["shopeepay"],
+    bca_va: ["bca_va"],
+    bni_va: ["bni_va"],
+    bri_va: ["bri_va"],
+    mandiri_va: ["echannel"],
+  };
+
+  return mapping[paymentMethod];
+}
+
 export async function createOnlinePayment(
   currentUser: AuthUser,
   shipmentId: number,
@@ -185,20 +219,18 @@ export async function createOnlinePayment(
 
   ensurePaymentOwner(currentUser, payment);
 
-  if (payment.payment_status === payments_payment_status.paid) {
-    throw new ValidationError("Payment is already paid");
+  if (payment.shipments.sender_id !== BigInt(currentUser.id)) {
+    throw new ForbiddenError("Penerima hanya dapat melihat detail dan tracking shipment.");
   }
 
-  if (
-    payment.payment_method === payments_payment_method.cash &&
-    payment.shipments.handover_method === shipments_handover_method.pickup
-  ) {
-    throw new ValidationError("Pickup shipments require online payment");
+  if (payment.payment_status === payments_payment_status.paid) {
+    throw new ValidationError("Payment is already paid");
   }
 
   const orderId = `EXP-${payment.shipments.tracking_number}-${Date.now()}`;
   const amount = toNumber(payment.amount);
   const sender = payment.shipments.customers_shipments_sender_idTocustomers;
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   const transaction = (await createSnapTransaction({
     transaction_details: {
       order_id: orderId,
@@ -217,7 +249,12 @@ export async function createOnlinePayment(
         name: `Ongkos Kirim ${payment.shipments.tracking_number}`,
       },
     ],
-    enabled_payments: [input.paymentMethod],
+    enabled_payments: mapEnabledPayments(input.paymentMethod),
+    callbacks: {
+      finish: `${appUrl}/customer/pesanan/${shipmentId}?payment=finish`,
+      error: `${appUrl}/customer/pembayaran/${shipmentId}?status=error`,
+      pending: `${appUrl}/customer/pembayaran/${shipmentId}?status=pending`,
+    },
   })) as {
     token?: string;
     redirect_url?: string;
@@ -267,6 +304,68 @@ export async function handleMidtransWebhook(payload: MidtransWebhookPayload) {
   });
 
   return toJsonSafe(updatedPayment);
+}
+
+async function applyMidtransPaymentStatus(payload: MidtransStatusPayload) {
+  const payment = await findPaymentByTransactionReference(payload.order_id);
+
+  if (!payment) {
+    throw new NotFoundError("Payment not found");
+  }
+
+  if (payment.payment_status === payments_payment_status.paid) {
+    return toJsonSafe(payment);
+  }
+
+  const paymentStatus = mapMidtransStatus(
+    normalizeMidtransStatus(payload.transaction_status),
+  );
+
+  if (paymentStatus === payments_payment_status.pending) {
+    return toJsonSafe(payment);
+  }
+
+  const updatedPayment = await updatePaymentStatus({
+    paymentId: Number(payment.id),
+    paymentStatus,
+    paymentDate:
+      paymentStatus === payments_payment_status.paid ? new Date() : null,
+    transactionReference: payload.order_id,
+  });
+
+  return toJsonSafe(updatedPayment);
+}
+
+export async function syncCustomerPaymentStatus(
+  currentUser: AuthUser,
+  shipmentId: number,
+) {
+  ensureCustomer(currentUser);
+
+  const payment = await findPaymentByShipmentId(shipmentId);
+
+  if (!payment) {
+    throw new NotFoundError("Payment not found");
+  }
+
+  ensurePaymentOwner(currentUser, payment);
+
+  if (!payment.transaction_reference) {
+    return toJsonSafe(payment);
+  }
+
+  if (payment.payment_status === payments_payment_status.paid) {
+    return toJsonSafe(payment);
+  }
+
+  const status = await getMidtransTransactionStatus(payment.transaction_reference);
+
+  return applyMidtransPaymentStatus({
+    order_id: String(status.order_id ?? payment.transaction_reference),
+    transaction_status: normalizeMidtransStatus(status.transaction_status),
+    status_code: status.status_code ? String(status.status_code) : undefined,
+    gross_amount: status.gross_amount ? String(status.gross_amount) : undefined,
+  });
 }
 
 export async function verifyCashPayment(

@@ -9,6 +9,7 @@ type CreateUserData = {
   password: string;
   role: users_role;
   branchId?: number | null;
+  courierCode?: string | null;
 };
 
 type UpdateUserData = Partial<CreateUserData>;
@@ -17,6 +18,7 @@ const publicUserSelect = {
   id: true,
   name: true,
   email: true,
+  courier_code: true,
   email_verified_at: true,
   role: true,
   branch_id: true,
@@ -32,6 +34,7 @@ export function createUser(data: CreateUserData) {
       email: data.email,
       password: data.password,
       role: data.role,
+      courier_code: data.courierCode ?? null,
       branch_id: data.branchId ? BigInt(data.branchId) : null,
       email_verified_at: new Date(),
       is_active: true,
@@ -48,6 +51,7 @@ export function updateUser(id: number, data: UpdateUserData) {
       email: data.email,
       password: data.password,
       role: data.role,
+      courier_code: data.courierCode,
       branch_id: data.branchId === undefined ? undefined : data.branchId ? BigInt(data.branchId) : null,
     },
     select: publicUserSelect,

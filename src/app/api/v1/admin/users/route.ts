@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireRole("admin");
+    await requireRole("admin", "manager");
     const input = validateRequest(createUserSchema, await request.json());
     const user = await createUserData(input);
 

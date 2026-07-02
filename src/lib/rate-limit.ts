@@ -18,7 +18,7 @@ function getClientKey(request: NextRequest, key: string) {
 
 export function rateLimit(
   request: NextRequest,
-  options: { key: string; limit: number; windowMs: number },
+  options: { key: string; limit: number; windowMs: number; message?: string },
 ) {
   const now = Date.now();
   const bucketKey = getClientKey(request, options.key);
@@ -32,6 +32,6 @@ export function rateLimit(
   current.count += 1;
 
   if (current.count > options.limit) {
-    throw new AppError("Too many requests. Please try again later.", 429);
+    throw new AppError(options.message ?? "Too many requests. Please try again later.", 429);
   }
 }

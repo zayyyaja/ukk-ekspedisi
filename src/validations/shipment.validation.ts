@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PAYMENT_METHODS } from "@/constants/payment";
+import { PAYMENT_METHODS, isPaymentMethodAllowedForHandover } from "@/constants/payment";
 import { SHIPMENT_STATUS } from "@/constants/shipment-status";
 
 const paymentMethodValues = [
@@ -25,11 +25,56 @@ const updatableShipmentStatuses = [
 
 export const createShipmentSchema = z
   .object({
-    receiverId: z.coerce.number().int().positive(),
+    receiverId: z.coerce.number().int().positive().optional(),
+    receiverAddress: z.string().min(1).optional(),
+    receiver: z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().trim().email().optional().or(z.literal("")),
+      phone: z.string().max(15).optional().or(z.literal("")),
+      address: z.string().min(1),
+      note: z.string().max(500).optional().or(z.literal("")),
+    }).optional(),
     originBranchId: z.coerce.number().int().positive(),
     destinationBranchId: z.coerce.number().int().positive(),
-    rateId: z.coerce.number().int().positive(),
-    handoverMethod: z.enum(["drop_off", "pickup"]),
+    rateId: z.coerce.number().int().positive().optional(),
+    handoverMethod: z.enum(["drop_off", "pickup"]).default("drop_off"),
+    paymentMethod: z.enum(paymentMethodValues),
+    items: z
+      .array(
+        z.object({
+          itemName: z.string().min(2),
+          itemType: z.string().max(100).optional().or(z.literal("")),
+          quantity: z.coerce.number().int().min(1),
+          weight: z.coerce.number().positive(),
+          photo: z.string().optional().nullable(),
+        }),
+      )
+      .min(1),
+  })
+  .refine((data) => isPaymentMethodAllowedForHandover(data.handoverMethod, data.paymentMethod), {
+    message: "Cash hanya tersedia untuk metode Datang ke Cabang.",
+    path: ["paymentMethod"],
+  });
+
+export const createCashierOrderSchema = z
+  .object({
+    sender: z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().trim().email().optional().or(z.literal("")),
+      phone: z.string().min(1).max(15),
+      address: z.string().min(1),
+      city: z.string().min(1).max(255),
+    }),
+    receiver: z.object({
+      name: z.string().min(2).max(50),
+      phone: z.string().min(1).max(15),
+      address: z.string().min(1),
+      city: z.string().min(1).max(255),
+    }),
+    originBranchId: z.coerce.number().int().positive(),
+    destinationBranchId: z.coerce.number().int().positive(),
+    rateId: z.coerce.number().int().positive().optional(),
+    handoverMethod: z.enum(["drop_off", "pickup"]).default("drop_off"),
     paymentMethod: z.enum(paymentMethodValues),
     items: z
       .array(
@@ -37,28 +82,25 @@ export const createShipmentSchema = z
           itemName: z.string().min(2),
           quantity: z.coerce.number().int().min(1),
           weight: z.coerce.number().positive(),
-          photo: z.string().url().optional().nullable(),
+          photo: z.string().optional().nullable(),
         }),
       )
       .min(1),
   })
-  .refine(
-    (data) =>
-      data.handoverMethod === "drop_off" || data.paymentMethod !== "cash",
-    {
-      message: "Pickup shipments require online payment.",
-      path: ["paymentMethod"],
-    },
-  );
+  .refine((data) => isPaymentMethodAllowedForHandover(data.handoverMethod, data.paymentMethod), {
+    message: "Cash hanya tersedia untuk metode Datang ke Cabang.",
+    path: ["paymentMethod"],
+  });
 
 export const updateShipmentStatusSchema = z.object({
   status: z.enum(updatableShipmentStatuses),
   location: z.string().min(1),
   description: z.string().min(1),
+  photo: z.string().optional(),
 });
 
 export const assignCourierSchema = z.object({
-  courierId: z.coerce.number().int().positive(),
+  courierCode: z.string().trim().regex(/^\d{5}$/, "ID Kurir harus menggunakan format BBBKK, contoh 00101."),
 });
 
 export const shipmentListQuerySchema = z.object({
@@ -81,6 +123,7 @@ export const shipmentListQuerySchema = z.object({
 });
 
 export type CreateShipmentInput = z.infer<typeof createShipmentSchema>;
+export type CreateCashierOrderInput = z.infer<typeof createCashierOrderSchema>;
 export type UpdateShipmentStatusInput = z.infer<
   typeof updateShipmentStatusSchema
 >;

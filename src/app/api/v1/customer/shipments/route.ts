@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
+import { rateLimit } from "@/lib/rate-limit";
 import { successResponse } from "@/lib/response";
 import { requireCustomer } from "@/middleware/customer.middleware";
 import {
@@ -30,6 +31,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    rateLimit(request, {
+      key: "customer-order-create",
+      limit: 20,
+      windowMs: 60 * 60 * 1000,
+      message: "Anda telah mencapai batas maksimal pembuatan pesanan. Silakan coba kembali beberapa saat lagi.",
+    });
+
     const currentUser = await requireCustomer();
     const body = await request.json();
     const input = validateRequest(createShipmentSchema, body);

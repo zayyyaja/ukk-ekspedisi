@@ -10,9 +10,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = validateRequest(verifyEmailSchema, body);
-    const user = await verifyCustomerEmail(input);
 
-    return successResponse("Email verified successfully", { user });
+    await verifyCustomerEmail(input);
+
+    return successResponse(
+      "Email verified successfully. Your account has been created.",
+      null,
+    );
   } catch (error) {
     return handleApiError(error);
   }

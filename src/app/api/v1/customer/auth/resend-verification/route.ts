@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const result = await resendVerificationEmail(input);
 
     return successResponse(
-      "If the email is registered and not verified, a verification email has been sent.",
+      "Email verifikasi baru telah dikirim.",
       result,
     );
   } catch (error) {

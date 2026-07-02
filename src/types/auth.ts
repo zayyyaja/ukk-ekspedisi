@@ -16,4 +16,8 @@ export type AuthUser = {
   branchId?: number | null;
   email: string;
   name: string;
+  phone?: string | null;
+  city?: string | null;
+  address?: string | null;
+  photo?: string | null;
 };

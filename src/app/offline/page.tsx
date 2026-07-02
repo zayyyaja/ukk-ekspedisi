@@ -15,7 +15,7 @@ export default function OfflinePage() {
           <Link className="button primary" href="/">
             Coba Lagi
           </Link>
-          <Link className="button secondary" href="/customer/dashboard">
+          <Link className="button secondary" href="/customer">
             Buka dashboard terakhir
           </Link>
         </div>

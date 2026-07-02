@@ -73,6 +73,9 @@ async function apiRequest<T>(
   }
 
   if (!response.ok || !json?.success) {
+    if (response.status === 422) {
+      console.error("Server Validation Error (422):", json);
+    }
     const message = json?.message || "Request gagal diproses.";
     throw new ApiClientError(message, response.status, json?.errors ?? {});
   }

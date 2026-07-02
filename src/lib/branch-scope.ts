@@ -5,7 +5,7 @@ export type BranchScope = {
 };
 
 export function applyBranchScope(user: AuthUser): BranchScope {
-  if (user.role === "admin" || user.role === "manager" || user.role === "customer") {
+  if (user.role === "manager" || user.role === "owner" || user.role === "customer") {
     return {};
   }
 

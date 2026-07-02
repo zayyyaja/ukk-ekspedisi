@@ -11,6 +11,7 @@ const roleHome: Record<StaffRole, string> = {
   cashier: "/staff/cashier/dashboard",
   courier: "/staff/courier/dashboard",
   manager: "/staff/manager/dashboard",
+  owner: "/staff/owner/dashboard",
 };
 
 export function dashboardForRole(role: string) {
@@ -36,7 +37,7 @@ export function StaffGuard({
     getCurrentUser()
       .then((response) => {
         const currentUser = response.data as CurrentUser;
-        if (currentUser.type !== "staff" && currentUser.role !== "admin" && currentUser.role !== "cashier" && currentUser.role !== "courier" && currentUser.role !== "manager") {
+        if (currentUser.type !== "staff" && currentUser.role !== "admin" && currentUser.role !== "cashier" && currentUser.role !== "courier" && currentUser.role !== "manager" && currentUser.role !== "owner") {
           router.replace("/staff/login");
           return;
         }

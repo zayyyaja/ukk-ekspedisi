@@ -6,7 +6,7 @@ export type Branch = {
   phone: string;
 };
 
-export type StaffRole = "admin" | "cashier" | "courier" | "manager";
+export type StaffRole = "admin" | "cashier" | "courier" | "manager" | "owner";
 
 export type CurrentUser = {
   id: number | string;
@@ -33,6 +33,7 @@ export type StaffUser = {
   id: string;
   name: string;
   email: string;
+  courier_code?: string | null;
   role: StaffRole;
   branch_id?: string | null;
   is_active: boolean;
@@ -67,11 +68,11 @@ export type DashboardSummary = {
 export type CustomerRecord = {
   id: string;
   name: string;
-  email: string;
+  email?: string | null;
   city: string;
   phone: string;
   address?: string | null;
-  is_verified: boolean;
+  email_verified_at?: string | null;
   created_at: string;
 };
 
@@ -90,6 +91,7 @@ export type Payment = {
   payment_status: string;
   payment_date?: string | null;
   transaction_reference?: string | null;
+  expired_at?: string | null;
   shipments?: Shipment;
 };
 
@@ -104,21 +106,26 @@ export type Tracking = {
 export type CustomerMini = {
   id: string;
   name: string;
-  email: string;
+  email?: string | null;
   city: string;
   phone: string;
+  address?: string | null;
 };
 
 export type Shipment = {
   id: string;
   tracking_number: string;
+  courier_id?: string | null;
   status: string;
   handover_method: string;
   total_weight: string;
   total_price: string;
+  photo?: string | null;
   shipment_date: string;
   paid_at?: string | null;
   delivered_at?: string | null;
+  created_source?: string;
+  created_by_user_id?: string | null;
   customers_shipments_sender_idTocustomers?: CustomerMini;
   customers_shipments_receiver_idTocustomers?: CustomerMini;
   branches_shipments_origin_branch_idTobranches?: Branch;
@@ -129,3 +136,12 @@ export type Shipment = {
   payments?: Payment | null;
   shipment_trackings?: Tracking[];
 };
+
+export interface Customer {
+  id: string;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;  // Tambahkan ini
+  address?: string | null;
+  city?: string | null;
+}

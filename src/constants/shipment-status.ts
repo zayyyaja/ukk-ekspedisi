@@ -16,7 +16,7 @@ export const SHIPMENT_STATUS_TRANSITIONS: Record<
   ShipmentStatus[]
 > = {
   pending: ["picked_up", "cancelled"],
-  picked_up: ["in_transit", "out_for_delivery", "cancelled"],
+  picked_up: ["in_transit", "cancelled"],
   in_transit: ["arrived_at_branch", "cancelled"],
   arrived_at_branch: ["out_for_delivery", "cancelled"],
   out_for_delivery: ["delivered", "cancelled"],

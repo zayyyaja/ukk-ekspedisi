@@ -40,6 +40,21 @@ export function getMidtransSnap() {
   });
 }
 
+export function getMidtransCoreApi() {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
+
+  if (!serverKey || !clientKey) {
+    throw new Error("Midtrans credentials are not configured");
+  }
+
+  return new midtransClient.CoreApi({
+    isProduction: isProduction(),
+    serverKey,
+    clientKey,
+  });
+}
+
 export async function createSnapTransaction(payload: SnapTransactionPayload) {
   if (
     process.env.NODE_ENV !== "production" &&
@@ -75,4 +90,8 @@ export function verifyMidtransSignature(payload: MidtransNotificationPayload) {
     .digest("hex");
 
   return signature === payload.signature_key;
+}
+
+export async function getMidtransTransactionStatus(orderId: string) {
+  return getMidtransCoreApi().transaction.status(orderId);
 }

@@ -21,41 +21,12 @@ export function findCustomerById(id: bigint) {
   });
 }
 
-export function createCustomer(data: CreateCustomerData) {
+export function createVerifiedCustomer(data: CreateCustomerData) {
   return prisma.customers.create({
     data: {
       ...data,
-      email_verified_at: null,
-      is_verified: false,
-      remember_token: null,
-    },
-  });
-}
-
-export function updateCustomerVerification(id: bigint) {
-  return prisma.customers.update({
-    where: { id },
-    data: {
       email_verified_at: new Date(),
-      is_verified: true,
-    },
-  });
-}
-
-export function updateCustomerRememberToken(id: bigint, rememberToken: string) {
-  return prisma.customers.update({
-    where: { id },
-    data: {
-      remember_token: rememberToken,
-    },
-  });
-}
-
-export function clearCustomerRememberToken(id: bigint) {
-  return prisma.customers.update({
-    where: { id },
-    data: {
-      remember_token: null,
+      photo: null,
     },
   });
 }
@@ -69,23 +40,5 @@ export function findStaffByEmail(email: string) {
 export function findStaffById(id: bigint) {
   return prisma.users.findUnique({
     where: { id },
-  });
-}
-
-export function updateStaffRememberToken(id: bigint, rememberToken: string) {
-  return prisma.users.update({
-    where: { id },
-    data: {
-      remember_token: rememberToken,
-    },
-  });
-}
-
-export function clearStaffRememberToken(id: bigint) {
-  return prisma.users.update({
-    where: { id },
-    data: {
-      remember_token: null,
-    },
   });
 }

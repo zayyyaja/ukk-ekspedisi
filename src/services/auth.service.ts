@@ -1,16 +1,9 @@
-import { jwtVerify, SignJWT } from "jose";
-
 import {
-  clearCustomerRememberToken,
-  clearStaffRememberToken,
-  createCustomer,
+  createVerifiedCustomer,
   findCustomerByEmail,
   findCustomerById,
   findStaffByEmail,
   findStaffById,
-  updateCustomerRememberToken,
-  updateCustomerVerification,
-  updateStaffRememberToken,
 } from "@/repositories/auth.repository";
 import type {
   CustomerLoginInput,
@@ -19,41 +12,23 @@ import type {
   StaffLoginInput,
   VerifyEmailInput,
 } from "@/validations/auth.validation";
-import { verifyCaptcha } from "@/lib/captcha";
 import { comparePassword, hashPassword } from "@/lib/password";
-import {
-  signAccessToken,
-  signRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-  type JwtPayload,
-} from "@/lib/jwt";
 import { buildVerificationLink, sendVerificationEmail } from "@/lib/email";
 import {
   ConflictError,
   ForbiddenError,
-  NotFoundError,
   UnauthorizedError,
   ValidationError,
 } from "@/lib/errors";
+import {
+  EMAIL_VERIFICATION_EXPIRES_IN_SECONDS,
+  signCustomerRegistrationVerificationToken,
+  verifyCustomerRegistrationVerificationToken,
+} from "@/lib/email-verification-token";
 import type { AuthUser } from "@/types/auth";
+import type { SessionUser } from "@/lib/session";
 
-type EmailVerificationPayload = {
-  type: "customer_email_verification";
-  email: string;
-};
-
-function tokenSecret() {
-  const secret = process.env.JWT_ACCESS_SECRET;
-
-  if (!secret) {
-    throw new Error("JWT_ACCESS_SECRET is not configured");
-  }
-
-  return new TextEncoder().encode(secret);
-}
-
-function toBigIntId(id: string) {
+function toBigIntId(id: string | number) {
   try {
     return BigInt(id);
   } catch {
@@ -68,15 +43,17 @@ function toNumberId(id: bigint) {
 function sanitizeCustomer(customer: {
   id: bigint;
   name: string;
-  email: string;
-  is_verified: boolean;
+  email: string | null;
   email_verified_at: Date | null;
 }) {
+  if (!customer.email) {
+    throw new UnauthorizedError("Customer belum memiliki akses login.");
+  }
+
   return {
     id: toNumberId(customer.id),
     name: customer.name,
     email: customer.email,
-    isVerified: customer.is_verified,
     emailVerifiedAt: customer.email_verified_at,
     type: "customer" as const,
     role: "customer" as const,
@@ -88,7 +65,7 @@ function sanitizeStaff(staff: {
   id: bigint;
   name: string;
   email: string;
-  role: "admin" | "cashier" | "courier" | "manager";
+  role: "admin" | "cashier" | "courier" | "manager" | "owner";
   branch_id: bigint | null;
   is_active: boolean;
   email_verified_at: Date | null;
@@ -105,129 +82,75 @@ function sanitizeStaff(staff: {
   };
 }
 
-function customerAuthUser(customer: {
-  id: bigint;
-  name: string;
-  email: string;
-}): AuthUser {
+function toCustomerSession(customer: { id: bigint; email: string | null }): SessionUser {
+  if (!customer.email) {
+    throw new UnauthorizedError("Customer belum memiliki akses login.");
+  }
+
   return {
-    sub: customer.id.toString(),
-    id: toNumberId(customer.id),
+    userId: toNumberId(customer.id),
     type: "customer",
     role: "customer",
-    branchId: null,
     email: customer.email,
-    name: customer.name,
   };
 }
 
-function staffAuthUser(staff: {
+function toStaffSession(staff: {
   id: bigint;
-  name: string;
   email: string;
-  role: "admin" | "cashier" | "courier" | "manager";
-  branch_id: bigint | null;
-}): AuthUser {
+  role: "admin" | "cashier" | "courier" | "manager" | "owner";
+}): SessionUser {
   return {
-    sub: staff.id.toString(),
-    id: toNumberId(staff.id),
+    userId: toNumberId(staff.id),
     type: "staff",
     role: staff.role,
-    branchId: staff.branch_id ? toNumberId(staff.branch_id) : null,
     email: staff.email,
-    name: staff.name,
   };
 }
 
-async function validateCaptchaOrThrow(captchaToken: string) {
-  const captcha = await verifyCaptcha(captchaToken);
-
-  if (!captcha.success) {
-    throw new ValidationError("Captcha verification failed", {
-      captchaToken: captcha.errors,
-    });
-  }
-}
-
-async function generateEmailVerificationToken(email: string) {
-  return new SignJWT({
-    type: "customer_email_verification",
-    email,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(tokenSecret());
-}
-
-async function verifyEmailVerificationToken(token: string) {
-  const { payload } = await jwtVerify<EmailVerificationPayload>(
-    token,
-    tokenSecret(),
-  );
-
-  if (payload.type !== "customer_email_verification" || !payload.email) {
-    throw new UnauthorizedError("Invalid verification token");
-  }
-
-  return payload;
-}
-
-async function issueSession(user: AuthUser) {
-  const accessToken = await signAccessToken(user);
-  const refreshToken = await signRefreshToken(user);
-  const hashedRefreshToken = await hashPassword(refreshToken);
-
-  if (user.type === "customer") {
-    await updateCustomerRememberToken(toBigIntId(user.sub), hashedRefreshToken);
-  } else {
-    await updateStaffRememberToken(toBigIntId(user.sub), hashedRefreshToken);
-  }
-
-  return {
-    accessToken,
-    refreshToken,
-  };
-}
-
-export async function registerCustomer(input: CustomerRegisterInput) {
-  await validateCaptchaOrThrow(input.captchaToken);
-
+async function sendRegistrationVerification(input: CustomerRegisterInput) {
   const existingCustomer = await findCustomerByEmail(input.email);
 
   if (existingCustomer) {
     throw new ConflictError("Email already registered");
   }
 
-  const hashedPassword = await hashPassword(input.password);
-  const customer = await createCustomer({
+  const passwordHash = await hashPassword(input.password);
+  const token = await signCustomerRegistrationVerificationToken({
+    type: "customer_registration_verification",
     name: input.name,
     email: input.email,
-    password: hashedPassword,
+    passwordHash,
     address: input.address,
     city: input.city,
     phone: input.phone,
   });
-  const verificationToken = await generateEmailVerificationToken(customer.email);
-  const verificationLink = buildVerificationLink(verificationToken);
-  const email = await sendVerificationEmail({
-    to: customer.email,
-    name: customer.name,
+  const verificationLink = buildVerificationLink(token);
+
+  await sendVerificationEmail({
+    to: input.email,
+    name: input.name,
     verificationLink,
   });
 
   return {
-    customer: sanitizeCustomer(customer),
-    verificationLink: email.verificationLink,
+    email: input.email,
+    expiresIn: EMAIL_VERIFICATION_EXPIRES_IN_SECONDS,
   };
 }
 
-export async function loginCustomer(input: CustomerLoginInput) {
-  await validateCaptchaOrThrow(input.captchaToken);
+export async function registerCustomer(input: CustomerRegisterInput) {
+  return sendRegistrationVerification(input);
+}
 
+export async function loginCustomer(input: CustomerLoginInput) {
   const customer = await findCustomerByEmail(input.email);
 
   if (!customer) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  if (!customer.email || !customer.password) {
     throw new UnauthorizedError("Invalid email or password");
   }
 
@@ -237,21 +160,17 @@ export async function loginCustomer(input: CustomerLoginInput) {
     throw new UnauthorizedError("Invalid email or password");
   }
 
-  if (!customer.is_verified || !customer.email_verified_at) {
-    throw new ForbiddenError("Please verify your email before login");
+  if (!customer.email_verified_at) {
+    throw new ForbiddenError("Silakan verifikasi email terlebih dahulu.");
   }
-
-  const session = await issueSession(customerAuthUser(customer));
 
   return {
     user: sanitizeCustomer(customer),
-    ...session,
+    session: toCustomerSession(customer),
   };
 }
 
 export async function loginStaff(input: StaffLoginInput) {
-  await validateCaptchaOrThrow(input.captchaToken);
-
   const staff = await findStaffByEmail(input.email);
 
   if (!staff) {
@@ -262,142 +181,87 @@ export async function loginStaff(input: StaffLoginInput) {
     throw new ForbiddenError("Staff account is inactive");
   }
 
-  if (!staff.email_verified_at) {
-    throw new ForbiddenError("Staff email is not verified");
-  }
-
   const passwordMatches = await comparePassword(input.password, staff.password);
 
   if (!passwordMatches) {
     throw new UnauthorizedError("Invalid email or password");
   }
 
-  const session = await issueSession(staffAuthUser(staff));
-
   return {
     user: sanitizeStaff(staff),
-    ...session,
+    session: toStaffSession(staff),
   };
 }
 
 export async function verifyCustomerEmail(input: VerifyEmailInput) {
-  const payload = await verifyEmailVerificationToken(input.token);
-  const customer = await findCustomerByEmail(payload.email);
+  let payload;
 
-  if (!customer) {
-    throw new NotFoundError("Customer not found");
+  try {
+    payload = await verifyCustomerRegistrationVerificationToken(input.token);
+  } catch {
+    throw new ValidationError("Token verifikasi tidak valid atau sudah kedaluwarsa", {
+      token: ["Token verifikasi tidak valid atau sudah kedaluwarsa."],
+    });
   }
 
-  const verifiedCustomer = await updateCustomerVerification(customer.id);
+  const existingCustomer = await findCustomerByEmail(payload.email);
 
-  return sanitizeCustomer(verifiedCustomer);
+  if (existingCustomer) {
+    throw new ConflictError("Email already verified or registered");
+  }
+
+  await createVerifiedCustomer({
+    name: payload.name,
+    email: payload.email,
+    password: payload.passwordHash,
+    address: payload.address,
+    city: payload.city,
+    phone: payload.phone,
+  });
+
+  return null;
 }
 
 export async function resendVerificationEmail(input: ResendVerificationInput) {
-  await validateCaptchaOrThrow(input.captchaToken);
-
-  const customer = await findCustomerByEmail(input.email);
-
-  if (!customer || customer.is_verified) {
-    return {
-      verificationLink: null,
-    };
-  }
-
-  const verificationToken = await generateEmailVerificationToken(customer.email);
-  const verificationLink = buildVerificationLink(verificationToken);
-  const email = await sendVerificationEmail({
-    to: customer.email,
-    name: customer.name,
-    verificationLink,
-  });
-
-  return {
-    verificationLink: email.verificationLink,
-  };
+  return sendRegistrationVerification(input);
 }
 
-async function getSessionUser(payload: JwtPayload) {
-  if (payload.type === "customer") {
-    const customer = await findCustomerById(toBigIntId(payload.sub));
+export async function getCurrentUser(session: SessionUser): Promise<AuthUser> {
+  if (session.type === "customer") {
+    const customer = await findCustomerById(toBigIntId(session.userId));
 
-    if (!customer) {
-      throw new UnauthorizedError("Invalid session");
+    if (!customer || !customer.email || !customer.email_verified_at) {
+      throw new UnauthorizedError();
     }
 
     return {
-      record: customer,
-      user: sanitizeCustomer(customer),
-      authUser: customerAuthUser(customer),
+      sub: customer.id.toString(),
+      id: toNumberId(customer.id),
+      type: "customer",
+      role: "customer",
+      branchId: null,
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone,
+      city: customer.city,
+      address: customer.address,
+      photo: customer.photo,
     };
   }
 
-  const staff = await findStaffById(toBigIntId(payload.sub));
+  const staff = await findStaffById(toBigIntId(session.userId));
 
   if (!staff || !staff.is_active) {
-    throw new UnauthorizedError("Invalid session");
+    throw new UnauthorizedError();
   }
 
   return {
-    record: staff,
-    user: sanitizeStaff(staff),
-    authUser: staffAuthUser(staff),
+    sub: staff.id.toString(),
+    id: toNumberId(staff.id),
+    type: "staff",
+    role: staff.role,
+    branchId: staff.branch_id ? toNumberId(staff.branch_id) : null,
+    email: staff.email,
+    name: staff.name,
   };
-}
-
-export async function refreshSession(refreshToken: string | null) {
-  if (!refreshToken) {
-    throw new UnauthorizedError("Refresh token is missing");
-  }
-
-  const payload = await verifyRefreshToken(refreshToken);
-  const sessionUser = await getSessionUser(payload);
-  const rememberedToken = sessionUser.record.remember_token;
-
-  if (!rememberedToken) {
-    throw new UnauthorizedError("Invalid session");
-  }
-
-  const tokenMatches = await comparePassword(refreshToken, rememberedToken);
-
-  if (!tokenMatches) {
-    throw new UnauthorizedError("Invalid session");
-  }
-
-  const session = await issueSession(sessionUser.authUser);
-
-  return {
-    user: sessionUser.user,
-    ...session,
-  };
-}
-
-export async function getCurrentUser(accessToken: string | null) {
-  if (!accessToken) {
-    throw new UnauthorizedError("Access token is missing");
-  }
-
-  const payload = await verifyAccessToken(accessToken);
-  const sessionUser = await getSessionUser(payload);
-
-  return sessionUser.user;
-}
-
-export async function logout(accessToken: string | null, refreshToken: string | null) {
-  const token = accessToken ?? refreshToken;
-
-  if (!token) {
-    return;
-  }
-
-  const payload = accessToken
-    ? await verifyAccessToken(accessToken)
-    : await verifyRefreshToken(token);
-
-  if (payload.type === "customer") {
-    await clearCustomerRememberToken(toBigIntId(payload.sub));
-    return;
-  }
-
-  await clearStaffRememberToken(toBigIntId(payload.sub));
 }

@@ -73,6 +73,58 @@ function ensureRoleBranchRule(role?: string, branchId?: number | null) {
   }
 }
 
+const BRANCH_CODE_BY_CITY: Record<string, string> = {
+  Bogor: "001",
+  Depok: "002",
+  Bandung: "003",
+  Bekasi: "004",
+  Jakarta: "005",
+};
+
+function fallbackBranchCode(branchId: number) {
+  return String(branchId).padStart(3, "0").slice(-3);
+}
+
+async function resolveBranchCode(branchId: number) {
+  const branch = await prisma.branches.findUnique({
+    where: { id: BigInt(branchId) },
+    select: { city: true },
+  });
+
+  if (!branch) {
+    throw new ValidationError("Branch not found");
+  }
+
+  return BRANCH_CODE_BY_CITY[branch.city] ?? fallbackBranchCode(branchId);
+}
+
+async function generateCourierCode(role: string, branchId?: number | null) {
+  if (role !== "courier" || !branchId) {
+    return null;
+  }
+
+  const branchCode = await resolveBranchCode(branchId);
+  const lastCourier = await prisma.users.findFirst({
+    where: {
+      role: users_role.courier,
+      courier_code: {
+        startsWith: branchCode,
+      },
+    },
+    orderBy: {
+      courier_code: "desc",
+    },
+    select: {
+      courier_code: true,
+    },
+  });
+  const lastSequence = lastCourier?.courier_code
+    ? Number(lastCourier.courier_code.slice(3))
+    : 0;
+
+  return `${branchCode}${String(lastSequence + 1).padStart(2, "0")}`;
+}
+
 export async function getUsers(query: UserFilterInput) {
   const { page, limit, skip, take } = paginate(query);
   const [total, users] = await findUsers(buildUserWhere(query), skip, take);
@@ -99,6 +151,7 @@ export async function createUserData(input: CreateUserInput) {
   await ensureEmailAvailable(input.email);
 
   const password = await hashPassword(input.password ?? "Password123");
+  const courierCode = await generateCourierCode(input.role, input.branchId);
 
   return toJsonSafe(
     await createUser({
@@ -107,6 +160,7 @@ export async function createUserData(input: CreateUserInput) {
       password,
       role: input.role as users_role,
       branchId: input.branchId,
+      courierCode,
     }),
   );
 }
@@ -133,6 +187,19 @@ export async function updateUserData(id: number, input: UpdateUserInput) {
     await ensureEmailAvailable(input.email, id);
   }
 
+  const shouldGenerateCourierCode =
+    nextRole === "courier" &&
+    nextBranchId != null &&
+    (existing.role !== "courier" ||
+      existing.branch_id == null ||
+      Number(existing.branch_id) !== nextBranchId ||
+      !existing.courier_code);
+  const courierCode = shouldGenerateCourierCode
+    ? await generateCourierCode(nextRole, nextBranchId)
+    : nextRole === "courier"
+      ? existing.courier_code
+      : null;
+
   return toJsonSafe(
     await updateUser(id, {
       name: input.name,
@@ -140,6 +207,7 @@ export async function updateUserData(id: number, input: UpdateUserInput) {
       password: input.password ? await hashPassword(input.password) : undefined,
       role: input.role as users_role | undefined,
       branchId: input.branchId,
+      courierCode,
     }),
   );
 }

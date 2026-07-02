@@ -5,7 +5,7 @@ export type ReportPeriod = {
 
 export type ReportGenerator = {
   name: string;
-  role: "admin" | "cashier" | "manager";
+  role: "admin" | "cashier" | "manager" | "owner";
   branchName?: string | null;
 };
 

@@ -34,7 +34,12 @@ function paginationMeta(total: number, page: number, limit: number) {
 function buildCustomerWhere(query: CustomerFilterInput): Prisma.customersWhereInput {
   return {
     city: query.city ? { contains: query.city } : undefined,
-    is_verified: query.isVerified,
+    email_verified_at:
+      query.isVerified === undefined
+        ? undefined
+        : query.isVerified
+          ? { not: null }
+          : null,
   };
 }
 

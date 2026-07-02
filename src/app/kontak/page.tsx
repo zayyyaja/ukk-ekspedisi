@@ -25,7 +25,7 @@ export default function KontakPage() {
       <main className="bg-background px-4 py-16">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <section>
-            <p className="text-sm font-semibold uppercase text-blue-600">Kontak</p>
+            <p className="text-sm font-semibold uppercase text-orange-600">Kontak</p>
             <h1 className="mt-3 text-4xl font-black text-slate-950">
               Ada pertanyaan tentang pengiriman?
             </h1>
@@ -39,7 +39,7 @@ export default function KontakPage() {
                 return (
                   <Card key={contact.label}>
                     <CardContent className="flex gap-4 p-4">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-md bg-orange-50 text-orange-700">
                         <Icon className="h-5 w-5" />
                       </span>
                       <div>

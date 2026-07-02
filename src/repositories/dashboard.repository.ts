@@ -1,8 +1,9 @@
+import type { Prisma } from "@prisma/client";
 import { payments_payment_status, shipments_status } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-export async function getDashboardData() {
+export async function getDashboardData(shipmentWhere: Prisma.shipmentsWhereInput = {}) {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -25,14 +26,15 @@ export async function getDashboardData() {
     prisma.users.count(),
     prisma.branches.count(),
     prisma.vehicles.count(),
-    prisma.shipments.count(),
-    prisma.shipments.groupBy({ by: ["status"], _count: { status: true } }),
-    prisma.payments.groupBy({ by: ["payment_status"], _count: { payment_status: true } }),
-    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid }, _sum: { amount: true } }),
-    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid, payment_date: { gte: startOfDay } }, _sum: { amount: true } }),
-    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid, payment_date: { gte: startOfMonth } }, _sum: { amount: true } }),
+    prisma.shipments.count({ where: shipmentWhere }),
+    prisma.shipments.groupBy({ by: ["status"], where: shipmentWhere, _count: { status: true } }),
+    prisma.payments.groupBy({ by: ["payment_status"], where: { shipments: shipmentWhere }, _count: { payment_status: true } }),
+    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid, shipments: shipmentWhere }, _sum: { amount: true } }),
+    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid, payment_date: { gte: startOfDay }, shipments: shipmentWhere }, _sum: { amount: true } }),
+    prisma.payments.aggregate({ where: { payment_status: payments_payment_status.paid, payment_date: { gte: startOfMonth }, shipments: shipmentWhere }, _sum: { amount: true } }),
     prisma.shipments.findMany({
       take: 10,
+      where: shipmentWhere,
       orderBy: { created_at: "desc" },
       include: {
         customers_shipments_sender_idTocustomers: { select: { id: true, name: true, email: true, city: true, phone: true } },
@@ -44,6 +46,7 @@ export async function getDashboardData() {
     }),
     prisma.payments.findMany({
       take: 10,
+      where: { shipments: shipmentWhere },
       orderBy: { created_at: "desc" },
       include: {
         shipments: {

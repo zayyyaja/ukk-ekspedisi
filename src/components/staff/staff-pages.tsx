@@ -1,8 +1,10 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { BarChart3, Building2, CreditCard, PackageCheck, Truck, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { PdfExportButton } from "@/components/reports/pdf-export-button";
 import { ReportFilter } from "@/components/reports/report-filter";
@@ -42,6 +44,7 @@ import { exportManagerRevenuePdf } from "@/lib/reports/manager-revenue-report";
 import { exportManagerShipmentPdf } from "@/lib/reports/manager-shipment-report";
 import type {
   Branch,
+  CurrentUser,
   CustomerRecord,
   DashboardSummary,
   Payment,
@@ -52,33 +55,21 @@ import type {
 } from "@/types/customer-portal";
 import type { PdfReportOptions, ReportFilters, ReportGenerator } from "@/types/report";
 
-type LoadState<T> = {
-  data: T;
-  loading: boolean;
-  error: string;
-};
-
 function useApiData<T>(path: string, fallback: T, refreshKey = 0) {
-  const [state, setState] = useState<LoadState<T>>({
-    data: fallback,
-    loading: true,
-    error: "",
+  const query = useQuery({
+    queryKey: ["staff-api", path, refreshKey],
+    queryFn: async () => {
+      const response = await apiGet<T>(path);
+      return response.data;
+    },
+    refetchInterval: 4_000,
   });
 
-  useEffect(() => {
-    setState((current) => ({ ...current, loading: true, error: "" }));
-    apiGet<T>(path)
-      .then((response) => setState({ data: response.data, loading: false, error: "" }))
-      .catch((error) =>
-        setState({
-          data: fallback,
-          loading: false,
-          error: error instanceof Error ? error.message : "Gagal memuat data.",
-        }),
-      );
-  }, [path, refreshKey]);
-
-  return state;
+  return {
+    data: query.data ?? fallback,
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : query.isError ? "Gagal memuat data." : "",
+  };
 }
 
 function StatePanel({ loading, error, onRetry }: { loading: boolean; error: string; onRetry?: () => void }) {
@@ -108,7 +99,7 @@ function validateReportFilters(filters: ReportFilters) {
   }
 }
 
-function useReportGenerator(role: "admin" | "cashier" | "manager") {
+function useReportGenerator(role: "admin" | "cashier" | "manager" | "owner") {
   const [generator, setGenerator] = useState<ReportGenerator>({
     name: "Staff",
     role,
@@ -133,7 +124,7 @@ function useReportGenerator(role: "admin" | "cashier" | "manager") {
 
 function reportOptions(
   title: string,
-  role: "admin" | "cashier" | "manager",
+  role: "admin" | "cashier" | "manager" | "owner",
   generator: ReportGenerator,
   filters: ReportFilters,
 ): PdfReportOptions {
@@ -464,7 +455,7 @@ export function CustomersPage() {
     { header: "Email", accessorKey: "email" },
     { header: "City", accessorKey: "city" },
     { header: "Phone", accessorKey: "phone" },
-    { header: "Verified", cell: ({ row }) => row.original.is_verified ? "Verified" : "Unverified" },
+    { header: "Verified", cell: ({ row }) => row.original.email_verified_at ? "Verified" : "Unverified" },
   ];
   return (
     <section className="content">
@@ -482,10 +473,10 @@ export function CustomersPage() {
             reportData.map((customer, index) => [
               index + 1,
               customer.name,
-              customer.email,
+              customer.email ?? "-",
               customer.city,
               customer.phone,
-              customer.is_verified ? "Verified" : "Unverified",
+              customer.email_verified_at ? "Verified" : "Unverified",
             ]),
             reportGenerator,
             reportFilters,
@@ -578,27 +569,117 @@ export function ShipmentsPage({
   const reportGenerator = useReportGenerator(mode === "manager" ? "manager" : "admin");
   const endpoint = mode === "courier" ? "/api/v1/courier/shipments?limit=100" : "/api/v1/admin/shipments?limit=100";
   const { data, loading, error } = useApiData<Shipment[]>(`${endpoint}${status ? `&status=${status}` : ""}`, [], refresh);
+  const [arrivalReceipts, setArrivalReceipts] = useState<Record<string, string>>({});
+  const [courierCodes, setCourierCodes] = useState<Record<string, string>>({});
+  const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
+  const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
+  const [deliveryPhotoFiles, setDeliveryPhotoFiles] = useState<Record<string, File>>({}); // actual File objects
+  const [deliveryPhotoPreviews, setDeliveryPhotoPreviews] = useState<Record<string, string>>({}); // object URLs for preview
+  const currentUser = useQuery({
+    queryKey: ["current-staff-user"],
+    queryFn: async () => {
+      const response = await getCurrentUser();
+      return response.data as CurrentUser;
+    },
+    staleTime: 60_000,
+  });
   const shipments = filter ? data.filter(filter) : data;
+  const currentBranchId = currentUser.data?.branchId != null
+    ? String(currentUser.data.branchId)
+    : null;
 
-  async function updateStatus(id: string, nextStatus: string) {
+  async function updateStatus(id: string, nextStatus: string, photo?: string) {
     const path = mode === "courier" ? `/api/v1/courier/shipments/${id}/status` : `/api/v1/admin/shipments/${id}/status`;
-    await apiPatch(path, {
-      status: nextStatus,
-      location: "Cabang operasional",
-      description: `Status updated to ${nextStatus}`,
+    try {
+      await apiPatch(path, {
+        status: nextStatus,
+        location: "Cabang operasional",
+        description: `Status updated to ${nextStatus}`,
+        ...(photo ? { photo } : {}),
+      });
+      toast.success("Status pengiriman berhasil diperbarui.");
+      setRefresh((value) => value + 1);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Status pengiriman gagal diperbarui.");
+    }
+  }
+
+  function setRowError(id: string, message: string) {
+    setRowErrors((current) => ({ ...current, [id]: message }));
+  }
+
+  function clearRowError(id: string) {
+    setRowErrors((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
     });
-    setRefresh((value) => value + 1);
   }
 
   async function assignCourier(id: string) {
-    const courierId = window.prompt("Courier ID");
-    if (!courierId) return;
-    await apiPatch(`/api/v1/admin/shipments/${id}/assign-courier`, { courierId: Number(courierId) });
-    setRefresh((value) => value + 1);
+    const courierCode = courierCodes[id]?.trim();
+    if (!courierCode) {
+      setRowError(id, "ID Kurir wajib diisi.");
+      return;
+    }
+
+    setRowBusy((current) => ({ ...current, [id]: true }));
+    clearRowError(id);
+    try {
+      await apiPatch(`/api/v1/admin/shipments/${id}/assign-courier`, { courierCode });
+      toast.success("Kurir berhasil ditugaskan.");
+      setCourierCodes((current) => ({ ...current, [id]: "" }));
+      setRefresh((value) => value + 1);
+    } catch (error) {
+      setRowError(id, error instanceof Error ? error.message : "Kurir gagal ditugaskan.");
+    } finally {
+      setRowBusy((current) => ({ ...current, [id]: false }));
+    }
+  }
+
+  async function receiveDestinationShipment(id: string) {
+    const trackingNumber = arrivalReceipts[id]?.trim();
+    if (!trackingNumber) {
+      setRowError(id, "Nomor resi wajib diisi.");
+      return;
+    }
+
+    setRowBusy((current) => ({ ...current, [id]: true }));
+    clearRowError(id);
+    try {
+      await apiPost("/api/v1/admin/shipments/receive", { shipmentId: id, trackingNumber });
+      toast.success("Paket berhasil diterima cabang tujuan.");
+      setArrivalReceipts((current) => ({ ...current, [id]: "" }));
+      setRefresh((value) => value + 1);
+    } catch (error) {
+      setRowError(id, error instanceof Error ? error.message : "Paket gagal diterima.");
+    } finally {
+      setRowBusy((current) => ({ ...current, [id]: false }));
+    }
+  }
+
+  function isOriginBranch(shipment: Shipment) {
+    return currentBranchId != null &&
+      shipment.branches_shipments_origin_branch_idTobranches?.id === currentBranchId;
+  }
+
+  function isDestinationBranch(shipment: Shipment) {
+    return currentBranchId != null &&
+      shipment.branches_shipments_destination_branch_idTobranches?.id === currentBranchId;
   }
 
   const columns: ColumnDef<Shipment>[] = [
-    { header: "Tracking", accessorKey: "tracking_number" },
+    {
+      header: "Tracking",
+      cell: ({ row }) =>
+        mode === "admin" &&
+        row.original.status === "in_transit" &&
+        isDestinationBranch(row.original) &&
+        !isOriginBranch(row.original)
+          ? <span className="muted">Menunggu verifikasi resi</span>
+          : row.original.tracking_number,
+    },
+    { header: "Courier", cell: ({ row }) => row.original.users?.courier_code ?? row.original.users?.name ?? "-" },
     { header: "Sender", cell: ({ row }) => row.original.customers_shipments_sender_idTocustomers?.name ?? "-" },
     { header: "Receiver", cell: ({ row }) => row.original.customers_shipments_receiver_idTocustomers?.name ?? "-" },
     { header: "Origin", cell: ({ row }) => row.original.branches_shipments_origin_branch_idTobranches?.city ?? "-" },
@@ -608,22 +689,211 @@ export function ShipmentsPage({
     { header: "Payment", cell: ({ row }) => <StatusBadge status={row.original.payments?.payment_status} /> },
     {
       header: "Action",
-      cell: ({ row }) => (
-        <ActionMenu>
-          {mode === "admin" && <button className="button secondary" onClick={() => assignCourier(row.original.id)} type="button">Assign</button>}
-          {mode !== "manager" && (
-            <select className="select" onChange={(event) => event.target.value && updateStatus(row.original.id, event.target.value)} defaultValue="">
-              <option value="">Update</option>
-              <option value="picked_up">picked_up</option>
-              <option value="in_transit">in_transit</option>
-              <option value="arrived_at_branch">arrived_at_branch</option>
-              <option value="out_for_delivery">out_for_delivery</option>
-              <option value="delivered">delivered</option>
-              <option value="cancelled">cancelled</option>
-            </select>
-          )}
-        </ActionMenu>
-      ),
+      cell: ({ row }) => {
+        const shipment = row.original;
+        const originAdminAction =
+          mode === "admin" &&
+          shipment.status === "picked_up" &&
+          isOriginBranch(shipment);
+        const destinationArrivalAction =
+          mode === "admin" &&
+          shipment.status === "in_transit" &&
+          isDestinationBranch(shipment);
+        const destinationAssignAction =
+          mode === "admin" &&
+          shipment.status === "arrived_at_branch" &&
+          isDestinationBranch(shipment) &&
+          !shipment.courier_id;
+        const courierStartAction =
+          mode === "courier" &&
+          shipment.status === "arrived_at_branch" &&
+          shipment.courier_id != null &&
+          String(shipment.courier_id) === String(currentUser.data?.id ?? "");
+        const courierCompleteAction =
+          mode === "courier" && shipment.status === "out_for_delivery";
+
+        const destinationAwaitingCourierAction =
+          mode === "admin" &&
+          shipment.status === "arrived_at_branch" &&
+          isDestinationBranch(shipment) &&
+          Boolean(shipment.courier_id);
+
+        if (
+          !originAdminAction &&
+          !destinationArrivalAction &&
+          !destinationAssignAction &&
+          !destinationAwaitingCourierAction &&
+          !courierStartAction &&
+          !courierCompleteAction
+        ) {
+          return <span className="muted">Tidak ada aksi</span>;
+        }
+
+        return (
+          <ActionMenu>
+            {originAdminAction ? (
+              <button className="button primary" onClick={() => updateStatus(shipment.id, "in_transit")} type="button">
+                Konfirmasi Keberangkatan
+              </button>
+            ) : null}
+            {destinationArrivalAction ? (
+              <form
+                className="inline-action"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  receiveDestinationShipment(shipment.id);
+                }}
+              >
+                <input
+                  aria-label={`Nomor resi ${shipment.tracking_number}`}
+                  className="input"
+                  onChange={(event) =>
+                    setArrivalReceipts((current) => ({
+                      ...current,
+                      [shipment.id]: event.target.value,
+                    }))
+                  }
+                  placeholder="Input Nomor Resi"
+                  value={arrivalReceipts[shipment.id] ?? ""}
+                />
+                <button className="button primary" disabled={rowBusy[shipment.id]} type="submit">
+                  {rowBusy[shipment.id] ? "Memproses..." : "Konfirmasi"}
+                </button>
+                {rowErrors[shipment.id] ? <span className="inline-error">{rowErrors[shipment.id]}</span> : null}
+              </form>
+            ) : null}
+            {destinationAssignAction ? (
+              <form
+                className="inline-action"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  assignCourier(shipment.id);
+                }}
+              >
+                <input
+                  aria-label={`ID Kurir antar shipment ${shipment.tracking_number}`}
+                  className="input"
+                  maxLength={5}
+                  onChange={(event) =>
+                    setCourierCodes((current) => ({
+                      ...current,
+                      [shipment.id]: event.target.value,
+                    }))
+                  }
+                  placeholder="ID Kurir Antar"
+                  value={courierCodes[shipment.id] ?? ""}
+                />
+                <button className="button secondary" disabled={rowBusy[shipment.id]} type="submit">
+                  {rowBusy[shipment.id] ? "Memproses..." : "Tugaskan Kurir Antar"}
+                </button>
+                {rowErrors[shipment.id] ? <span className="inline-error">{rowErrors[shipment.id]}</span> : null}
+              </form>
+            ) : null}
+            {destinationAwaitingCourierAction ? (
+              <div className="inline-action" style={{ background: "#fffbeb", borderRadius: 8, padding: "8px 12px" }}>
+                <span style={{ fontSize: 12, color: "#b45309", fontWeight: 600 }}>⏳ Menunggu kurir konfirmasi siap antar</span>
+              </div>
+            ) : null}
+            {courierStartAction ? (
+              <button
+                className="button primary"
+                onClick={() => updateStatus(shipment.id, "out_for_delivery")}
+                title="Konfirmasi bahwa Anda siap mengantarkan paket ini kepada penerima"
+                type="button"
+              >
+                Konfirmasi Siap Antar
+              </button>
+            ) : null}
+            {courierCompleteAction ? (
+              <form
+                className="inline-action"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const photoFile = deliveryPhotoFiles[shipment.id];
+                  if (!photoFile) {
+                    setRowError(shipment.id, "Foto bukti penyerahan wajib diunggah.");
+                    return;
+                  }
+                  setRowBusy((current) => ({ ...current, [shipment.id]: true }));
+                  clearRowError(shipment.id);
+                  try {
+                    // Step 1: Upload the photo file to get a URL
+                    const formData = new FormData();
+                    formData.append("file", photoFile);
+                    const uploadRes = await fetch("/api/v1/staff/upload", {
+                      method: "POST",
+                      body: formData,
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (!uploadRes.ok) {
+                      throw new Error(uploadData.message || "Gagal mengunggah foto bukti");
+                    }
+                    const photoUrl = uploadData.data.url as string;
+
+                    // Step 2: Update shipment status with the uploaded photo URL
+                    await updateStatus(shipment.id, "delivered", photoUrl);
+
+                    // Clean up
+                    setDeliveryPhotoFiles((current) => {
+                      const next = { ...current };
+                      delete next[shipment.id];
+                      return next;
+                    });
+                    setDeliveryPhotoPreviews((current) => {
+                      const next = { ...current };
+                      if (next[shipment.id]) {
+                        URL.revokeObjectURL(next[shipment.id]);
+                      }
+                      delete next[shipment.id];
+                      return next;
+                    });
+                  } catch (err) {
+                    setRowError(shipment.id, err instanceof Error ? err.message : "Konfirmasi gagal.");
+                  } finally {
+                    setRowBusy((current) => ({ ...current, [shipment.id]: false }));
+                  }
+                }}
+              >
+                <label className="text-xs text-slate-500" htmlFor={`photo-${shipment.id}`}>
+                  Foto Bukti Penyerahan
+                </label>
+                <input
+                  accept="image/*"
+                  id={`photo-${shipment.id}`}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    // Revoke previous preview URL to avoid memory leaks
+                    if (deliveryPhotoPreviews[shipment.id]) {
+                      URL.revokeObjectURL(deliveryPhotoPreviews[shipment.id]);
+                    }
+                    const previewUrl = URL.createObjectURL(file);
+                    setDeliveryPhotoFiles((current) => ({ ...current, [shipment.id]: file }));
+                    setDeliveryPhotoPreviews((current) => ({ ...current, [shipment.id]: previewUrl }));
+                  }}
+                  style={{ display: "block", marginTop: 4 }}
+                  type="file"
+                />
+                {deliveryPhotoPreviews[shipment.id] ? (
+                  <img
+                    alt="preview foto bukti"
+                    src={deliveryPhotoPreviews[shipment.id]}
+                    style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, marginTop: 4 }}
+                  />
+                ) : null}
+                <button
+                  className="button primary"
+                  disabled={rowBusy[shipment.id] || !deliveryPhotoFiles[shipment.id]}
+                  type="submit"
+                >
+                  {rowBusy[shipment.id] ? "Memproses..." : "Konfirmasi Terkirim"}
+                </button>
+                {rowErrors[shipment.id] ? <span className="inline-error">{rowErrors[shipment.id]}</span> : null}
+              </form>
+            ) : null}
+          </ActionMenu>
+        );
+      },
     },
   ];
 
@@ -847,7 +1117,7 @@ export function CourierDashboardPage() {
       {!loading && !error && (
         <>
           <div className="grid metrics">
-            <StatCard label="Pickup Task" value={data.filter((shipment) => shipment.handover_method === "pickup" && shipment.status === "pending").length} />
+            <StatCard label="Jemput Paket" value={data.filter((shipment) => shipment.handover_method === "pickup" && shipment.status === "pending").length} />
             <StatCard label="Delivery Task" value={data.filter((shipment) => shipment.status === "arrived_at_branch" || shipment.status === "out_for_delivery").length} />
             <StatCard label="Delivered Today" value={data.filter((shipment) => shipment.status === "delivered").length} />
             <StatCard label="Active Shipment" value={data.filter((shipment) => shipment.status !== "delivered" && shipment.status !== "cancelled").length} />
@@ -969,6 +1239,136 @@ export function ManagerAnalyticsPage() {
             <StatCard label="Paid" value={String(data.totalPaid ?? 0)} />
             <StatCard label="Pending" value={String(data.totalPending ?? 0)} />
             <StatCard label="Failed" value={String(data.totalFailed ?? 0)} />
+          </div>
+          <DashboardChart data={chart} title="Revenue by Branch" />
+        </>
+      )}
+    </section>
+  );
+}
+
+export function OwnerDashboardPage() {
+  const [reportFilters, setReportFilters] = useState<ReportFilters>({});
+  const reportGenerator = useReportGenerator("owner");
+  const { data, loading, error } = useApiData<DashboardSummary>("/api/v1/owner/dashboard", {
+    totalCustomers: 0,
+    totalStaff: 0,
+    totalBranches: 0,
+    totalVehicles: 0,
+    totalShipments: 0,
+    totalPendingShipment: 0,
+    totalDeliveredShipment: 0,
+    totalRevenue: 0,
+    shipmentChart: {},
+    paymentChart: {},
+    recentShipments: [],
+    recentPayments: [],
+  });
+  return (
+    <section className="content">
+      <PageHeader
+        title="Owner Dashboard"
+        description="Statistik keseluruhan perusahaan ekspedisi — hanya baca."
+      />
+      <ReportFilter onChange={setReportFilters} value={reportFilters} />
+      <div className="staff-filter">
+        <PdfExportButton
+          label="Export Revenue PDF"
+          onExport={async () => {
+            validateReportFilters(reportFilters);
+            const reportData = await getManagerRevenueReport();
+            exportManagerRevenuePdf(
+              reportData,
+              reportOptions("Laporan Revenue Perusahaan", "owner", reportGenerator, reportFilters),
+            );
+          }}
+        />
+        <PdfExportButton
+          label="Export Shipment PDF"
+          onExport={async () => {
+            validateReportFilters(reportFilters);
+            const reportData = await getManagerShipmentReport(reportFilters);
+            exportManagerShipmentPdf(
+              reportData,
+              reportOptions("Laporan Shipment Perusahaan", "owner", reportGenerator, reportFilters),
+            );
+          }}
+        />
+      </div>
+      <StatePanel error={error} loading={loading} />
+      {!loading && !error && (
+        <>
+          <div className="grid metrics">
+            <StatCard label="Total Revenue" value={formatCurrency(data.totalRevenue)} icon={CreditCard} />
+            <StatCard label="Total Shipment" value={data.totalShipments} icon={PackageCheck} />
+            <StatCard label="Pending Shipment" value={data.totalPendingShipment} icon={Truck} />
+            <StatCard label="Delivered" value={data.totalDeliveredShipment} icon={PackageCheck} />
+            <StatCard label="Total Customer" value={data.totalCustomers} icon={Users} />
+            <StatCard label="Total Branch" value={data.totalBranches} icon={Building2} />
+            <StatCard label="Total Staff" value={data.totalStaff} icon={Users} />
+            <StatCard label="Total Kendaraan" value={data.totalVehicles} icon={Truck} />
+          </div>
+          <div className="grid two-col">
+            <DashboardChart data={chartData(data.shipmentChart)} title="Shipment by Status" />
+            <DashboardChart data={chartData(data.paymentChart)} title="Payment by Status" />
+          </div>
+          <RecentTables payments={data.recentPayments} shipments={data.recentShipments} />
+        </>
+      )}
+    </section>
+  );
+}
+
+export function OwnerAnalyticsPage() {
+  const [reportFilters, setReportFilters] = useState<ReportFilters>({});
+  const reportGenerator = useReportGenerator("owner");
+  const { data, loading, error } = useApiData<Record<string, unknown>>("/api/v1/owner/payments/summary", {});
+  const chart = useMemo(
+    () =>
+      Object.entries((data.revenueByBranch as Record<string, number> | undefined) ?? {}).map(
+        ([name, value]) => ({ name, value }),
+      ),
+    [data],
+  );
+  return (
+    <section className="content">
+      <PageHeader
+        title="Owner Analytics"
+        description="Analisa revenue dan performa seluruh cabang."
+      />
+      <ReportFilter onChange={setReportFilters} value={reportFilters} />
+      <div className="staff-filter">
+        <PdfExportButton
+          label="Export Revenue PDF"
+          onExport={async () => {
+            validateReportFilters(reportFilters);
+            const reportData = await getManagerRevenueReport();
+            exportManagerRevenuePdf(
+              reportData,
+              reportOptions("Laporan Revenue Perusahaan", "owner", reportGenerator, reportFilters),
+            );
+          }}
+        />
+        <PdfExportButton
+          label="Export Performa Kurir PDF"
+          onExport={async () => {
+            validateReportFilters(reportFilters);
+            const reportData = await getManagerCourierPerformanceReport(reportFilters);
+            exportManagerCourierPerformancePdf(
+              reportData,
+              reportOptions("Laporan Performa Kurir", "owner", reportGenerator, reportFilters),
+            );
+          }}
+        />
+      </div>
+      <StatePanel error={error} loading={loading} />
+      {!loading && !error && (
+        <>
+          <div className="grid metrics">
+            <StatCard label="Total Revenue" value={formatCurrency(Number(data.totalRevenue ?? 0))} icon={CreditCard} />
+            <StatCard label="Paid" value={String(data.totalPaid ?? 0)} icon={BarChart3} />
+            <StatCard label="Pending" value={String(data.totalPending ?? 0)} icon={PackageCheck} />
+            <StatCard label="Failed" value={String(data.totalFailed ?? 0)} icon={Truck} />
           </div>
           <DashboardChart data={chart} title="Revenue by Branch" />
         </>

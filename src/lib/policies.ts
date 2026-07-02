@@ -1,7 +1,7 @@
 import type { AuthUser } from "@/types/auth";
 
 export function canViewShipment(user: AuthUser) {
-  return ["admin", "cashier", "courier", "manager", "customer"].includes(
+  return ["admin", "cashier", "courier", "manager", "owner", "customer"].includes(
     user.role,
   );
 }
@@ -15,15 +15,15 @@ export function canDeleteShipment(user: AuthUser) {
 }
 
 export function canViewPayment(user: AuthUser) {
-  return ["admin", "cashier", "manager", "customer"].includes(user.role);
+  return ["admin", "cashier", "manager", "owner", "customer"].includes(user.role);
 }
 
 export function canManageUsers(user: AuthUser) {
-  return user.role === "admin";
+  return ["admin", "manager"].includes(user.role);
 }
 
 export function canManageBranches(user: AuthUser) {
-  return user.role === "admin";
+  return ["admin", "manager"].includes(user.role);
 }
 
 export function canManageRates(user: AuthUser) {

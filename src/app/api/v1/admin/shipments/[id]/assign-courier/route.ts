@@ -22,7 +22,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const shipment = await assignCourierToShipment(
       currentUser,
       Number(id),
-      input.courierId,
+      input.courierCode,
     );
 
     return successResponse("Courier assigned successfully", shipment);

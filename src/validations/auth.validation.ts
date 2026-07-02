@@ -15,7 +15,6 @@ export const customerRegisterSchema = z
     address: z.string().min(1),
     city: z.string().min(1),
     phone: z.string().min(1),
-    captchaToken: z.string().min(1),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Password confirmation does not match.",
@@ -25,7 +24,7 @@ export const customerRegisterSchema = z
 export const customerLoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  captchaToken: z.string().min(1),
+  captchaInput: z.string().min(1),
 });
 
 export const staffLoginSchema = customerLoginSchema;
@@ -34,10 +33,7 @@ export const verifyEmailSchema = z.object({
   token: z.string().min(1),
 });
 
-export const resendVerificationSchema = z.object({
-  email: z.string().email(),
-  captchaToken: z.string().min(1),
-});
+export const resendVerificationSchema = customerRegisterSchema;
 
 export type CustomerRegisterInput = z.infer<typeof customerRegisterSchema>;
 export type CustomerLoginInput = z.infer<typeof customerLoginSchema>;

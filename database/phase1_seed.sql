@@ -11,13 +11,57 @@ VALUES
   ('Bogor', 'Bogor', 'Jl. Pajajaran No. 30, Bogor', '0251838383'),
   ('Bandung', 'Bandung', 'Jl. Asia Afrika No. 40, Bandung', '022123789');
 
-INSERT INTO `users` (`name`, `email`, `email_verified_at`, `password`, `role`, `branch_id`, `remember_token`, `is_active`)
+INSERT INTO `users` (`name`, `email`, `courier_code`, `email_verified_at`, `password`, `role`, `branch_id`, `remember_token`, `is_active`)
 VALUES
-  ('Admin Global', 'admin@ekspedisi.test', NOW(), @default_password, 'admin', NULL, NULL, TRUE),
-  ('Manager Global', 'manager@ekspedisi.test', NOW(), @default_password, 'manager', NULL, NULL, TRUE),
+  (
+    'Admin Jakarta Pusat',
+    'admin.jakarta@ekspedisi.test',
+    NULL,
+    NOW(),
+    @default_password,
+    'admin',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Jakarta Pusat' AND `city` = 'Jakarta' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Admin Depok',
+    'admin.depok@ekspedisi.test',
+    NULL,
+    NOW(),
+    @default_password,
+    'admin',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Depok' AND `city` = 'Depok' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Admin Bogor',
+    'admin.bogor@ekspedisi.test',
+    NULL,
+    NOW(),
+    @default_password,
+    'admin',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Bogor' AND `city` = 'Bogor' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Admin Bandung',
+    'admin.bandung@ekspedisi.test',
+    NULL,
+    NOW(),
+    @default_password,
+    'admin',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Bandung' AND `city` = 'Bandung' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  ('Manager Global', 'manager@ekspedisi.test', NULL, NOW(), @default_password, 'manager', NULL, NULL, TRUE),
   (
     'Cashier Depok',
     'cashier.depok@ekspedisi.test',
+    NULL,
     NOW(),
     @default_password,
     'cashier',
@@ -26,8 +70,20 @@ VALUES
     TRUE
   ),
   (
-    'Courier Depok',
-    'courier.depok@ekspedisi.test',
+    'Courier 1 Depok',
+    'courier1.depok@ekspedisi.test',
+    '00201',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Depok' AND `city` = 'Depok' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Courier 2 Depok',
+    'courier2.depok@ekspedisi.test',
+    '00202',
     NOW(),
     @default_password,
     'courier',
@@ -38,6 +94,7 @@ VALUES
   (
     'Cashier Bogor',
     'cashier.bogor@ekspedisi.test',
+    NULL,
     NOW(),
     @default_password,
     'cashier',
@@ -46,23 +103,75 @@ VALUES
     TRUE
   ),
   (
-    'Courier Bogor',
-    'courier.bogor@ekspedisi.test',
+    'Courier 1 Bogor',
+    'courier1.bogor@ekspedisi.test',
+    '00101',
     NOW(),
     @default_password,
     'courier',
     (SELECT `id` FROM `branches` WHERE `name` = 'Bogor' AND `city` = 'Bogor' LIMIT 1),
     NULL,
     TRUE
+  ),
+  (
+    'Courier 2 Bogor',
+    'courier2.bogor@ekspedisi.test',
+    '00102',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Bogor' AND `city` = 'Bogor' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Courier 1 Bandung',
+    'courier1.bandung@ekspedisi.test',
+    '00301',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Bandung' AND `city` = 'Bandung' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Courier 2 Bandung',
+    'courier2.bandung@ekspedisi.test',
+    '00302',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Bandung' AND `city` = 'Bandung' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Courier 1 Jakarta Pusat',
+    'courier1.jakarta@ekspedisi.test',
+    '00501',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Jakarta Pusat' AND `city` = 'Jakarta' LIMIT 1),
+    NULL,
+    TRUE
+  ),
+  (
+    'Courier 2 Jakarta Pusat',
+    'courier2.jakarta@ekspedisi.test',
+    '00502',
+    NOW(),
+    @default_password,
+    'courier',
+    (SELECT `id` FROM `branches` WHERE `name` = 'Jakarta Pusat' AND `city` = 'Jakarta' LIMIT 1),
+    NULL,
+    TRUE
   );
 
-INSERT INTO `customers` (`name`, `email`, `email_verified_at`, `password`, `address`, `city`, `phone`, `photo`, `is_verified`)
-VALUES
-  ('Iqbal Depok', 'iqbal.depok@example.com', NOW(), @default_password, 'Jl. Melati No. 1, Depok', 'Depok', '081111111111', NULL, TRUE),
-  ('Budi Bogor', 'budi.bogor@example.com', NOW(), @default_password, 'Jl. Mawar No. 2, Bogor', 'Bogor', '082222222222', NULL, TRUE),
-  ('Siti Bandung', 'siti.bandung@example.com', NOW(), @default_password, 'Jl. Anggrek No. 3, Bandung', 'Bandung', '083333333333', NULL, TRUE),
-  ('Andi Jakarta', 'andi.jakarta@example.com', NOW(), @default_password, 'Jl. Sudirman No. 4, Jakarta', 'Jakarta', '084444444444', NULL, TRUE),
-  ('Rina Depok', 'rina.depok@example.com', NULL, @default_password, 'Jl. Kenanga No. 5, Depok', 'Depok', '085555555555', NULL, FALSE);
+-- Customer seed removed intentionally.
+-- Customers are now expected to register through the real registration flow
+-- and verify their email before login.
 
 INSERT INTO `rates` (`origin_city`, `destination_city`, `price_per_kg`, `estimated_days`)
 VALUES
@@ -82,164 +191,12 @@ VALUES
   (
     'B 1234 DPK',
     'motor',
-    (SELECT `id` FROM `users` WHERE `email` = 'courier.depok@ekspedisi.test' AND `role` = 'courier' LIMIT 1)
+    (SELECT `id` FROM `users` WHERE `email` = 'courier1.depok@ekspedisi.test' AND `role` = 'courier' LIMIT 1)
   ),
   (
     'F 5678 BGR',
     'motor',
-    (SELECT `id` FROM `users` WHERE `email` = 'courier.bogor@ekspedisi.test' AND `role` = 'courier' LIMIT 1)
-  );
-
-INSERT INTO `shipments` (
-  `tracking_number`,
-  `sender_id`,
-  `receiver_id`,
-  `origin_branch_id`,
-  `destination_branch_id`,
-  `courier_id`,
-  `rate_id`,
-  `handover_method`,
-  `total_weight`,
-  `total_price`,
-  `status`,
-  `shipment_date`,
-  `paid_at`,
-  `delivered_at`,
-  `photo`
-)
-VALUES
-  (
-    'EXP-DPK-BGR-0001',
-    (SELECT `id` FROM `customers` WHERE `email` = 'iqbal.depok@example.com' LIMIT 1),
-    (SELECT `id` FROM `customers` WHERE `email` = 'budi.bogor@example.com' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Depok' AND `city` = 'Depok' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Bogor' AND `city` = 'Bogor' LIMIT 1),
-    NULL,
-    (SELECT `id` FROM `rates` WHERE `origin_city` = 'Depok' AND `destination_city` = 'Bogor' LIMIT 1),
-    'drop_off',
-    2.00,
-    16000,
-    'pending',
-    CURRENT_DATE,
-    NULL,
-    NULL,
-    NULL
-  ),
-  (
-    'EXP-BGR-BDG-0002',
-    (SELECT `id` FROM `customers` WHERE `email` = 'budi.bogor@example.com' LIMIT 1),
-    (SELECT `id` FROM `customers` WHERE `email` = 'siti.bandung@example.com' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Bogor' AND `city` = 'Bogor' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Bandung' AND `city` = 'Bandung' LIMIT 1),
-    (SELECT `id` FROM `users` WHERE `email` = 'courier.bogor@ekspedisi.test' AND `role` = 'courier' LIMIT 1),
-    (SELECT `id` FROM `rates` WHERE `origin_city` = 'Bogor' AND `destination_city` = 'Bandung' LIMIT 1),
-    'pickup',
-    3.00,
-    30000,
-    'picked_up',
-    CURRENT_DATE,
-    NOW(),
-    NULL,
-    NULL
-  ),
-  (
-    'EXP-DPK-DPK-0003',
-    (SELECT `id` FROM `customers` WHERE `email` = 'iqbal.depok@example.com' LIMIT 1),
-    (SELECT `id` FROM `customers` WHERE `email` = 'rina.depok@example.com' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Depok' AND `city` = 'Depok' LIMIT 1),
-    (SELECT `id` FROM `branches` WHERE `name` = 'Depok' AND `city` = 'Depok' LIMIT 1),
-    (SELECT `id` FROM `users` WHERE `email` = 'courier.depok@ekspedisi.test' AND `role` = 'courier' LIMIT 1),
-    (SELECT `id` FROM `rates` WHERE `origin_city` = 'Depok' AND `destination_city` = 'Depok' LIMIT 1),
-    'drop_off',
-    1.50,
-    7500,
-    'out_for_delivery',
-    CURRENT_DATE,
-    NOW(),
-    NULL,
-    NULL
-  );
-
-INSERT INTO `shipment_items` (`shipment_id`, `item_name`, `quantity`, `weight`, `photo`)
-VALUES
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-BGR-0001' LIMIT 1),
-    'Dokumen Sekolah',
-    1,
-    2.00,
-    'https://example.com/items/dokumen.jpg'
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-BGR-BDG-0002' LIMIT 1),
-    'Sepatu',
-    1,
-    1.50,
-    'https://example.com/items/sepatu.jpg'
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-BGR-BDG-0002' LIMIT 1),
-    'Jaket',
-    1,
-    1.50,
-    'https://example.com/items/jaket.jpg'
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-DPK-0003' LIMIT 1),
-    'Paket Makanan',
-    1,
-    1.50,
-    'https://example.com/items/makanan.jpg'
-  );
-
-INSERT INTO `payments` (`shipment_id`, `amount`, `payment_method`, `payment_status`, `payment_date`, `transaction_reference`)
-VALUES
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-BGR-0001' LIMIT 1),
-    16000,
-    'cash',
-    'pending',
-    NULL,
-    NULL
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-BGR-BDG-0002' LIMIT 1),
-    30000,
-    'qris',
-    'paid',
-    CURRENT_DATE,
-    'MIDTRANS-QRIS-0002'
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-DPK-0003' LIMIT 1),
-    7500,
-    'gopay',
-    'paid',
-    CURRENT_DATE,
-    'MIDTRANS-GOPAY-0003'
-  );
-
-INSERT INTO `shipment_trackings` (`shipment_id`, `location`, `description`, `status`, `tracked_at`)
-VALUES
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-BGR-BDG-0002' LIMIT 1),
-    'Bogor',
-    'Paket berhasil diambil oleh kurir dari alamat pengirim.',
-    'picked_up',
-    NOW()
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-DPK-0003' LIMIT 1),
-    'Depok',
-    'Paket diterima di Cabang Depok.',
-    'picked_up',
-    NOW()
-  ),
-  (
-    (SELECT `id` FROM `shipments` WHERE `tracking_number` = 'EXP-DPK-DPK-0003' LIMIT 1),
-    'Depok',
-    'Paket sedang dibawa kurir menuju alamat penerima.',
-    'out_for_delivery',
-    NOW()
+    (SELECT `id` FROM `users` WHERE `email` = 'courier1.bogor@ekspedisi.test' AND `role` = 'courier' LIMIT 1)
   );
 
 COMMIT;

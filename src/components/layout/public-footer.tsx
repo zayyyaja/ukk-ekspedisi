@@ -17,7 +17,7 @@ export function PublicFooter() {
           <h2 className="font-bold text-white">Perusahaan</h2>
           <p className="text-sm leading-6 text-slate-400">
             Ekspedisi Online membantu pengiriman antar cabang dengan proses
-            pickup, drop off, tracking, dan pembayaran yang transparan.
+            drop off, tracking, dan pembayaran online yang transparan.
           </p>
         </section>
         <section className="space-y-3">
@@ -33,7 +33,6 @@ export function PublicFooter() {
         <section className="space-y-3">
           <h2 className="font-bold text-white">Layanan</h2>
           <ul className="grid gap-2 text-sm text-slate-400">
-            <li>Pickup</li>
             <li>Drop Off</li>
             <li>Tracking</li>
             <li>Pembayaran Online</li>

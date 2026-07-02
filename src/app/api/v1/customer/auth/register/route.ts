@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const result = await registerCustomer(input);
 
     return successResponse(
-      "Registration successful. Please verify your email.",
+      "Email verifikasi telah dikirim. Silakan cek inbox atau spam.",
       result,
       null,
       201,

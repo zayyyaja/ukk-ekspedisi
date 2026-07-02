@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { LoadingState } from "@/components/shared/loading-state";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
 import { ErrorState } from "@/components/shared/error-state";
 import { getCurrentUser } from "@/lib/auth-client";
 import type { CurrentUser } from "@/types/customer-portal";
@@ -40,7 +40,7 @@ export function CustomerGuard({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   if (status === "loading") {
-    return <LoadingState title="Memuat portal customer" />;
+    return <FullPageLoader label="Memuat portal customer..." />;
   }
 
   if (status === "forbidden") {

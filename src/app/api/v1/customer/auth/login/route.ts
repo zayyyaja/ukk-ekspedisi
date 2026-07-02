@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
-import { setAuthCookies } from "@/lib/cookies";
+import { createAuthSession, verifyCaptchaInput } from "@/lib/session";
 import { rateLimit } from "@/lib/rate-limit";
 import { successResponse } from "@/lib/response";
 import { validateRequest } from "@/lib/validation";
@@ -13,9 +13,10 @@ export async function POST(request: NextRequest) {
     rateLimit(request, { key: "customer-login", limit: 10, windowMs: 60_000 });
     const body = await request.json();
     const input = validateRequest(customerLoginSchema, body);
-    const { accessToken, refreshToken, user } = await loginCustomer(input);
 
-    await setAuthCookies(accessToken, refreshToken);
+    await verifyCaptchaInput(input.captchaInput);
+    const { session, user } = await loginCustomer(input);
+    await createAuthSession(session);
 
     return successResponse("Login successful", { user });
   } catch (error) {

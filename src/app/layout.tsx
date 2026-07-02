@@ -1,8 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Montserrat, Roboto } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+  display: "swap",
+});
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
@@ -43,7 +59,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#12352b",
+  themeColor: "#f97316",
 };
 
 export default function RootLayout({
@@ -52,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html className={`${montserrat.variable} ${roboto.variable}`} lang="id">
       <head>
         <link href="/manifest.json" rel="manifest" />
       </head>

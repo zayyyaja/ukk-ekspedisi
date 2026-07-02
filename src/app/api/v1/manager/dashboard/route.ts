@@ -5,8 +5,8 @@ import { getDashboardSummary } from "@/services/dashboard.service";
 
 export async function GET() {
   try {
-    await requireRole("manager");
-    const dashboard = await getDashboardSummary();
+    const currentUser = await requireRole("manager");
+    const dashboard = await getDashboardSummary(currentUser);
 
     return successResponse("Dashboard retrieved successfully", dashboard);
   } catch (error) {

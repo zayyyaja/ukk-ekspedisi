@@ -9,7 +9,7 @@ import { customerFilterSchema } from "@/validations/customer.validation";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole("admin", "manager");
+    await requireRole("admin");
     const query = validateRequest(
       customerFilterSchema,
       Object.fromEntries(request.nextUrl.searchParams),

@@ -17,7 +17,6 @@ const shipmentStatuses = [
   "picked_up",
   "in_transit",
   "arrived_at_branch",
-  "out_for_delivery",
   "delivered",
   "cancelled",
 ];
@@ -31,7 +30,6 @@ export function exportAdminShipmentPdf(data: Shipment[], options: PdfReportOptio
     "Picked Up": data.filter((item) => item.status === "picked_up").length,
     "In Transit": data.filter((item) => item.status === "in_transit").length,
     "Arrived At Branch": data.filter((item) => item.status === "arrived_at_branch").length,
-    "Out For Delivery": data.filter((item) => item.status === "out_for_delivery").length,
     Delivered: data.filter((item) => item.status === "delivered").length,
     Cancelled: data.filter((item) => item.status === "cancelled").length,
   });

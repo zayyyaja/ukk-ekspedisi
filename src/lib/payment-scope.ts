@@ -12,8 +12,14 @@ export type PaymentScope =
     };
 
 export function applyPaymentScope(user: AuthUser): PaymentScope {
-  if (user.role === "admin" || user.role === "manager") {
+  if (user.role === "admin" || user.role === "owner") {
     return {};
+  }
+
+  if (user.role === "manager") {
+    return {
+      forbidden: true,
+    };
   }
 
   if (user.role === "courier") {

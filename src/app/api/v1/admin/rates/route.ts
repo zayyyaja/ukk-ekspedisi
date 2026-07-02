@@ -9,7 +9,7 @@ import { createRateSchema, rateFilterSchema } from "@/validations/rate.validatio
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole("admin", "manager");
+    await requireRole("admin");
     const query = validateRequest(
       rateFilterSchema,
       Object.fromEntries(request.nextUrl.searchParams),

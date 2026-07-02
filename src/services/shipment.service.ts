@@ -240,8 +240,8 @@ function assertTransitionAllowed(
     throw new ValidationError("Admin Tujuan tidak dapat melakukan arrival apabila shipment belum in_transit.");
   }
 
-  if (nextStatus === shipments_status.delivered && currentStatus !== shipments_status.out_for_delivery) {
-    throw new ValidationError("Kurir tidak dapat melakukan delivery apabila shipment belum out_for_delivery.");
+  if (nextStatus === shipments_status.delivered && currentStatus !== shipments_status.arrived_at_branch) {
+    throw new ValidationError("Kurir tidak dapat melakukan delivery apabila shipment belum arrived_at_branch.");
   }
 
   const baseAllowed =
@@ -303,8 +303,8 @@ function assertRoleCanUpdateStatus(
       pending: [],
       picked_up: [],
       in_transit: [],
-      arrived_at_branch: [shipments_status.out_for_delivery],
-      out_for_delivery: [shipments_status.delivered],
+      arrived_at_branch: [shipments_status.delivered],
+      out_for_delivery: [],
       delivered: [],
       cancelled: [],
     };
@@ -341,10 +341,6 @@ function buildTrackingDetails(
     arrived_at_branch: {
       location: destination,
       description: `Paket telah tiba di ${destination}.`,
-    },
-    out_for_delivery: {
-      location: destinationCity,
-      description: "Kurir telah mengonfirmasi siap antar. Paket sedang dalam perjalanan menuju penerima.",
     },
     delivered: {
       location: receiverAddress,
@@ -411,6 +407,9 @@ export async function createShipment(
   );
   const handoverMethod = input.handoverMethod as shipments_handover_method;
   const paymentMethod = input.paymentMethod as payments_payment_method;
+  if (paymentMethod !== payments_payment_method.cash) {
+    throw new ValidationError("Kasir hanya dapat membuat pesanan dengan pembayaran cash.");
+  }
   assertPaymentAllowed(handoverMethod, paymentMethod);
   const totalPrice = calculateTotalPrice(totalWeight, rate.price_per_kg, handoverMethod);
 

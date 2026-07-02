@@ -43,7 +43,6 @@ const STATUS_LABELS: Record<string, string> = {
   picked_up: "Paket Diambil",
   in_transit: "Dalam Perjalanan",
   arrived_at_branch: "Tiba di Cabang",
-  out_for_delivery: "Dalam Pengantaran",
   delivered: "Terkirim",
   cancelled: "Dibatalkan",
 };
@@ -59,7 +58,6 @@ const STATUS_ORDER = [
   "picked_up",
   "in_transit",
   "arrived_at_branch",
-  "out_for_delivery",
   "delivered",
 ] as const;
 
@@ -236,7 +234,6 @@ export default function CustomerOrderDetailPage() {
       paymentStatus !== "paid" &&
       shipment.status !== "cancelled" &&
       shipment.status !== "delivered" &&
-      shipment.status !== "out_for_delivery" &&
       shipment.status === "pending";
 
     return {

@@ -61,7 +61,11 @@ const customer: AuthUser = {
 };
 
 function assertCase(name: string, actual: unknown, expected: unknown) {
-  const passed = JSON.stringify(actual) === JSON.stringify(expected);
+  const serialize = (value: unknown) =>
+    JSON.stringify(value, (_key, currentValue: unknown) =>
+      typeof currentValue === "bigint" ? Number(currentValue) : currentValue,
+    );
+  const passed = serialize(actual) === serialize(expected);
 
   console.log(`${passed ? "PASS" : "FAIL"} ${name}`);
 
@@ -75,7 +79,7 @@ function assertCase(name: string, actual: unknown, expected: unknown) {
 assertCase("Admin can manage users", canManageUsers(admin), true);
 assertCase("Cashier cannot manage users", canManageUsers(cashier), false);
 assertCase("Courier cannot view payment", canViewPayment(courier), false);
-assertCase("Manager can view payment", canViewPayment(manager), true);
+assertCase("Manager cannot view payment", canViewPayment(manager), false);
 assertCase("Customer can view shipment", canViewShipment(customer), true);
 assertCase(
   "Customer can view own shipment",

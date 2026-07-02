@@ -9,7 +9,7 @@ import { paymentFilterSchema } from "@/validations/payment.validation";
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await requireRole("admin", "manager");
+    const currentUser = await requireRole("admin");
     const query = validateRequest(
       paymentFilterSchema,
       Object.fromEntries(request.nextUrl.searchParams),

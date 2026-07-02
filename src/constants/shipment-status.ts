@@ -3,7 +3,6 @@ export const SHIPMENT_STATUS = {
   pickedUp: "picked_up",
   inTransit: "in_transit",
   arrivedAtBranch: "arrived_at_branch",
-  outForDelivery: "out_for_delivery",
   delivered: "delivered",
   cancelled: "cancelled",
 } as const;
@@ -18,8 +17,7 @@ export const SHIPMENT_STATUS_TRANSITIONS: Record<
   pending: ["picked_up", "cancelled"],
   picked_up: ["in_transit", "cancelled"],
   in_transit: ["arrived_at_branch", "cancelled"],
-  arrived_at_branch: ["out_for_delivery", "cancelled"],
-  out_for_delivery: ["delivered", "cancelled"],
+  arrived_at_branch: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };

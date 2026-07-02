@@ -5,7 +5,7 @@ import { getManagerPaymentSummary } from "@/services/payment.service";
 
 export async function GET() {
   try {
-    const currentUser = await requireRole("admin", "manager");
+    const currentUser = await requireRole("admin");
     const summary = await getManagerPaymentSummary(currentUser);
 
     return successResponse("Payment summary retrieved successfully", summary);

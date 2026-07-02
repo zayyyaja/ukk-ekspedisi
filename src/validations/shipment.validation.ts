@@ -18,7 +18,6 @@ const updatableShipmentStatuses = [
   SHIPMENT_STATUS.pickedUp,
   SHIPMENT_STATUS.inTransit,
   SHIPMENT_STATUS.arrivedAtBranch,
-  SHIPMENT_STATUS.outForDelivery,
   SHIPMENT_STATUS.delivered,
   SHIPMENT_STATUS.cancelled,
 ] as const;
@@ -74,8 +73,8 @@ export const createCashierOrderSchema = z
     originBranchId: z.coerce.number().int().positive(),
     destinationBranchId: z.coerce.number().int().positive(),
     rateId: z.coerce.number().int().positive().optional(),
-    handoverMethod: z.enum(["drop_off", "pickup"]).default("drop_off"),
-    paymentMethod: z.enum(paymentMethodValues),
+    handoverMethod: z.literal("drop_off").default("drop_off"),
+    paymentMethod: z.literal(PAYMENT_METHODS.cash).default(PAYMENT_METHODS.cash),
     items: z
       .array(
         z.object({
@@ -88,7 +87,7 @@ export const createCashierOrderSchema = z
       .min(1),
   })
   .refine((data) => isPaymentMethodAllowedForHandover(data.handoverMethod, data.paymentMethod), {
-    message: "Cash hanya tersedia untuk metode Datang ke Cabang.",
+    message: "Kasir hanya dapat membuat pesanan cash di cabang.",
     path: ["paymentMethod"],
   });
 
@@ -109,7 +108,6 @@ export const shipmentListQuerySchema = z.object({
     SHIPMENT_STATUS.pickedUp,
     SHIPMENT_STATUS.inTransit,
     SHIPMENT_STATUS.arrivedAtBranch,
-    SHIPMENT_STATUS.outForDelivery,
     SHIPMENT_STATUS.delivered,
     SHIPMENT_STATUS.cancelled,
   ]).optional(),

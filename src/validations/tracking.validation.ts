@@ -7,7 +7,6 @@ export const trackingFilterSchema = z.object({
       "picked_up",
       "in_transit",
       "arrived_at_branch",
-      "out_for_delivery",
       "delivered",
       "cancelled",
     ])

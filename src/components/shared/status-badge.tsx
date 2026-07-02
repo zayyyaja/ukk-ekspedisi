@@ -5,7 +5,6 @@ const statusVariant: Record<string, "default" | "success" | "warning" | "danger"
   picked_up: "info",
   in_transit: "info",
   arrived_at_branch: "outline",
-  out_for_delivery: "info",
   delivered: "success",
   cancelled: "danger",
 };

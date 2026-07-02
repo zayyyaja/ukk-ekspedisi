@@ -5,7 +5,7 @@ import type { AuthUser } from "@/types/auth";
 export type ShipmentScope = Prisma.shipmentsWhereInput;
 
 const ORIGIN_BRANCH_STATUSES = ["pending", "picked_up", "in_transit", "cancelled"] as const;
-const DESTINATION_BRANCH_STATUSES = ["in_transit", "arrived_at_branch", "out_for_delivery", "delivered"] as const;
+const DESTINATION_BRANCH_STATUSES = ["in_transit", "arrived_at_branch", "delivered"] as const;
 
 export function branchOperationalScope(branchId: number): ShipmentScope {
   return {

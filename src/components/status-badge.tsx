@@ -7,7 +7,6 @@ const labels: Record<string, string> = {
   picked_up: "Picked up",
   in_transit: "In transit",
   arrived_at_branch: "Arrived at branch",
-  out_for_delivery: "Out for delivery",
   delivered: "Delivered",
   cancelled: "Cancelled",
   paid: "Paid",

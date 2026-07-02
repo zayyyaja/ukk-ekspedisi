@@ -29,13 +29,10 @@ export const customerMenu = [
 export const staffMenus: Record<StaffRole, typeof customerMenu> = {
   admin: [
     { href: "/staff/admin/dashboard", label: "Dashboard", icon: Home },
-    { href: "/staff/admin/branches", label: "Branches", icon: Building2 },
     { href: "/staff/admin/staff", label: "Staff", icon: UsersRound },
-    { href: "/staff/admin/customers", label: "Customers", icon: UserRound },
-    { href: "/staff/admin/rates", label: "Rates", icon: Route },
     { href: "/staff/admin/vehicles", label: "Vehicles", icon: Truck },
     { href: "/staff/admin/shipments", label: "Shipments", icon: PackageCheck },
-    { href: "/staff/admin/payments", label: "Payments", icon: WalletCards },
+    { href: "/staff/admin/shipments", label: "Laporan", icon: ReceiptText },
   ],
   cashier: [
     { href: "/staff/cashier/dashboard", label: "Beranda", icon: Home },
@@ -50,12 +47,8 @@ export const staffMenus: Record<StaffRole, typeof customerMenu> = {
   ],
   manager: [
     { href: "/staff/manager/dashboard", label: "Dashboard", icon: Home },
-    { href: "/staff/manager/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/staff/manager/shipments", label: "Shipments", icon: PackageCheck },
-    { href: "/staff/manager/payments", label: "Payments", icon: WalletCards },
     { href: "/staff/manager/branches", label: "Branches", icon: Building2 },
-    { href: "/staff/manager/users", label: "Staff", icon: UsersRound },
-    { href: "/staff/cashier/reports", label: "Reports", icon: ReceiptText },
+    { href: "/staff/manager/users", label: "Admin Cabang", icon: UsersRound },
   ],
   owner: [
     { href: "/staff/owner/dashboard", label: "Dashboard", icon: Home },

@@ -704,13 +704,11 @@ export function ShipmentsPage({
           shipment.status === "arrived_at_branch" &&
           isDestinationBranch(shipment) &&
           !shipment.courier_id;
-        const courierStartAction =
+        const courierCompleteAction =
           mode === "courier" &&
           shipment.status === "arrived_at_branch" &&
           shipment.courier_id != null &&
           String(shipment.courier_id) === String(currentUser.data?.id ?? "");
-        const courierCompleteAction =
-          mode === "courier" && shipment.status === "out_for_delivery";
 
         const destinationAwaitingCourierAction =
           mode === "admin" &&
@@ -723,7 +721,6 @@ export function ShipmentsPage({
           !destinationArrivalAction &&
           !destinationAssignAction &&
           !destinationAwaitingCourierAction &&
-          !courierStartAction &&
           !courierCompleteAction
         ) {
           return <span className="muted">Tidak ada aksi</span>;
@@ -793,16 +790,6 @@ export function ShipmentsPage({
               <div className="inline-action" style={{ background: "#fffbeb", borderRadius: 8, padding: "8px 12px" }}>
                 <span style={{ fontSize: 12, color: "#b45309", fontWeight: 600 }}>⏳ Menunggu kurir konfirmasi siap antar</span>
               </div>
-            ) : null}
-            {courierStartAction ? (
-              <button
-                className="button primary"
-                onClick={() => updateStatus(shipment.id, "out_for_delivery")}
-                title="Konfirmasi bahwa Anda siap mengantarkan paket ini kepada penerima"
-                type="button"
-              >
-                Konfirmasi Siap Antar
-              </button>
             ) : null}
             {courierCompleteAction ? (
               <form
@@ -952,7 +939,6 @@ export function ShipmentsPage({
           <option value="picked_up">picked_up</option>
           <option value="in_transit">in_transit</option>
           <option value="arrived_at_branch">arrived_at_branch</option>
-          <option value="out_for_delivery">out_for_delivery</option>
           <option value="delivered">delivered</option>
         </select>
       </FilterBar>
@@ -1118,7 +1104,7 @@ export function CourierDashboardPage() {
         <>
           <div className="grid metrics">
             <StatCard label="Jemput Paket" value={data.filter((shipment) => shipment.handover_method === "pickup" && shipment.status === "pending").length} />
-            <StatCard label="Delivery Task" value={data.filter((shipment) => shipment.status === "arrived_at_branch" || shipment.status === "out_for_delivery").length} />
+            <StatCard label="Delivery Task" value={data.filter((shipment) => shipment.status === "arrived_at_branch").length} />
             <StatCard label="Delivered Today" value={data.filter((shipment) => shipment.status === "delivered").length} />
             <StatCard label="Active Shipment" value={data.filter((shipment) => shipment.status !== "delivered" && shipment.status !== "cancelled").length} />
           </div>

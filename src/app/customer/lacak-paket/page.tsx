@@ -422,7 +422,6 @@ export default function CustomerOrderListPage() {
                 <option value="picked_up">Picked Up</option>
                 <option value="in_transit">In Transit</option>
                 <option value="arrived_at_branch">Arrived At Branch</option>
-                <option value="out_for_delivery">Out For Delivery</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>

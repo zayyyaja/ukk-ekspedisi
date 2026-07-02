@@ -12,7 +12,7 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
-    await requireRole("admin", "manager");
+    await requireRole("admin");
     const query = validateRequest(
       vehicleFilterSchema,
       Object.fromEntries(request.nextUrl.searchParams),

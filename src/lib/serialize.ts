@@ -7,7 +7,7 @@ export function toJsonSafe<T>(value: T) {
 
       return currentValue;
     }),
-  ) as unknown;
+  ) as T;
 }
 
 export function paginationMeta(total: number, page: number, limit: number) {

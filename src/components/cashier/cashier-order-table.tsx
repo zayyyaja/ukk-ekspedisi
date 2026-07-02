@@ -16,7 +16,6 @@ function shipmentStatusClass(status?: string | null) {
   if (status === "delivered") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "cancelled") return "border-red-200 bg-red-50 text-red-700";
   if (status === "arrived_at_branch") return "border-orange-200 bg-orange-50 text-orange-700";
-  if (status === "out_for_delivery") return "border-orange-200 bg-orange-50 text-orange-700";
   if (status === "picked_up") return "border-orange-200 bg-orange-50 text-orange-700";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }

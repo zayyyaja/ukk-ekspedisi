@@ -12,9 +12,6 @@ import { apiGet } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/customer-format";
 import type { Branch } from "@/types/customer-portal";
 
-const onlinePaymentMethods = ["qris", "gopay", "shopeepay", "bca_va", "bni_va", "bri_va", "mandiri_va"] as const;
-const allPaymentMethods = ["cash", ...onlinePaymentMethods] as const;
-
 type FormState = {
   senderName: string;
   senderEmail: string;
@@ -98,19 +95,13 @@ function CashierCreateOrderContent() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Gagal membuat pesanan."),
   });
 
-  const paymentMethods = form.handoverMethod === "pickup" ? onlinePaymentMethods : allPaymentMethods;
   const estimatedPrice = useMemo(() => {
-    const pickupFee = form.handoverMethod === "pickup" ? 10000 : 0;
-    return Number(form.weight || 0) * 8000 + pickupFee;
-  }, [form.handoverMethod, form.weight]);
+    return Number(form.weight || 0) * 8000;
+  }, [form.weight]);
 
   function patch(next: Partial<FormState>) {
     setForm((current) => {
-      const merged = { ...current, ...next };
-      if (merged.handoverMethod === "pickup" && merged.paymentMethod === "cash") {
-        merged.paymentMethod = "qris";
-      }
-      return merged;
+      return { ...current, ...next, handoverMethod: "drop_off", paymentMethod: "cash" };
     });
   }
 
@@ -173,18 +164,15 @@ function CashierCreateOrderContent() {
               </SelectField>
               <SelectField label="Metode Penyerahan" value={form.handoverMethod} onChange={(value) => patch({ handoverMethod: value as FormState["handoverMethod"] })}>
                 <option value="drop_off">Datang ke Cabang</option>
-                <option value="pickup">Jemput Paket</option>
               </SelectField>
               <SelectField label="Metode Pembayaran" value={form.paymentMethod} onChange={(value) => patch({ paymentMethod: value })}>
-                {paymentMethods.map((method) => (
-                  <option key={method} value={method}>{method.toUpperCase().replace("_", " ")}</option>
-                ))}
+                <option value="cash">CASH</option>
               </SelectField>
             </div>
             <div className="flex flex-col gap-4 rounded-2xl bg-orange-50 p-4 text-orange-800 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-semibold">Estimasi biaya</p>
-                <p className="text-sm">Pickup otomatis menambahkan biaya Rp 10.000 dan tidak mengizinkan cash.</p>
+                <p className="text-sm">Pesanan dari kasir hanya menerima pembayaran cash di cabang.</p>
               </div>
               <strong className="text-2xl">{formatCurrency(estimatedPrice)}</strong>
             </div>

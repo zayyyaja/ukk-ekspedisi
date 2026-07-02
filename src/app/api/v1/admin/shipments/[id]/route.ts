@@ -11,7 +11,7 @@ type RouteContext = {
 
 export async function GET(_request: Request, context: RouteContext) {
   try {
-    const currentUser = await requireRole("admin", "manager");
+    const currentUser = await requireRole("admin");
     const { id } = await context.params;
     const shipment = await getShipmentDetailForStaff(currentUser, Number(id));
 

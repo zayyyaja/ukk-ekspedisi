@@ -11,7 +11,7 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    await requireRole("admin", "manager");
+    await requireRole("admin");
     const { id } = await context.params;
     const tracking = await getTrackingDetail(Number(id));
 

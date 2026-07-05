@@ -1,8 +1,0 @@
-SET FOREIGN_KEY_CHECKS = 0;
-
-TRUNCATE TABLE shipment_trackings;
-TRUNCATE TABLE shipment_items;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE shipments;
-
-SET FOREIGN_KEY_CHECKS = 1;

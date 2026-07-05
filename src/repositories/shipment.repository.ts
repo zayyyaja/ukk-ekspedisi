@@ -297,7 +297,7 @@ export function createCashierShipmentWithCustomers(data: CreateCashierShipmentDa
     const receiver = await tx.customers.create({
       data: {
         name: data.receiver.name,
-        email: null,
+        email: data.receiver.email?.trim().toLowerCase() || null,
         password: null,
         email_verified_at: null,
         address: data.receiver.address,
@@ -305,6 +305,10 @@ export function createCashierShipmentWithCustomers(data: CreateCashierShipmentDa
         phone: data.receiver.phone,
         photo: null,
       },
+    });
+
+    const originBranch = await tx.branches.findUniqueOrThrow({
+      where: { id: BigInt(data.originBranchId) },
     });
 
     return tx.shipments.create({
@@ -318,7 +322,7 @@ export function createCashierShipmentWithCustomers(data: CreateCashierShipmentDa
         handover_method: data.handoverMethod,
         total_weight: data.totalWeight,
         total_price: data.totalPrice,
-        status: shipments_status.pending,
+        status: shipments_status.picked_up,
         created_source: shipments_created_source.cashier,
         created_by_user_id: BigInt(data.cashierId),
         shipment_date: new Date(),
@@ -338,6 +342,14 @@ export function createCashierShipmentWithCustomers(data: CreateCashierShipmentDa
             payment_date: null,
             transaction_reference: null,
             expired_at: data.paymentExpiredAt ?? null,
+          },
+        },
+        shipment_trackings: {
+          create: {
+            location: originBranch.name,
+            description: "Paket walk-in diterima kasir dan langsung dikonfirmasi siap kirim.",
+            status: shipment_trackings_status.picked_up,
+            tracked_at: new Date(),
           },
         },
       },
@@ -435,7 +447,13 @@ export function findAllShipments(
         customers_shipments_receiver_idTocustomers: true,
         branches_shipments_origin_branch_idTobranches: true,
         branches_shipments_destination_branch_idTobranches: true,
-        users: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            courier_code: true,
+          },
+        },
         payments: true,
       },
     }),
@@ -459,15 +477,50 @@ export function findCourierShipments(
   );
 }
 
-export function assignCourier(shipmentId: number, courierId: number) {
-  return prisma.shipments.update({
-    where: {
-      id: BigInt(shipmentId),
-    },
-    data: {
-      courier_id: BigInt(courierId),
-    },
-    include: shipmentInclude,
+export function assignCourier(
+  shipmentId: number,
+  options: {
+    mode: "pickup" | "delivery";
+    location: string;
+    courier: {
+      id: number;
+      name: string;
+      courier_code: string | null;
+    };
+  },
+) {
+  const { courier, mode, location } = options;
+  const courierLabel = courier.courier_code
+    ? `${courier.name} (${courier.courier_code})`
+    : courier.name;
+  const description =
+    mode === "pickup"
+      ? `Kurir ${courierLabel} ditugaskan menjemput paket. Handled by: Kurir ${courier.name}`
+      : `Kurir ${courierLabel} ditugaskan mengantar paket ke penerima. Handled by: Kurir ${courier.name}`;
+
+  return prisma.$transaction(async (tx) => {
+    await tx.shipment_trackings.create({
+      data: {
+        shipment_id: BigInt(shipmentId),
+        location,
+        description,
+        status:
+          mode === "pickup"
+            ? shipment_trackings_status.picked_up
+            : shipment_trackings_status.arrived_at_branch,
+        tracked_at: new Date(),
+      },
+    });
+
+    return tx.shipments.update({
+      where: {
+        id: BigInt(shipmentId),
+      },
+      data: {
+        courier_id: BigInt(courier.id),
+      },
+      include: shipmentInclude,
+    });
   });
 }
 
@@ -503,6 +556,10 @@ export function updateShipmentStatus(
         delivered_at:
           status === shipments_status.delivered ? new Date() : undefined,
         ...(photo && { photo }),
+        ...((status === shipments_status.in_transit ||
+          status === shipments_status.arrived_at_branch) && {
+          courier_id: null,
+        }),
       },
       include: shipmentInclude,
     });

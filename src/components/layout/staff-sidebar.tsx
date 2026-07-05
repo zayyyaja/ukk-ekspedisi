@@ -85,7 +85,7 @@ export function StaffSidebar({ role }: { role: StaffRole }) {
 
           return (
             <Link
-              key={item.href}
+              key={`${item.href}-${item.label}`}
               href={item.href}
               className={cn(
                 "flex w-full items-center justify-start rounded-lg text-left py-3 px-4 transition-all duration-300",

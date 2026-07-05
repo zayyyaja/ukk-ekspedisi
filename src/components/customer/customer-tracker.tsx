@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -20,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { apiGet, apiPost } from "@/lib/api-client";
 import { formatCurrency, formatDate } from "@/lib/customer-format";
+import { getShipmentCoverPhoto } from "@/lib/shipment-photos";
 import type { Shipment } from "@/types/customer-portal";
 
 function downloadReceipt(shipment: Shipment) {
@@ -227,11 +227,10 @@ export function CustomerTracker() {
                 >
                   {/* Cover */}
                   <div className="relative aspect-[16/8] overflow-hidden bg-orange-50">
-                    <Image
-                      src="/images/package-card.jpg"
-                      alt="Shipment"
-                      fill
-                      className="object-cover transition duration-500 group-hover:scale-105"
+                    <img
+                      src={getShipmentCoverPhoto(shipment)}
+                      alt="Foto paket"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
                     <div className="absolute bottom-5 left-5">

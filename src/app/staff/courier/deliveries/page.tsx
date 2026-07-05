@@ -1,14 +1,5 @@
-"use client";
-
-import { ShipmentsPage } from "@/components/staff/staff-pages";
+import { redirect } from "next/navigation";
 
 export default function CourierDeliveriesRoute() {
-  return (
-    <ShipmentsPage
-      filter={(shipment) =>
-        shipment.status === "arrived_at_branch"
-      }
-      mode="courier"
-    />
-  );
+  redirect("/staff/courier/shipments");
 }

@@ -18,6 +18,7 @@ const updatableShipmentStatuses = [
   SHIPMENT_STATUS.pickedUp,
   SHIPMENT_STATUS.inTransit,
   SHIPMENT_STATUS.arrivedAtBranch,
+  SHIPMENT_STATUS.outForDelivery,
   SHIPMENT_STATUS.delivered,
   SHIPMENT_STATUS.cancelled,
 ] as const;
@@ -66,6 +67,7 @@ export const createCashierOrderSchema = z
     }),
     receiver: z.object({
       name: z.string().min(2).max(50),
+      email: z.string().trim().email().optional().or(z.literal("")),
       phone: z.string().min(1).max(15),
       address: z.string().min(1),
       city: z.string().min(1).max(255),
@@ -74,7 +76,7 @@ export const createCashierOrderSchema = z
     destinationBranchId: z.coerce.number().int().positive(),
     rateId: z.coerce.number().int().positive().optional(),
     handoverMethod: z.literal("drop_off").default("drop_off"),
-    paymentMethod: z.literal(PAYMENT_METHODS.cash).default(PAYMENT_METHODS.cash),
+    paymentMethod: z.enum(paymentMethodValues),
     items: z
       .array(
         z.object({
@@ -87,7 +89,7 @@ export const createCashierOrderSchema = z
       .min(1),
   })
   .refine((data) => isPaymentMethodAllowedForHandover(data.handoverMethod, data.paymentMethod), {
-    message: "Kasir hanya dapat membuat pesanan cash di cabang.",
+    message: "Metode Jemput Paket hanya menerima pembayaran e-wallet/online (QRIS, GoPay, bank VA).",
     path: ["paymentMethod"],
   });
 
@@ -99,7 +101,11 @@ export const updateShipmentStatusSchema = z.object({
 });
 
 export const assignCourierSchema = z.object({
-  courierCode: z.string().trim().regex(/^\d{5}$/, "ID Kurir harus menggunakan format BBBKK, contoh 00101."),
+  courierCode: z
+    .string()
+    .trim()
+    .min(1, "Courier code wajib diisi.")
+    .regex(/^\d{5}$/, "Courier code harus 5 digit angka, contoh 00101."),
 });
 
 export const shipmentListQuerySchema = z.object({
@@ -108,6 +114,7 @@ export const shipmentListQuerySchema = z.object({
     SHIPMENT_STATUS.pickedUp,
     SHIPMENT_STATUS.inTransit,
     SHIPMENT_STATUS.arrivedAtBranch,
+    SHIPMENT_STATUS.outForDelivery,
     SHIPMENT_STATUS.delivered,
     SHIPMENT_STATUS.cancelled,
   ]).optional(),

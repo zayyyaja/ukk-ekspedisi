@@ -57,7 +57,7 @@ export function MobileSidebar({
                   isActive(pathname, item.href) && "bg-slate-800 text-white",
                 )}
                 href={item.href}
-                key={item.href}
+                key={`${item.href}-${item.label}`}
                 onClick={() => setOpen(false)}
               >
                 <Icon className="h-4 w-4" />

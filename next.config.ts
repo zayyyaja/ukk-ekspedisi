@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.join(process.cwd()),
   reactStrictMode: true,
   images: {
     remotePatterns: [

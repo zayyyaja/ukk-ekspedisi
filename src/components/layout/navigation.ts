@@ -3,6 +3,7 @@ import {
   Building2,
   CreditCard,
   Home,
+  Mail,
   PackageCheck,
   PackagePlus,
   ReceiptText,
@@ -21,6 +22,7 @@ export const customerMenu = [
   { href: "/customer", label: "Beranda", icon: Home },
   { href: "/customer/buat-pesanan", label: "Buat Shipment", icon: PackagePlus },
   { href: "/customer/lacak-paket", label: "Riwayat Shipment", icon: Truck },
+  { href: "/customer/inbox", label: "Inbox", icon: Mail },
   { href: "/customer/lacak-paket", label: "Tracking", icon: Search },
   { href: "/customer/lacak-paket", label: "Payments", icon: CreditCard },
   { href: "/customer/profile", label: "Profile", icon: UserRound },
@@ -32,7 +34,7 @@ export const staffMenus: Record<StaffRole, typeof customerMenu> = {
     { href: "/staff/admin/staff", label: "Staff", icon: UsersRound },
     { href: "/staff/admin/vehicles", label: "Vehicles", icon: Truck },
     { href: "/staff/admin/shipments", label: "Shipments", icon: PackageCheck },
-    { href: "/staff/admin/shipments", label: "Laporan", icon: ReceiptText },
+    { href: "/staff/admin/payments", label: "Laporan", icon: ReceiptText },
   ],
   cashier: [
     { href: "/staff/cashier/dashboard", label: "Beranda", icon: Home },
@@ -41,9 +43,8 @@ export const staffMenus: Record<StaffRole, typeof customerMenu> = {
     { href: "/staff/cashier/laporan", label: "Laporan", icon: BarChart3 },
   ],
   courier: [
-    { href: "/staff/courier/dashboard", label: "Dashboard", icon: Home },
-    { href: "/staff/courier/deliveries", label: "Deliveries", icon: PackageCheck },
-    { href: "/staff/courier/shipments", label: "Shipments", icon: Truck },
+    { href: "/staff/courier/dashboard", label: "Beranda", icon: Home },
+    { href: "/staff/courier/shipments", label: "Pengiriman", icon: Truck },
   ],
   manager: [
     { href: "/staff/manager/dashboard", label: "Dashboard", icon: Home },

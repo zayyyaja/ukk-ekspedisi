@@ -21,13 +21,10 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 
 import { apiGet, apiPost } from "@/lib/api-client";
-import { getCurrentUser } from "@/lib/auth-client";
-import {
-  formatCurrency,
-  formatDate,
-} from "@/lib/customer-format";
+import { formatCurrency, formatDate } from "@/lib/customer-format";
+import { getShipmentCoverPhoto } from "@/lib/shipment-photos";
 
-import type { CurrentUser, Shipment } from "@/types/customer-portal";
+import type { Shipment } from "@/types/customer-portal";
 
 function downloadReceipt(shipment: Shipment) {
   const payment = shipment.payments;
@@ -105,18 +102,14 @@ function ShipmentCard({
   paymentLoading,
   onPay,
   onDownload,
-  currentUserId,
 }: {
   shipment: Shipment;
   paymentLoading: boolean;
   onPay: () => void;
   onDownload: () => void;
-  currentUserId?: string | number;
 }) {
   const paymentStatus = shipment.payments?.payment_status;
-  const isReceiverInbox = String(shipment.customers_shipments_receiver_idTocustomers?.id ?? "") === String(currentUserId ?? "") &&
-    String(shipment.customers_shipments_sender_idTocustomers?.id ?? "") !== String(currentUserId ?? "");
-  const canPay = !isReceiverInbox && (paymentStatus === "pending" || paymentStatus === "failed");
+  const canPay = paymentStatus === "pending" || paymentStatus === "failed";
 
   return (
     <Link
@@ -126,8 +119,8 @@ function ShipmentCard({
       {/* Cover */}
       <div className="relative aspect-[16/8] overflow-hidden bg-orange-50">
         <img
-          src="/images/package-card.jpg"
-          alt="Shipment"
+          src={getShipmentCoverPhoto(shipment)}
+          alt="Foto paket"
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
 
@@ -135,7 +128,7 @@ function ShipmentCard({
 
         <div className="absolute bottom-5 left-5">
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-orange-600 backdrop-blur">
-            {isReceiverInbox ? "Inbox Penerima" : shipment.tracking_number}
+            {shipment.tracking_number}
           </span>
         </div>
       </div>
@@ -155,11 +148,6 @@ function ShipmentCard({
           <p className="font-mono font-semibold text-orange-600">
             {shipment.tracking_number}
           </p>
-          {isReceiverInbox && (
-            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-orange-600">
-              Shipment diterima dari pengirim
-            </p>
-          )}
         </div>
 
         {/* Information */}
@@ -276,13 +264,6 @@ export default function CustomerOrderListPage() {
   const [status, setStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [search, setSearch] = useState("");
-  const currentUser = useQuery({
-    queryKey: ["customer-current-user"],
-    queryFn: async () => {
-      const response = await getCurrentUser();
-      return response.data as CurrentUser;
-    },
-  });
 
   const shipments = useQuery({
     queryKey: ["customer-shipments"],
@@ -482,7 +463,6 @@ export default function CustomerOrderListPage() {
               paymentLoading={payment.isPending}
               onPay={() => payment.mutate(shipment)}
               onDownload={() => downloadReceipt(shipment)}
-              currentUserId={currentUser.data?.id}
             />
           ))}
         </div>

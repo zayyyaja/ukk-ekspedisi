@@ -33,6 +33,10 @@ import { StatusBadge } from "@/components/status-badge";
 import { apiGet, apiPatch, apiPost } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/auth-client";
 import { formatCurrency, formatDate } from "@/lib/customer-format";
+import {
+  getShipmentDeliveryProof,
+  getShipmentPackagePhoto,
+} from "@/lib/shipment-photos";
 import type { CurrentUser, Shipment } from "@/types/customer-portal";
 
 // ============================================
@@ -43,6 +47,7 @@ const STATUS_LABELS: Record<string, string> = {
   picked_up: "Paket Diambil",
   in_transit: "Dalam Perjalanan",
   arrived_at_branch: "Tiba di Cabang",
+  out_for_delivery: "Sedang Diantar",
   delivered: "Terkirim",
   cancelled: "Dibatalkan",
 };
@@ -58,6 +63,7 @@ const STATUS_ORDER = [
   "picked_up",
   "in_transit",
   "arrived_at_branch",
+  "out_for_delivery",
   "delivered",
 ] as const;
 
@@ -262,7 +268,8 @@ export default function CustomerOrderDetailPage() {
 
   const data = shipment;
   const { paymentStatus, canPay, isPendingAdditional, packageName, canCancel } = derivedState;
-  const packagePhoto = data.shipment_items?.[0]?.photo ?? data.photo;
+  const packagePhoto = getShipmentPackagePhoto(data);
+  const deliveryProofPhoto = getShipmentDeliveryProof(data);
   const origin = data.branches_shipments_origin_branch_idTobranches;
   const destination = data.branches_shipments_destination_branch_idTobranches;
   const sender = data.customers_shipments_sender_idTocustomers;
@@ -325,6 +332,10 @@ export default function CustomerOrderDetailPage() {
             />
 
             <TrackingTimeline shipment={data} />
+
+            {deliveryProofPhoto ? (
+              <DeliveryProofCard photoUrl={deliveryProofPhoto} />
+            ) : null}
           </div>
 
           {/* RIGHT COLUMN - Payment Summary */}
@@ -404,6 +415,26 @@ function ShipmentAlerts({
   );
 }
 
+function DeliveryProofCard({ photoUrl }: { photoUrl: string }) {
+  return (
+    <article className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+      <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-4">
+        <h2 className="text-lg font-bold text-emerald-900">Bukti Paket Telah Diterima</h2>
+        <p className="mt-1 text-sm text-emerald-700">
+          Foto penyerahan dari kurir saat paket sampai di tujuan.
+        </p>
+      </div>
+      <div className="p-6">
+        <img
+          alt="Bukti paket telah diterima"
+          className="h-64 w-full rounded-2xl object-cover"
+          src={photoUrl}
+        />
+      </div>
+    </article>
+  );
+}
+
 function PackageHeroCard({
   packagePhoto,
   packageName,
@@ -426,6 +457,7 @@ function PackageHeroCard({
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             sizes="(max-width: 1024px) 100vw, 640px"
             priority
+            unoptimized={packagePhoto.startsWith("/uploads/")}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -793,6 +825,11 @@ function SummaryRow({
   );
 }
 
+function getTrackingStatusIndex(status: string) {
+  const index = STATUS_ORDER.indexOf(status as (typeof STATUS_ORDER)[number]);
+  return index === -1 ? -1 : index;
+}
+
 function TrackingTimeline({ shipment }: { shipment: Shipment }) {
   const trackings = useMemo(
     () =>
@@ -803,14 +840,37 @@ function TrackingTimeline({ shipment }: { shipment: Shipment }) {
   );
 
   const currentStatusIndex = useMemo(
-    () => STATUS_ORDER.indexOf(shipment.status as never),
+    () => getTrackingStatusIndex(shipment.status),
     [shipment.status],
   );
 
+  const currentTrackingId = useMemo(() => {
+    if (trackings.length === 0) {
+      return null;
+    }
+
+    const matched = trackings.filter(
+      (tracking) => getTrackingStatusIndex(tracking.status) === currentStatusIndex,
+    );
+
+    if (matched.length > 0) {
+      return matched[matched.length - 1]?.id ?? null;
+    }
+
+    const reached = trackings.filter(
+      (tracking) => getTrackingStatusIndex(tracking.status) <= currentStatusIndex,
+    );
+
+    return reached[reached.length - 1]?.id ?? trackings[trackings.length - 1]?.id ?? null;
+  }, [trackings, currentStatusIndex]);
+
   const progressPercent = useMemo(() => {
-    if (trackings.length === 0) return 0;
+    if (currentStatusIndex < 0) {
+      return 0;
+    }
+
     return Math.round(((currentStatusIndex + 1) / STATUS_ORDER.length) * 100);
-  }, [currentStatusIndex, trackings.length]);
+  }, [currentStatusIndex]);
 
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -828,32 +888,7 @@ function TrackingTimeline({ shipment }: { shipment: Shipment }) {
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
-          {STATUS_ORDER.slice(0, 5).map((step, index) => {
-            const isActive = index <= currentStatusIndex;
-            const isCurrent = index === currentStatusIndex;
-
-            return (
-              <div key={step} className="flex flex-1 items-center">
-                <div className="flex flex-col items-center">
-                  <StepIndicator isActive={isActive} isCurrent={isCurrent} />
-                  <p
-                    className={`mt-2 hidden text-center text-[10px] font-semibold uppercase tracking-wide sm:block ${isActive ? "text-orange-600" : "text-slate-400"
-                      }`}
-                  >
-                    {step.replace(/_/g, " ")}
-                  </p>
-                </div>
-                {index < 4 && (
-                  <div
-                    className={`mx-1 h-0.5 flex-1 transition-all ${index < currentStatusIndex ? "bg-orange-500" : "bg-slate-200"
-                      }`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <HorizontalStepper currentStatusIndex={currentStatusIndex} />
       </div>
 
       <div className="p-6">
@@ -871,18 +906,81 @@ function TrackingTimeline({ shipment }: { shipment: Shipment }) {
           </div>
         ) : (
           <ol className="relative space-y-0">
-            {trackings.map((tracking, index) => (
-              <TimelineItem
-                key={tracking.id}
-                tracking={tracking}
-                isFirst={index === 0}
-                isLast={index === trackings.length - 1}
-              />
-            ))}
+            {trackings.map((tracking, index) => {
+              const statusIndex = getTrackingStatusIndex(tracking.status);
+              const isActive =
+                currentStatusIndex >= 0 &&
+                statusIndex >= 0 &&
+                statusIndex <= currentStatusIndex;
+              const nextTracking = trackings[index + 1];
+              const nextStatusIndex = nextTracking
+                ? getTrackingStatusIndex(nextTracking.status)
+                : -1;
+              const isNextActive =
+                currentStatusIndex >= 0 &&
+                nextStatusIndex >= 0 &&
+                nextStatusIndex <= currentStatusIndex;
+
+              return (
+                <TimelineItem
+                  key={tracking.id}
+                  tracking={tracking}
+                  isActive={isActive}
+                  isCurrent={tracking.id === currentTrackingId}
+                  isLast={index === trackings.length - 1}
+                  isNextActive={isNextActive}
+                />
+              );
+            })}
           </ol>
         )}
       </div>
     </section>
+  );
+}
+
+function formatStepLabel(step: (typeof STATUS_ORDER)[number]) {
+  return step.replaceAll("_", " ");
+}
+
+function HorizontalStepper({ currentStatusIndex }: { currentStatusIndex: number }) {
+  return (
+    <div className="mt-5 grid grid-cols-6">
+      {STATUS_ORDER.map((step, index) => {
+        const isActive = currentStatusIndex >= 0 && index <= currentStatusIndex;
+        const isCurrent = index === currentStatusIndex;
+        const isLineActive = currentStatusIndex >= 0 && index < currentStatusIndex;
+
+        return (
+          <div key={step} className="relative flex flex-col items-center px-0.5">
+            {index < STATUS_ORDER.length - 1 ? (
+              <span
+                aria-hidden
+                className={`absolute top-4 z-0 h-0.5 -translate-y-1/2 transition-colors ${
+                  isLineActive ? "bg-orange-500" : "bg-slate-200"
+                }`}
+                style={{
+                  left: "calc(50% + 1rem)",
+                  right: "calc(-50% + 1rem)",
+                }}
+              />
+            ) : null}
+
+            <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-visible">
+              <StepIndicator isActive={isActive} isCurrent={isCurrent} />
+            </div>
+
+            <p
+              className={`mt-2 hidden min-h-8 w-full px-0.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wide sm:block ${
+                isActive ? "text-orange-600" : "text-slate-400"
+              }`}
+            >
+              {formatStepLabel(step)}
+            </p>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -908,25 +1006,36 @@ function StepIndicator({ isActive, isCurrent }: { isActive: boolean; isCurrent: 
 
 function TimelineItem({
   tracking,
-  isFirst,
+  isActive,
+  isCurrent,
   isLast,
+  isNextActive,
 }: {
   tracking: NonNullable<Shipment["shipment_trackings"]>[number];
-  isFirst: boolean;
+  isActive: boolean;
+  isCurrent: boolean;
   isLast: boolean;
+  isNextActive: boolean;
 }) {
+  const connectorActive = isActive && isNextActive;
+
   return (
     <li className="relative grid grid-cols-[32px_1fr] gap-4 pb-6 last:pb-0">
       {!isLast && (
         <span
-          className={`absolute left-[15px] top-8 h-full w-0.5 ${isFirst ? "bg-orange-500" : "bg-slate-200"
-            }`}
+          className={`absolute left-[15px] top-8 bottom-0 w-0.5 transition-colors ${
+            connectorActive ? "bg-orange-500" : "bg-slate-200"
+          }`}
         />
       )}
 
       <div className="relative z-10 flex justify-center pt-1">
-        {isFirst ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 ring-4 ring-orange-100">
+        {isActive ? (
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 transition-all ${
+              isCurrent ? "ring-4 ring-orange-100" : ""
+            }`}
+          >
             <CheckCircle2 size={16} className="text-white" />
           </span>
         ) : (
@@ -937,25 +1046,31 @@ function TimelineItem({
       </div>
 
       <div
-        className={`rounded-2xl p-4 transition-all ${isFirst
-          ? "border border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm"
-          : "bg-slate-50"
-          }`}
+        className={`rounded-2xl p-4 transition-all ${
+          isActive
+            ? isCurrent
+              ? "border border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm"
+              : "border border-orange-100 bg-orange-50/70"
+            : "bg-slate-50"
+        }`}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <strong
-            className={`text-sm font-bold capitalize ${isFirst ? "text-orange-700" : "text-slate-900"
-              }`}
+            className={`text-sm font-bold capitalize ${
+              isActive ? "text-orange-700" : "text-slate-900"
+            }`}
           >
             {tracking.status.replaceAll("_", " ")}
           </strong>
-          <span className="text-xs font-medium text-slate-500">
+          <span className={`text-xs font-medium ${isActive ? "text-orange-600/80" : "text-slate-500"}`}>
             {formatDate(tracking.tracked_at)}
           </span>
         </div>
-        <p className="mt-1.5 text-sm text-slate-600">{tracking.description ?? "-"}</p>
+        <p className={`mt-1.5 text-sm ${isActive ? "text-slate-700" : "text-slate-600"}`}>
+          {tracking.description ?? "-"}
+        </p>
         {tracking.location && (
-          <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
+          <p className={`mt-1 flex items-center gap-1 text-xs ${isActive ? "text-orange-600/70" : "text-slate-400"}`}>
             <MapPin size={12} />
             {tracking.location}
           </p>

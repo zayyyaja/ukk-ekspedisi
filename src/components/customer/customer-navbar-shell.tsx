@@ -1,11 +1,12 @@
 "use client";
 
-import { LogOut, Menu, PackagePlus, Search, UserRound } from "lucide-react";
+import { LogOut, Mail, Menu, PackagePlus, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { customerLogout, getCurrentUser } from "@/lib/auth-client";
+import { apiGet } from "@/lib/api-client";
 import { FullPageLoader } from "@/components/ui/full-page-loader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const menu = [
   { href: "/customer", label: "BERANDA", icon: null },
   { href: "/customer/lacak-paket", label: "CARI PAKET", icon: Search },
   { href: "/customer/buat-pesanan", label: "KIRIM PAKET", icon: PackagePlus },
+  { href: "/customer/inbox", label: "INBOX", icon: Mail },
   { href: "/customer/profile", label: "PROFIL", icon: UserRound },
 ];
 
@@ -44,6 +46,7 @@ export function CustomerNavbarShell({
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -63,6 +66,12 @@ export function CustomerNavbarShell({
       .finally(() => {
         if (mounted) setLoading(false);
       });
+
+    apiGet<{ unreadCount: number }>("/api/v1/customer/notifications/summary")
+      .then((response) => {
+        if (mounted) setUnreadCount(response.data.unreadCount ?? 0);
+      })
+      .catch(() => null);
 
     return () => {
       mounted = false;
@@ -118,16 +127,21 @@ export function CustomerNavbarShell({
           <nav className="hidden items-center gap-8 md:flex">
             {menu.map((item) => (
               <Link
-                key={item.href}
+                key={`${item.href}-${item.label}`}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors duration-300 hover:text-orange-500",
+                  "relative text-sm font-medium transition-colors duration-300 hover:text-orange-500",
                   isActive(pathname, item.href)
                     ? "text-orange-500"
                     : (isHome && !scrolled ? "text-white/90" : "text-slate-950")
                 )}
               >
                 {item.label}
+                {item.href === "/customer/inbox" && unreadCount > 0 && (
+                  <span className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
             ))}
 
@@ -170,7 +184,7 @@ export function CustomerNavbarShell({
                     const Icon = item.icon;
                     return (
                       <Link
-                        key={item.href}
+                        key={`${item.href}-${item.label}`}
                         href={item.href}
                         onClick={() => setOpen(false)}
                         className={cn(
@@ -182,6 +196,11 @@ export function CustomerNavbarShell({
                       >
                         {Icon && <Icon className="mr-3 h-5 w-5" />}
                         {item.label}
+                        {item.href === "/customer/inbox" && unreadCount > 0 && (
+                          <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </span>
+                        )}
                       </Link>
                     )
                   })}

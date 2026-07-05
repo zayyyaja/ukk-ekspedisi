@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { NextRequest } from "next/server";
 
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Define the path: <project_root>/public/uploads/<filename>
     const uploadDir = join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
     const filePath = join(uploadDir, fileName);
 
     // Write file to local disk

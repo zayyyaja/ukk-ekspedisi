@@ -23,6 +23,7 @@ import {
   findBranchById,
   findCourierByCode,
   findCourierShipments,
+  findCustomerByEmail,
   findCustomerById,
   findCustomerShipments,
   findRateByCities,
@@ -33,6 +34,7 @@ import {
   cancelCustomerShipment as cancelCustomerShipmentRepository,
   updateShipmentStatus as updateShipmentStatusRepository,
 } from "@/repositories/shipment.repository";
+import { notifyRegisteredReceiverAboutShipment } from "@/services/notification.service";
 import type { AuthUser } from "@/types/auth";
 import type {
   CreateCashierOrderInput,
@@ -111,7 +113,7 @@ function assertPaymentAllowed(
     handoverMethod === shipments_handover_method.pickup &&
     paymentMethod === payments_payment_method.cash
   ) {
-    throw new ValidationError("Metode Jemput Paket hanya menerima pembayaran Midtrans.");
+    throw new ValidationError("Metode Jemput Paket hanya menerima pembayaran e-wallet/online (QRIS, GoPay, bank VA).");
   }
 }
 
@@ -240,8 +242,12 @@ function assertTransitionAllowed(
     throw new ValidationError("Admin Tujuan tidak dapat melakukan arrival apabila shipment belum in_transit.");
   }
 
-  if (nextStatus === shipments_status.delivered && currentStatus !== shipments_status.arrived_at_branch) {
-    throw new ValidationError("Kurir tidak dapat melakukan delivery apabila shipment belum arrived_at_branch.");
+  if (nextStatus === shipments_status.delivered && currentStatus !== shipments_status.out_for_delivery) {
+    throw new ValidationError("Kurir tidak dapat melakukan delivery apabila shipment belum out_for_delivery.");
+  }
+
+  if (nextStatus === shipments_status.out_for_delivery && currentStatus !== shipments_status.arrived_at_branch) {
+    throw new ValidationError("Kurir tidak dapat mengkonfirmasi siap antar apabila shipment belum arrived_at_branch.");
   }
 
   const baseAllowed =
@@ -303,8 +309,8 @@ function assertRoleCanUpdateStatus(
       pending: [],
       picked_up: [],
       in_transit: [],
-      arrived_at_branch: [shipments_status.delivered],
-      out_for_delivery: [],
+      arrived_at_branch: [shipments_status.out_for_delivery],
+      out_for_delivery: [shipments_status.delivered],
       delivered: [],
       cancelled: [],
     };
@@ -342,9 +348,17 @@ function buildTrackingDetails(
       location: destination,
       description: `Paket telah tiba di ${destination}.`,
     },
+    out_for_delivery: {
+      location: destinationCity,
+      description: shipment.users
+        ? `Kurir ${shipment.users.name} mengkonfirmasi paket siap diantar ke penerima. Handled by: Kurir ${shipment.users.name}`
+        : "Kurir telah mengkonfirmasi paket siap diantar ke penerima.",
+    },
     delivered: {
       location: receiverAddress,
-      description: "Paket berhasil diterima customer.",
+      description: shipment.users
+        ? `Paket berhasil diterima customer. Handled by: Kurir ${shipment.users.name}`
+        : "Paket berhasil diterima customer.",
     },
   };
 
@@ -407,11 +421,12 @@ export async function createShipment(
   );
   const handoverMethod = input.handoverMethod as shipments_handover_method;
   const paymentMethod = input.paymentMethod as payments_payment_method;
-  if (paymentMethod !== payments_payment_method.cash) {
-    throw new ValidationError("Kasir hanya dapat membuat pesanan dengan pembayaran cash.");
-  }
   assertPaymentAllowed(handoverMethod, paymentMethod);
   const totalPrice = calculateTotalPrice(totalWeight, rate.price_per_kg, handoverMethod);
+  const receiverEmail = input.receiver?.email?.trim().toLowerCase() || null;
+  const existingReceiverAccount = receiverEmail
+    ? await findCustomerByEmail(receiverEmail)
+    : null;
 
   const shipment = await createShipmentWithItemsAndPayment({
     trackingNumber: generateTrackingNumber(),
@@ -446,6 +461,14 @@ export async function createShipment(
     paymentExpiredAt: paymentExpiresAt(paymentMethod),
     items: input.items,
   });
+
+  if (existingReceiverAccount) {
+    await notifyRegisteredReceiverAboutShipment(
+      Number(existingReceiverAccount.id),
+      shipment.tracking_number,
+      Number(shipment.id),
+    );
+  }
 
   return toJsonSafe(shipment);
 }
@@ -524,7 +547,10 @@ export async function createCashierOrder(
       ...input.sender,
       email: input.sender.email?.trim() || null,
     },
-    receiver: input.receiver,
+    receiver: {
+      ...input.receiver,
+      email: input.receiver.email?.trim() || null,
+    },
     cashierId: currentUser.id,
     originBranchId: input.originBranchId,
     destinationBranchId: input.destinationBranchId,
@@ -536,6 +562,19 @@ export async function createCashierOrder(
     paymentExpiredAt: paymentExpiresAt(paymentMethod),
     items: input.items,
   });
+
+  const receiverEmail = input.receiver.email?.trim().toLowerCase() || null;
+  const existingReceiverAccount = receiverEmail
+    ? await findCustomerByEmail(receiverEmail)
+    : null;
+
+  if (existingReceiverAccount) {
+    await notifyRegisteredReceiverAboutShipment(
+      Number(existingReceiverAccount.id),
+      shipment.tracking_number,
+      Number(shipment.id),
+    );
+  }
 
   return toJsonSafe(shipment);
 }
@@ -549,7 +588,7 @@ export async function getCustomerShipments(
   const { page, limit, skip, take } = paginate(query);
   const where: Prisma.shipmentsWhereInput = {
     ...buildBaseWhere(query),
-    OR: [{ sender_id: toBigInt(currentUser.id) }, { receiver_id: toBigInt(currentUser.id) }],
+    sender_id: toBigInt(currentUser.id),
   };
   const [total, shipments] = await findCustomerShipments(where, skip, take);
 
@@ -640,7 +679,7 @@ export async function assignCourierToShipment(
     throw new ForbiddenError("Admin or Cashier access required");
   }
 
-  const normalizedCourierCode = courierCode.trim().toUpperCase();
+  const normalizedCourierCode = courierCode.trim();
   const [shipment, courier] = await Promise.all([
     findShipmentWithRelations(shipmentId),
     findCourierByCode(normalizedCourierCode),
@@ -658,36 +697,62 @@ export async function assignCourierToShipment(
     throw new ForbiddenError("Branch is required");
   }
 
-  if (shipment.courier_id) {
-    throw new ValidationError("Shipment sudah memiliki kurir aktif.");
-  }
-
-  if (courier.branch_id !== toBigInt(currentUser.branchId)) {
-    throw new ForbiddenError("ID Kurir harus berasal dari cabang Anda.");
-  }
-
-  const isPickupMode = shipment.handover_method === shipments_handover_method.pickup && shipment.status === shipments_status.pending;
+  const isPickupMode =
+    shipment.handover_method === shipments_handover_method.pickup &&
+    shipment.status === shipments_status.pending;
   const isDeliveryMode = shipment.status === shipments_status.arrived_at_branch;
 
   if (isPickupMode) {
+    if (shipment.courier_id) {
+      throw new ValidationError("Kurir penjemput sudah ditugaskan untuk shipment ini.", {
+        courierCode: ["Kurir penjemput sudah ditugaskan."],
+      });
+    }
+
     if (shipment.origin_branch_id !== toBigInt(currentUser.branchId)) {
       throw new ForbiddenError("Only the origin branch can assign a pickup courier");
     }
 
     if (shipment.payments?.payment_status !== payments_payment_status.paid) {
-      throw new ValidationError("Shipment metode Jemput Paket hanya dapat diassign setelah pembayaran berstatus paid.");
+      throw new ValidationError(
+        "Shipment metode Jemput Paket hanya dapat diassign setelah pembayaran berstatus paid.",
+        { courierCode: ["Pembayaran belum lunas."] },
+      );
     }
   } else if (isDeliveryMode) {
+    if (shipment.courier_id) {
+      throw new ValidationError("Kurir pengantaran sudah ditugaskan untuk shipment ini.", {
+        courierCode: ["Kurir pengantaran sudah ditugaskan."],
+      });
+    }
+
     if (shipment.destination_branch_id !== toBigInt(currentUser.branchId)) {
       throw new ForbiddenError("Only the destination branch can assign a delivery courier");
     }
   } else {
     throw new ValidationError(
       "Kurir hanya dapat ditugaskan untuk penjemputan (status pending) atau pengiriman (status arrived_at_branch).",
+      { courierCode: ["Status shipment tidak memungkinkan penugasan kurir."] },
     );
   }
 
-  const updatedShipment = await assignCourier(shipmentId, Number(courier.id));
+  if (courier.branch_id !== toBigInt(currentUser.branchId)) {
+    throw new ForbiddenError("ID Kurir harus berasal dari cabang Anda.");
+  }
+
+  const branchName = isPickupMode
+    ? shipment.branches_shipments_origin_branch_idTobranches.name
+    : shipment.branches_shipments_destination_branch_idTobranches.name;
+
+  const updatedShipment = await assignCourier(shipmentId, {
+    mode: isPickupMode ? "pickup" : "delivery",
+    location: branchName,
+    courier: {
+      id: Number(courier.id),
+      name: courier.name,
+      courier_code: courier.courier_code,
+    },
+  });
 
   return toJsonSafe(updatedShipment);
 }
@@ -757,7 +822,7 @@ export async function receiveShipmentAtDestination(
     {
       status: shipment_trackings_status.arrived_at_branch,
       location: destinationBranch.name,
-      description: `Paket telah tiba di ${destinationBranch.name}.`,
+      description: `Paket telah tiba di ${destinationBranch.name}. Siap untuk assign kurir pengantaran.`,
     },
   );
 

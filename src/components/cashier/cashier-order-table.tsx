@@ -5,6 +5,10 @@ import { useState } from "react";
 
 import type { ApiListMeta, CashierOrder } from "@/components/cashier/cashier-types";
 import { formatCurrency, formatDate } from "@/lib/customer-format";
+import {
+  getShipmentDeliveryProof,
+  getShipmentPackagePhoto,
+} from "@/lib/shipment-photos";
 
 function paymentStatusClass(status?: string | null) {
   if (status === "paid") return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -280,21 +284,35 @@ export function CashierOrderTable({
               <button className="button secondary" onClick={() => setDetail(null)} type="button">Tutup</button>
             </div>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Info label="Nama Pelanggan" value={detail.customers_shipments_sender_idTocustomers?.name} />
-              <Info label="Telepon" value={detail.customers_shipments_sender_idTocustomers?.phone} />
-              <Info label="Alamat" value={detail.customers_shipments_sender_idTocustomers?.city} />
+              <Info label="Nama Pengirim" value={detail.customers_shipments_sender_idTocustomers?.name} />
+              <Info label="Email Pengirim" value={detail.customers_shipments_sender_idTocustomers?.email} />
+              <Info label="Telepon Pengirim" value={detail.customers_shipments_sender_idTocustomers?.phone} />
+              <Info label="Kota Pengirim" value={detail.customers_shipments_sender_idTocustomers?.city} />
+              <Info label="Alamat Pengirim" value={detail.customers_shipments_sender_idTocustomers?.address} wide />
+              <Info label="Nama Penerima" value={detail.customers_shipments_receiver_idTocustomers?.name} />
+              <Info label="Email Penerima" value={detail.customers_shipments_receiver_idTocustomers?.email} />
+              <Info label="Telepon Penerima" value={detail.customers_shipments_receiver_idTocustomers?.phone} />
+              <Info label="Kota Penerima" value={detail.customers_shipments_receiver_idTocustomers?.city} />
+              <Info label="Alamat Penerima" value={detail.customers_shipments_receiver_idTocustomers?.address} wide />
               <Info label="Nama Paket" value={detail.shipment_items?.[0]?.item_name} />
               <Info label="Berat" value={`${detail.total_weight} kg`} />
-              <Info label="Dikirim Dari" value={detail.branches_shipments_origin_branch_idTobranches?.name} />
-              <Info label="Alamat Tujuan" value={detail.customers_shipments_receiver_idTocustomers?.address} />
-              <Info label="Kota Tujuan" value={detail.branches_shipments_destination_branch_idTobranches?.city} />
+              <Info label="Cabang Asal" value={detail.branches_shipments_origin_branch_idTobranches?.name} />
+              <Info label="Cabang Tujuan" value={detail.branches_shipments_destination_branch_idTobranches?.name} />
+              <Info label="Metode Penyerahan" value={detail.handover_method === "pickup" ? "Jemput Paket" : "Drop Off"} />
               <Info label="Metode Pembayaran" value={detail.payments?.payment_method} />
               <Info label="Status Pembayaran" value={detail.payments?.payment_status} />
               <Info label="Status Paket" value={detail.status} />
+              <Info label="No. Resi" value={detail.tracking_number} />
               <Info label="Total Harga" value={formatCurrency(detail.total_price)} />
             </div>
-            {detail.shipment_items?.[0]?.photo ? (
-              <img alt="Foto Paket" className="mt-5 h-48 w-full rounded-2xl object-cover" src={detail.shipment_items[0].photo} />
+            {getShipmentPackagePhoto(detail) ? (
+              <img alt="Foto Paket" className="mt-5 h-48 w-full rounded-2xl object-cover" src={getShipmentPackagePhoto(detail) ?? ""} />
+            ) : null}
+            {getShipmentDeliveryProof(detail) ? (
+              <div className="mt-5">
+                <p className="mb-2 text-sm font-semibold text-slate-700">Bukti paket telah diterima</p>
+                <img alt="Bukti penyerahan" className="h-48 w-full rounded-2xl object-cover" src={getShipmentDeliveryProof(detail) ?? ""} />
+              </div>
             ) : null}
             <h3 className="mt-6 font-bold">Timeline Tracking</h3>
             <div className="mt-3 grid gap-3">
@@ -330,9 +348,9 @@ export function CashierOrderTable({
   );
 }
 
-function Info({ label, value }: { label: string; value?: string | number | null }) {
+function Info({ label, value, wide }: { label: string; value?: string | number | null; wide?: boolean }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-4">
+    <div className={`rounded-2xl bg-slate-50 p-4 ${wide ? "md:col-span-2" : ""}`}>
       <div className="text-xs font-semibold uppercase text-slate-400">{label}</div>
       <div className="mt-1 font-semibold">{value ?? "-"}</div>
     </div>

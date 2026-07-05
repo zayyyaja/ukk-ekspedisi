@@ -1,3 +1,5 @@
-import { CashierDashboardPage } from "@/components/staff/staff-pages";
+import { redirect } from "next/navigation";
 
-export default CashierDashboardPage;
+export default function CashierReportsRedirect() {
+  redirect("/staff/cashier/laporan");
+}

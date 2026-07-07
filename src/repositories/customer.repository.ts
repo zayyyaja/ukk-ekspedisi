@@ -31,9 +31,17 @@ export function findCustomerById(id: number) {
 }
 
 export function updateCustomer(id: number, input: UpdateCustomerInput) {
+  const data: UpdateCustomerInput = {};
+
+  if (input.name !== undefined) data.name = input.name;
+  if (input.address !== undefined) data.address = input.address;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.phone !== undefined) data.phone = input.phone;
+  if (input.photo !== undefined) data.photo = input.photo;
+
   return prisma.customers.update({
     where: { id: BigInt(id) },
-    data: input,
+    data,
     select: publicCustomerSelect,
   });
 }

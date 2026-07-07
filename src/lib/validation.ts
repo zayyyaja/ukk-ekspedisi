@@ -7,7 +7,7 @@ export function formatZodError(error: z.ZodError): ValidationErrors {
   return error.issues.reduce<ValidationErrors>((formattedErrors, issue) => {
     const key = issue.path.join(".") || "root";
     formattedErrors[key] = formattedErrors[key] ?? [];
-    formattedErrors[key].push(issue.message);
+    formattedErrors[key].push(issue.message || "Nilai tidak valid");
 
     return formattedErrors;
   }, {});

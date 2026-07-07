@@ -8,7 +8,7 @@ type ApiResponse<T> = {
   errors?: Record<string, unknown>;
 };
 
-type RequestBody = Record<string, unknown> | unknown[] | null;
+type RequestBody = Record<string, unknown> | unknown[] | FormData | null;
 type QueryParams = Record<
   string,
   string | number | boolean | null | undefined
@@ -46,17 +46,39 @@ function buildUrl(path: string, query?: QueryParams) {
   return path.startsWith("http") ? url.toString() : `${url.pathname}${url.search}`;
 }
 
+function formatApiErrorMessage(json: ApiResponse<unknown> | null) {
+  const fieldErrors = Object.entries(json?.errors ?? {})
+    .map(([field, messages]) => {
+      const text = Array.isArray(messages) ? messages.join(", ") : String(messages);
+      return `${field}: ${text}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+
+  return fieldErrors || json?.message || "Request gagal diproses.";
+}
+
 async function apiRequest<T>(
   method: string,
   path: string,
   body?: RequestBody,
   query?: QueryParams,
 ): Promise<ApiResponse<T>> {
+  const isFormData = body instanceof FormData;
+
   const response = await fetch(buildUrl(path, query), {
     method,
     credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers:
+      body === undefined || isFormData
+        ? undefined
+        : { "Content-Type": "application/json" },
+    body:
+      body === undefined
+        ? undefined
+        : isFormData
+          ? body
+          : JSON.stringify(body),
   });
   const json = (await response.json().catch(() => null)) as ApiResponse<T> | null;
 
@@ -76,8 +98,12 @@ async function apiRequest<T>(
     if (response.status === 422) {
       console.error("Server Validation Error (422):", json);
     }
-    const message = json?.message || "Request gagal diproses.";
-    throw new ApiClientError(message, response.status, json?.errors ?? {});
+
+    throw new ApiClientError(
+      formatApiErrorMessage(json),
+      response.status,
+      json?.errors ?? {},
+    );
   }
 
   return json;
@@ -97,4 +123,8 @@ export function apiPatch<T>(path: string, body?: RequestBody, query?: QueryParam
 
 export function apiDelete<T>(path: string, query?: QueryParams) {
   return apiRequest<T>("DELETE", path, undefined, query);
+}
+
+export function apiPatchForm<T>(path: string, body: FormData, query?: QueryParams) {
+  return apiRequest<T>("PATCH", path, body, query);
 }

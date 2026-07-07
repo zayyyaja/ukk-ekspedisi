@@ -3,6 +3,18 @@ import { ZodError } from "zod";
 import { AppError } from "@/lib/errors";
 import { errorResponse, serverErrorResponse } from "@/lib/response";
 import { formatZodError } from "@/lib/validation";
+import type { ValidationErrors } from "@/types/api";
+
+function withFallbackErrors(
+  errors: ValidationErrors,
+  fallbackMessage: string,
+): ValidationErrors {
+  if (Object.keys(errors).length > 0) {
+    return errors;
+  }
+
+  return { root: [fallbackMessage] };
+}
 
 export function handleApiError(error: unknown) {
   if (
@@ -12,14 +24,30 @@ export function handleApiError(error: unknown) {
       "issues" in error &&
       Array.isArray((error as { issues?: unknown }).issues))
   ) {
-    return errorResponse("Validation error", formatZodError(error as ZodError), 422);
+    const errors = withFallbackErrors(
+      formatZodError(error as ZodError),
+      "Validasi gagal. Periksa kembali data yang dikirim.",
+    );
+
+    console.error("[API Validation Error]", errors);
+
+    return errorResponse("Validation failed", errors, 422);
   }
 
   if (error instanceof AppError) {
-    return errorResponse(error.message, error.errors, error.statusCode);
+    const errors = withFallbackErrors(
+      (error.errors ?? {}) as ValidationErrors,
+      error.message,
+    );
+
+    console.error("[API Error]", error.message, errors);
+
+    return errorResponse(error.message, errors, error.statusCode);
   }
 
-  console.error(error);
+  console.error("[API Unhandled Error]", error);
 
-  return serverErrorResponse();
+  const message = error instanceof Error ? error.message : "Internal server error";
+
+  return errorResponse(message, { root: [message] }, 500);
 }

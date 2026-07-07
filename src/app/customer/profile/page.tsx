@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { User, MapPin, UploadCloud, X, Image as ImageIcon, Save } from "lucide-react";
 
 import { CustomerNavbarShell } from "@/components/customer/customer-navbar-shell";
-import { apiPatch } from "@/lib/api-client";
+import { apiPatchForm, ApiClientError } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/auth-client";
 
 type ProfileForm = {
@@ -64,6 +64,10 @@ export default function CustomerProfilePage() {
         setError("File harus berupa gambar (JPG, PNG, dll)");
         return;
       }
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Ukuran file maksimal 5MB");
+        return;
+      }
       setPhotoFile(file);
       const url = URL.createObjectURL(file);
       setPhotoPreview(url);
@@ -83,44 +87,37 @@ export default function CustomerProfilePage() {
     setSaving(true);
     setError("");
     setMessage("");
-    
+
     try {
-      let finalPhotoUrl = form.photo;
-      
-      // Upload file if selected
+      const formData = new FormData();
+      formData.append("name", form.name.trim());
+      formData.append("phone", form.phone.trim());
+      formData.append("address", form.address.trim());
+      formData.append("city", form.city.trim());
+
       if (photoFile) {
-        const formData = new FormData();
-        formData.append("file", photoFile);
-        
-        const uploadRes = await fetch("/api/v1/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          throw new Error(uploadData.message || "Gagal mengunggah foto profil");
-        }
-        
-        finalPhotoUrl = uploadData.data.url;
+        formData.append("photo", photoFile);
+      } else if (!photoPreview && !form.photo) {
+        formData.append("removePhoto", "true");
       }
 
-      await apiPatch("/api/v1/customer/profile", {
-        name: form.name,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        photo: finalPhotoUrl || null,
-      });
-      
-      // Update local state to reflect new photo URL
-      updateField("photo", finalPhotoUrl);
-      setPhotoFile(null); // Clear file so we don't upload again
-      
+      const response = await apiPatchForm<{ photo?: string | null }>(
+        "/api/v1/customer/profile",
+        formData,
+      );
+
+      const savedPhoto = response.data?.photo ?? null;
+      updateField("photo", savedPhoto ?? "");
+      setPhotoPreview(savedPhoto);
+      setPhotoFile(null);
       setMessage("Profile berhasil diperbarui.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (currentError) {
-      setError(currentError instanceof Error ? currentError.message : "Gagal menyimpan profile.");
+      if (currentError instanceof ApiClientError) {
+        setError(currentError.message);
+      } else {
+        setError(currentError instanceof Error ? currentError.message : "Gagal menyimpan profile.");
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSaving(false);

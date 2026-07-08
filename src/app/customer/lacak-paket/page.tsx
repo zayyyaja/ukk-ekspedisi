@@ -114,113 +114,96 @@ function ShipmentCard({
   return (
     <Link
       href={`/customer/pesanan/${shipment.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-300 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+      className="group flex h-full flex-col overflow-hidden border-4 border-slate-900 bg-white shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-sm transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400"
     >
-      {/* Cover */}
-      <div className="relative aspect-[16/8] overflow-hidden bg-orange-50">
+      {/* Cover Gambar */}
+      <div className="relative aspect-[16/8] overflow-hidden bg-amber-50 border-b-4 border-slate-900">
         <img
           src={getShipmentCoverPhoto(shipment)}
           alt="Foto paket"
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover grayscale transition duration-300 group-hover:grayscale-0 group-hover:scale-102"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
 
-        <div className="absolute bottom-5 left-5">
-          <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-orange-600 backdrop-blur">
-            {shipment.tracking_number}
+        <div className="absolute bottom-4 left-4">
+          <span className="border-2 border-slate-900 bg-white px-2.5 py-1 text-3xs font-black uppercase tracking-wider text-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+            #{shipment.tracking_number}
           </span>
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col p-6">
-        {/* Title */}
+      {/* Konten Utama */}
+      <div className="flex flex-1 flex-col p-5">
         <div>
-          <h3 className="line-clamp-2 text-xl font-bold text-slate-900">
-            {shipment.shipment_items?.[0]?.item_name ?? "Paket Ekspedisi"}
+          <h3 className="line-clamp-2 text-md font-black text-slate-900 uppercase tracking-wide">
+            {shipment.shipment_items?.[0]?.item_name ?? "PAKET_DOMESTIK"}
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            Nomor Resi
+          <p className="mt-3 text-3xs font-bold uppercase tracking-wider text-slate-400">
+            // NOMOR_RESI_PELACAKAN
           </p>
-
-          <p className="font-mono font-semibold text-orange-600">
+          <p className="text-sm font-black text-amber-600">
             {shipment.tracking_number}
           </p>
         </div>
 
-        {/* Information */}
-        <div className="mt-6 grid grid-cols-2 gap-5">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-orange-100 p-2 text-orange-600">
-              <CalendarDays size={18} />
+        {/* Informasi Rincian */}
+        <div className="mt-4 grid grid-cols-2 gap-4 border-t-2 border-dashed border-slate-200 pt-4">
+          <div className="flex items-start gap-2">
+            <div className="border-2 border-slate-900 bg-amber-400 p-1.5 rounded-sm shrink-0">
+              <CalendarDays size={14} className="text-slate-900 stroke-[2.5]" />
             </div>
-
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">
-                Tanggal
-              </p>
-
-              <p className="mt-1 text-sm font-semibold text-slate-800">
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">TANGGAL</p>
+              <p className="text-2xs font-bold text-slate-800 mt-0.5">
                 {formatDate(shipment.shipment_date)}
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-orange-100 p-2 text-orange-600">
-              <MapPin size={18} />
+          <div className="flex items-start gap-2">
+            <div className="border-2 border-slate-900 bg-amber-400 p-1.5 rounded-sm shrink-0">
+              <MapPin size={14} className="text-slate-900 stroke-[2.5]" />
             </div>
-
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">
-                Tujuan
-              </p>
-
-              <p className="mt-1 text-sm font-semibold text-slate-800 line-clamp-1">
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">TUJUAN</p>
+              <p className="text-2xs font-bold text-slate-800 line-clamp-1 mt-0.5">
                 {shipment.branches_shipments_destination_branch_idTobranches?.name ?? "-"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Status */}
-        <div className="mt-6 space-y-3 rounded-2xl bg-slate-50 p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Status Pembayaran
-            </span>
-
+        {/* Status Monitoring */}
+        <div className="mt-4 space-y-2 border-2 border-slate-900 bg-slate-50 p-3 rounded-sm">
+          <div className="flex items-center justify-between text-3xs font-black uppercase tracking-wider">
+            <span className="text-slate-500">PEMBAYARAN:</span>
             <StatusBadge status={paymentStatus} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Status Pengiriman
-            </span>
-
+          <div className="flex items-center justify-between text-3xs font-black uppercase tracking-wider border-t border-slate-200 pt-2">
+            <span className="text-slate-500">PENGIRIMAN:</span>
             <StatusBadge status={shipment.status} />
           </div>
         </div>
 
-        {/* Price */}
-        <div className="mt-6 border-t border-slate-100 pt-5">
-          <p className="text-xs uppercase tracking-wider text-slate-400">
-            Total Harga
+        {/* Harga Total */}
+        <div className="mt-4 border-t-2 border-slate-900 pt-3">
+          <p className="text-3xs font-black uppercase tracking-wider text-slate-400">
+            TOTAL BIAYA OPERASIONAL
           </p>
-
-          <h4 className="mt-2 text-3xl font-black text-orange-600">
+          <h4 className="text-lg font-black text-slate-900 mt-0.5">
             {formatCurrency(shipment.total_price)}
           </h4>
         </div>
 
-        {/* Action */}
-        <div className="mt-auto pt-6">
-          <div className="flex flex-col gap-3 sm:flex-row">
+        {/* Blok Tombol Aksi */}
+        <div className="mt-auto pt-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
             {canPay ? (
               <Button
-                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                className="flex-1 rounded-sm border-2 border-slate-900 bg-amber-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-3xs uppercase tracking-widest transition-all h-10"
                 disabled={paymentLoading}
                 onClick={(e) => {
                   e.preventDefault();
@@ -229,19 +212,19 @@ function ShipmentCard({
                 }}
                 type="button"
               >
-                {paymentStatus === "failed" ? "Coba Bayar Lagi" : "Bayar Sekarang"}
+                {paymentStatus === "failed" ? "COBA BAYAR ULANG" : "BAYAR SEKARANG"}
               </Button>
             ) : (
-              <span className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white">
-                Lihat Detail
-                <ArrowRight className="h-4 w-4" />
+              <span className="flex flex-1 items-center justify-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-3 py-2 text-3xs font-black uppercase tracking-widest text-white rounded-sm h-10">
+                LIHAT DETAIL
+                <ArrowRight className="h-3 w-3 stroke-[3]" />
               </span>
             )}
 
             {paymentStatus === "paid" && (
               <Button
                 variant="outline"
-                className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+                className="flex-1 rounded-sm border-2 border-slate-900 bg-white font-black text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-3xs uppercase tracking-widest transition-all h-10"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -249,8 +232,8 @@ function ShipmentCard({
                 }}
                 type="button"
               >
-                <Download className="mr-2 h-4 w-4" />
-                Download
+                <Download className="mr-1.5 h-3.5 w-3.5 stroke-[2.5]" />
+                UNDUH RESI
               </Button>
             )}
           </div>
@@ -339,123 +322,128 @@ export default function CustomerOrderListPage() {
 
   return (
     <CustomerNavbarShell>
-      <section className="space-y-8">
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+      <section className="space-y-8 font-mono select-none">
+        {/* Header Section */}
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end border-b-4 border-slate-900 pb-6">
           <div>
-            <p className="text-sm font-semibold text-orange-600">
-              Pengiriman Anda
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600">
+              // DASHBOARD_PELANGGAN
             </p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-900">
-              Cari Paket
+            <h1 className="mt-1 text-3xl font-black uppercase tracking-wide text-slate-900">
+              MONITORING_PAKET
             </h1>
-            <p className="mt-3 max-w-2xl text-slate-500">
-              Pantau seluruh pengiriman paket, status pembayaran, serta perjalanan
-              paket Anda secara realtime.
+            <p className="mt-2 max-w-2xl text-xs font-bold leading-relaxed text-slate-500">
+              Pantau manifes pengiriman, verifikasi pelunasan invoice, serta pelacakan node 
+              posisi kurir secara terintegrasi dan berkala.
             </p>
           </div>
 
           <Link
             href="/customer/buat-pesanan"
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-orange-600"
+            className="inline-flex h-12 items-center justify-center gap-2 border-4 border-slate-900 bg-amber-400 px-6 font-black text-slate-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest rounded-sm transition-all"
           >
-            <Plus size={18} />
-            Buat Pesanan
+            <Plus size={16} className="stroke-[3]" />
+            BUAT MANIFES BARU
           </Link>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <Summary label="Total Pesanan" value={totalOrders} />
-          <Summary label="Sedang Diproses" value={processingOrders} />
-          <Summary label="Selesai" value={completedOrders} />
+        {/* Ringkasan Statistik */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Summary label="TOTAL MANIFES" value={totalOrders} />
+          <Summary label="DALAM TRANSIT" value={processingOrders} />
+          <Summary label="DONE_DELIVERED" value={completedOrders} />
           <Summary
-            label="Total Transaksi"
+            label="KUMULATIF TRANSAKSI"
             value={formatCurrency(paidTransactionTotal)}
           />
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="grid gap-4 lg:grid-cols-[1fr_220px_220px]">
-            <label className="relative">
+        {/* Panel Filter Navigasi */}
+        <div className="border-4 border-slate-900 bg-white p-4 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+          <div className="grid gap-3 lg:grid-cols-[1fr_240px_240px]">
+            <label className="relative flex">
               <Search
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-900 stroke-[2.5]"
               />
               <input
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 text-sm shadow-sm transition-all placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                placeholder="Cari nomor resi atau nama paket..."
+                className="h-11 w-full border-2 border-slate-900 bg-white pl-11 pr-4 text-2xs font-bold uppercase tracking-wide placeholder:text-slate-400 focus:bg-amber-50/20 focus:outline-none rounded-sm"
+                placeholder="INPUT NO RESI / ID BARANG..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
 
-            <div className="relative">
+            <div className="relative flex">
               <Funnel
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-900 stroke-[2.5]"
               />
               <select
-                className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-12 pr-10 text-sm shadow-sm transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="h-11 w-full appearance-none border-2 border-slate-900 bg-white pl-11 pr-10 text-2xs font-black uppercase tracking-widest focus:outline-none cursor-pointer rounded-sm"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
-                <option value="">Semua Status</option>
-                <option value="pending">Pending</option>
-                <option value="picked_up">Picked Up</option>
-                <option value="in_transit">In Transit</option>
-                <option value="arrived_at_branch">Arrived At Branch</option>
-                <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">[ SEMUA STATUS ]</option>
+                <option value="pending">PENDING</option>
+                <option value="picked_up">PICKED UP</option>
+                <option value="in_transit">IN TRANSIT</option>
+                <option value="arrived_at_branch">ARRIVED AT BRANCH</option>
+                <option value="delivered">DELIVERED</option>
+                <option value="cancelled">CANCELLED</option>
               </select>
             </div>
 
-            <select
-              className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm shadow-sm transition-all focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value)}
-            >
-              <option value="">Semua Pembayaran</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="failed">Failed</option>
-            </select>
+            <div className="relative flex">
+              <select
+                className="h-11 w-full appearance-none border-2 border-slate-900 bg-white px-4 text-2xs font-black uppercase tracking-widest focus:outline-none cursor-pointer rounded-sm"
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value)}
+              >
+                <option value="">[ STATUS INVOICE ]</option>
+                <option value="pending">PENDING</option>
+                <option value="paid">PAID</option>
+                <option value="failed">FAILED</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {shipments.isLoading ? <OrderSkeleton /> : null}
 
         {shipments.isError ? (
-          <div className="alert error">
-            {shipments.error instanceof Error
-              ? shipments.error.message
-              : "Gagal memuat data."}
+          <div className="border-4 border-slate-900 bg-rose-100 p-4 text-3xs font-black uppercase tracking-wider text-rose-950 rounded-sm">
+            [ LOG_ERROR_FETCH ]: {shipments.error instanceof Error ? shipments.error.message : "GAGAL_MEMUAT_MANIFES"}
           </div>
         ) : null}
 
+        {/* Kondisi Empty State */}
         {!shipments.isLoading && filtered.length === 0 ? (
-          <div className="grid min-h-[320px] place-items-center rounded-2xl border border-dashed border-slate-300 bg-white p-10">
-            <div className="text-center">
+          <div className="grid min-h-[300px] place-items-center border-4 border-dashed border-slate-400 bg-white p-8 rounded-sm">
+            <div className="text-center max-w-sm">
               <PackageSearch
-                size={42}
-                className="mx-auto text-slate-400"
+                size={40}
+                className="mx-auto text-slate-900 stroke-[2]"
               />
-              <h3 className="mt-5 text-xl font-bold text-slate-900">
-                Belum ada pesanan
+              <h3 className="mt-4 text-md font-black uppercase tracking-wide text-slate-900">
+                MANIFES_TIDAK_DITEMUKAN
               </h3>
-              <p className="mt-2 text-slate-500">
-                Buat pesanan pertama Anda untuk mulai melakukan pengiriman paket.
+              <p className="mt-1 text-3xs font-bold text-slate-500 uppercase leading-relaxed">
+                Belum ada berkas pengiriman terdaftar atau filter pencarian tidak cocok.
               </p>
               <Link
                 href="/customer/buat-pesanan"
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white transition hover:bg-orange-600"
+                className="mt-5 inline-flex h-10 items-center justify-center gap-2 border-2 border-slate-900 bg-amber-400 px-5 text-3xs font-black uppercase tracking-widest text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm transition-all"
               >
-                <Plus size={18} />
-                Buat Pesanan
+                <Plus size={14} className="stroke-[3]" />
+                ISIKAN FORM PESANAN
               </Link>
             </div>
           </div>
         ) : null}
 
-        <div className="grid gap-5 md:grid-cols-2">
+        {/* Grid Grid Kartu Pesanan */}
+        <div className="grid gap-6 md:grid-cols-2">
           {filtered.map((shipment) => (
             <ShipmentCard
               key={shipment.id}
@@ -479,9 +467,9 @@ function Summary({
   value: string | number;
 }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900">
+    <article className="border-4 border-slate-900 bg-white p-4 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm transition-all hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)]">
+      <p className="text-3xs font-black uppercase tracking-wider text-slate-400">// {label}</p>
+      <h2 className="mt-2 text-xl font-black tracking-tight text-slate-900 uppercase">
         {value}
       </h2>
     </article>
@@ -490,23 +478,23 @@ function Summary({
 
 function OrderSkeleton() {
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+          className="overflow-hidden border-4 border-slate-900 bg-white rounded-sm shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]"
         >
           <div className="animate-pulse">
-            <div className="aspect-[16/8] bg-slate-200" />
-            <div className="space-y-4 p-6">
-              <div className="h-6 w-40 rounded bg-slate-200" />
-              <div className="h-5 w-64 rounded bg-slate-200" />
+            <div className="aspect-[16/8] bg-slate-200 border-b-4 border-slate-900" />
+            <div className="space-y-4 p-5">
+              <div className="h-5 w-1/2 rounded bg-slate-200" />
+              <div className="h-4 w-3/4 rounded bg-slate-200" />
               <div className="grid grid-cols-2 gap-4">
-                <div className="h-10 rounded bg-slate-200" />
-                <div className="h-10 rounded bg-slate-200" />
+                <div className="h-8 rounded bg-slate-200" />
+                <div className="h-8 rounded bg-slate-200" />
               </div>
-              <div className="h-20 rounded-2xl bg-slate-200" />
-              <div className="h-12 w-full rounded bg-slate-200" />
+              <div className="h-14 rounded bg-slate-200" />
+              <div className="h-10 w-full rounded bg-slate-200" />
             </div>
           </div>
         </div>

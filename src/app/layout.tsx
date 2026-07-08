@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Roboto } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 
 import { Toaster } from "@/components/ui/sonner";
 
@@ -7,24 +7,33 @@ import "./globals.css";
 
 export const dynamic = "force-dynamic";
 
-const montserrat = Montserrat({
+// Memasang Font Baru Sesuai Aturan Sistem Cargo Manifest
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-montserrat",
+  variable: "--font-display",
+  weight: ["500", "700"],
   display: "swap",
 });
 
-const roboto = Roboto({
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-body",
   weight: ["400", "500", "700"],
-  variable: "--font-roboto",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
   title: {
-    default: "Ekspedisi Online",
-    template: "%s | Ekspedisi Online",
+    default: "Danish Ekspedisi | Cek Resi & Logistik",
+    template: "%s | Danish Ekspedisi",
   },
   description:
     "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
@@ -37,29 +46,29 @@ export const metadata: Metadata = {
   ],
   manifest: "/manifest.json",
   openGraph: {
-    title: "Ekspedisi Online",
+    title: "Danish Ekspedisi",
     description:
       "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
     url: "/",
-    siteName: "Ekspedisi Online",
+    siteName: "Danish Ekspedisi",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Ekspedisi Online",
+    title: "Danish Ekspedisi",
     description:
       "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
   },
   appleWebApp: {
     capable: true,
-    title: "Ekspedisi",
+    title: "Danish Ekspedisi",
     statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f97316",
+  themeColor: "#fbbf24", // disesuaikan ke amber-400 biar sinkron
 };
 
 export default function RootLayout({
@@ -68,11 +77,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={`${montserrat.variable} ${roboto.variable}`} lang="id">
+    <html className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`} lang="id">
       <head>
         <link href="/manifest.json" rel="manifest" />
       </head>
-      <body>
+      {/* DI SINI PERUBAHAN UTAMANYA: Bersihkan class gaib, buat width full h-full */}
+      <body className="w-full min-h-screen bg-slate-100 text-slate-900 font-mono antialiased m-0 p-0 overflow-x-hidden">
         {children}
         <Toaster />
       </body>

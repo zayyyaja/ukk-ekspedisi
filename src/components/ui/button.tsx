@@ -5,29 +5,35 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-app border-2 border-ink text-sm font-display font-bold uppercase tracking-wide transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-orange-700",
-        primary: "bg-primary text-primary-foreground hover:bg-orange-700",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-slate-800",
-        outline: "border border-border bg-background text-foreground hover:bg-muted",
-        ghost: "text-foreground hover:bg-muted",
-        danger: "bg-destructive text-destructive-foreground hover:bg-red-600",
+        default:
+          "bg-cargo-amber text-ink shadow-stamp-sm hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm",
+        primary:
+          "bg-cargo-amber text-ink shadow-stamp-sm hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm",
+        secondary:
+          "bg-paper text-ink hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-none",
+        outline:
+          "bg-transparent text-ink hover:bg-paper/50",
+        ghost:
+          "border-transparent bg-transparent text-ink hover:bg-paper/50",
+        danger:
+          "bg-alert-red text-paper shadow-stamp-sm hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm",
       },
       size: {
         default: "h-10 px-4",
-        sm: "h-9 px-3",
-        lg: "h-11 px-5",
-        icon: "h-10 w-10 px-0",
+        sm: "h-9 px-3 text-xs",
+        lg: "h-12 px-6 text-base",
+        icon: "h-10 w-10 p-0",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 export interface ButtonProps
@@ -47,7 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     );
-  },
+  }
 );
 Button.displayName = "Button";
 

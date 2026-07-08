@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import type { CurrentUser, StaffRole } from "@/types/customer-portal";
 
 const roleLabel: Record<StaffRole, string> = {
-  admin: "Admin",
-  cashier: "Cashier",
-  courier: "Courier",
-  manager: "Manager",
-  owner: "Owner",
+  admin: "ADMINISTRATOR",
+  cashier: "KASIR HUB",
+  courier: "KURIR LAPANGAN",
+  manager: "MANAJER WILAYAH",
+  owner: "DIREKSI / OWNER",
 };
 
 function isActive(pathname: string, href: string) {
@@ -24,10 +24,9 @@ function isActive(pathname: string, href: string) {
 
 function branchText(user: CurrentUser | null) {
   if (user?.branchId) {
-    return `Cabang #${user.branchId}`;
+    return `KODE CABANG #${user.branchId}`;
   }
-
-  return "Cabang Staff";
+  return "CABANG STAFF";
 }
 
 function SidebarBrand({ role }: { role: StaffRole }) {
@@ -35,23 +34,29 @@ function SidebarBrand({ role }: { role: StaffRole }) {
 
   return (
     <div className="p-6 pb-4">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 shadow-lg">
-          {!logoReady ? <Store size={28} /> : null}
+      <div className="flex items-center gap-3 mb-5">
+        {/* Logo Container - Kotak Geometris Tebal */}
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-ink bg-cargo-amber rounded-app shadow-stamp-sm">
+          {!logoReady ? <Store size={22} className="text-ink stroke-[2.5]" /> : null}
           <img
             alt="Logo Ekspedisi"
-            className={cn("h-12 w-12 object-contain", logoReady ? "block" : "hidden")}
+            className={cn("h-10 w-10 object-contain grayscale", logoReady ? "block" : "hidden")}
             onError={() => setLogoReady(false)}
             onLoad={() => setLogoReady(true)}
             src="/images/staff-sidebar-logo.png"
           />
         </div>
         <div>
-          <div className="text-base font-semibold text-white">Staff</div>
-          <div className="text-xs text-orange-100">{roleLabel[role]}</div>
+          <div className="font-display text-xs font-black tracking-widest text-steel uppercase">
+            DANISH // STAFF
+          </div>
+          <div className="font-display text-sm font-black text-ink uppercase tracking-tight">
+            {roleLabel[role]}
+          </div>
         </div>
       </div>
-      <div className="w-full h-px bg-orange-300/30" />
+      {/* Garis Pembatas Manifes */}
+      <div className="w-full h-0.5 bg-ink" />
     </div>
   );
 }
@@ -75,11 +80,13 @@ export function StaffSidebar({ role }: { role: StaffRole }) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-slate-950 text-white lg:flex">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-paper text-ink border-r-4 border-ink lg:flex">
+      {/* Bagian Identitas Atas */}
       <SidebarBrand role={role} />
 
-      <nav className="flex-1 px-4 overflow-y-auto">
-        {staffMenus[role].map((item, i) => {
+      {/* Navigasi Menu Utama */}
+      <nav className="flex-1 px-4 overflow-y-auto grid gap-1.5 content-start py-2">
+        {staffMenus[role].map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.href);
 
@@ -88,39 +95,42 @@ export function StaffSidebar({ role }: { role: StaffRole }) {
               key={`${item.href}-${item.label}`}
               href={item.href}
               className={cn(
-                "flex w-full items-center justify-start rounded-lg text-left py-3 px-4 transition-all duration-300",
-                i !== staffMenus[role].length - 1 && "mb-3",
+                "flex w-full items-center justify-start border-2 px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wider transition-all rounded-app",
                 active
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "text-white/80 hover:bg-white/10 hover:text-orange-100"
+                  ? "bg-ink text-paper border-ink shadow-stamp-sm"
+                  : "text-ink border-transparent hover:bg-ink/5 hover:border-ink"
               )}
             >
-              <Icon className="mr-3 h-5 w-5" />
+              <Icon className={cn("mr-3 h-4 w-4 stroke-[2.5]", active && "scale-105")} />
               <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 pt-6">
-        <div className="flex items-center justify-center space-x-2 mb-4">
-          <div className="w-8 h-8 flex items-center justify-center">
-            <Store className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-white">{branchText(user)}</h4>
-            <p className="text-[10px] text-orange-100">{roleLabel[role]}</p>
+      {/* Bagian Informasi Cabang & Tombol Log Keluar */}
+      <div className="p-4 border-t-2 border-ink/10 bg-paper">
+        <div className="flex items-center gap-3 mb-4 px-2 py-2 border-2 border-dashed border-ink/30 rounded-app bg-ink/2">
+          <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse shrink-0" />
+          <div className="min-w-0">
+            <h4 className="font-mono text-[10px] font-bold text-ink truncate">
+              {branchText(user)}
+            </h4>
+            <p className="font-mono text-[9px] text-steel tracking-wide uppercase">
+              GATEWAY SECURE
+            </p>
           </div>
         </div>
 
+        {/* Button Logout - Neo-Brutalist Stamp Action */}
         <button
-          className="flex w-full items-center justify-center rounded-lg bg-white py-2.5 text-sm font-medium text-slate-950 shadow-md transition-all duration-300 hover:bg-orange-50"
+          className="flex w-full items-center justify-center border-2 border-ink bg-cargo-amber py-2.5 font-display text-xs font-bold uppercase tracking-wider text-ink shadow-stamp-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm rounded-app disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
           disabled={busy}
           onClick={handleLogout}
           type="button"
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
+          <LogOut className="mr-2 h-4 w-4 stroke-[2.5]" />
+          Keluar Sistem
         </button>
       </div>
     </aside>

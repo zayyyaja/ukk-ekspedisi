@@ -125,7 +125,7 @@ Edit `.env` dan isi nilai sesuai environment Anda.
 Buat database MySQL:
 
 ```sql
-CREATE DATABASE ekspedisi_online CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE danish_ekspedisi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 Import schema & seed (pilih salah satu):
@@ -338,12 +338,6 @@ Histori kurir (pickup & delivery) disimpan di tabel `shipment_trackings`. Kolom 
 | Error 422 validasi | Cek format input (contoh: courier code harus 5 digit angka) |
 | Upload gagal | Pastikan folder `public/uploads` writable |
 | Midtrans gagal | Cek `MIDTRANS_SERVER_KEY` / `MIDTRANS_CLIENT_KEY` dan `APP_URL` |
-
----
-
-## Dokumentasi Tambahan
-
-- Struktur folder & penjelasan file: lihat **[FILEEDIT.md](./FILEEDIT.md)**
 
 ---
 

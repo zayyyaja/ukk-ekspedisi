@@ -41,12 +41,25 @@ export function StaffLayoutClient({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <RoleGuard allowedRoles={[role]}>
-        <div className="min-h-screen bg-[#f8fbff] text-slate-950">
+        {/* Kontainer Utama Arsitektur Gudang (Industrial Grid Layout) */}
+        <div className="min-h-screen bg-slate-100 font-mono text-slate-950 selection:bg-amber-400 selection:text-slate-950">
+          
+          {/* Komponen Navigasi Samping */}
           <StaffSidebar role={role} />
-          <div className="min-h-screen lg:pl-[260px]">
+          
+          {/* Sisi Kanan Layout: Area Topbar dan Ruang Kerja Konten */}
+          <div className="min-h-screen lg:pl-67.5 transition-all duration-300">
+            {/* Topbar Utama */}
             <StaffTopbar role={role} />
-            <main className="min-w-0">{children}</main>
+            
+            {/* Ruang Konten Kerja Manifes (Gaya Kotak Kargo) */}
+            <main className="min-w-0 p-4 sm:p-6 lg:p-8">
+              <div className="mx-auto max-w-[1600px] animate-fade-in">
+                {children}
+              </div>
+            </main>
           </div>
+
         </div>
       </RoleGuard>
     </QueryClientProvider>

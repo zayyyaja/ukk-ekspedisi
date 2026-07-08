@@ -134,7 +134,6 @@ export default function CustomerBuatPesananPage() {
     setError("");
     
     try {
-      // 1. Upload Photo
       const formData = new FormData();
       formData.append("file", photoFile);
       
@@ -150,7 +149,6 @@ export default function CustomerBuatPesananPage() {
       
       const photoUrl = uploadData.data.url;
 
-      // 2. Create Shipment
       const response = await apiPost<Shipment>("/api/v1/customer/shipments", {
         originBranchId: input.originBranchId,
         destinationBranchId: input.destinationBranchId,
@@ -171,7 +169,6 @@ export default function CustomerBuatPesananPage() {
         return;
       }
 
-      // 3. Request Payment
       const paymentResponse = await apiPost<MidtransPaymentResponse>(
         `/api/v1/customer/shipments/${response.data.id}/payments/online`,
         { paymentMethod: input.paymentMethod },
@@ -203,291 +200,250 @@ export default function CustomerBuatPesananPage() {
 
   return (
     <CustomerNavbarShell>
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Buat Pesanan Baru</h1>
-          <p className="mt-2 text-lg text-slate-500">Lengkapi detail paket dan pengiriman di bawah ini.</p>
+      <div className="mx-auto max-w-5xl font-mono select-none pb-12">
+        {/* Header Section */}
+        <header className="mb-8 border-b-4 border-slate-900 pb-6">
+          <p className="text-2xs font-black uppercase tracking-[0.2em] text-amber-600">// DEPLOY_NEW_MANIFEST</p>
+          <h1 className="mt-1 text-3xl font-black uppercase tracking-wide text-slate-900 sm:text-4xl">ENTRI PESANAN BARU</h1>
+          <p className="mt-2 text-xs font-bold text-slate-500">Formulir linear satu arah untuk pemrosesan muatan logistik kilat.</p>
         </header>
 
         {error && (
-          <div className="mb-8 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
-            {error}
+          <div className="mb-8 border-4 border-slate-900 bg-rose-100 p-4 text-xs font-black uppercase tracking-wider text-rose-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+            [ ERROR_SYSTEM ]: {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Kiri: Form Input */}
-            <div className="space-y-8 lg:col-span-2">
-              
-              {/* Seksi 1: Detail Paket */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-                <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                    <Package size={20} />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900">Informasi Paket</h2>
-                </div>
+          
+          {/* SEKSI 1: Lebar Penuh untuk Data Utama Paket */}
+          <section className="border-4 border-slate-900 bg-white p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm sm:p-8">
+            <div className="mb-6 flex items-center gap-3 border-b-2 border-dashed border-slate-200 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-400 text-slate-900 rounded-sm">
+                <Package size={18} className="stroke-[2.5]" />
+              </div>
+              <span className="text-2xs font-black bg-slate-900 text-white px-2 py-0.5 rounded-xs">STAGE_01</span>
+              <h2 className="text-md font-black uppercase tracking-wide text-slate-900">KARAKTERISTIK_MUATAN</h2>
+            </div>
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Nama/Isi Paket</label>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-2">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-2xs font-black uppercase tracking-wider text-slate-700">NAMA / DESKRIPSI BARANG</label>
                     <input 
-                      className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                      placeholder="Contoh: Pakaian, Dokumen, Sepatu" 
+                      className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold uppercase tracking-wide placeholder:text-slate-400 focus:outline-none rounded-sm" 
+                      placeholder="Contoh: DOKUMEN PERUSAHAAN" 
                       {...register("itemName")} 
                     />
-                    {errors.itemName && <span className="text-xs font-medium text-red-500">{errors.itemName.message}</span>}
+                    {errors.itemName && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.itemName.message}]</span>}
                   </div>
 
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Jenis Barang</label>
+                  <div className="space-y-2">
+                    <label className="text-2xs font-black uppercase tracking-wider text-slate-700">KATEGORI MATERIAL</label>
                     <input
-                      className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                      placeholder="Contoh: Dokumen, Elektronik, Fashion"
+                      className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold uppercase tracking-wide placeholder:text-slate-400 focus:outline-none rounded-sm"
+                      placeholder="Contoh: ARSIP / BERKAS"
                       {...register("itemType")}
                     />
-                    {errors.itemType && <span className="text-xs font-medium text-red-500">{errors.itemType.message}</span>}
+                    {errors.itemType && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.itemType.message}]</span>}
                   </div>
+                </div>
 
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Berat Paket (kg)</label>
-                    <div className="relative">
-                      <input 
-                        className="flex h-12 w-full rounded-lg border border-slate-300 bg-white pl-4 pr-12 py-2 text-sm transition-colors placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                        step="0.1" 
-                        type="number" 
-                        placeholder="0.0"
-                        {...register("weight")} 
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-400">KG</span>
-                    </div>
-                    {errors.weight && <span className="text-xs font-medium text-red-500">{errors.weight.message}</span>}
-                  </div>
-
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Foto Paket</label>
-                    
+                <div className="space-y-2 pt-2">
+                  <label className="text-2xs font-black uppercase tracking-wider text-slate-700">MASSA UNIT (BRUTO)</label>
+                  <div className="relative">
                     <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange}
+                      className="flex h-11 w-full border-2 border-slate-900 bg-white pl-4 pr-12 py-2 text-2xs font-bold focus:outline-none rounded-sm" 
+                      step="0.1" 
+                      type="number" 
+                      placeholder="0.0"
+                      {...register("weight")} 
                     />
-
-                    {!photoPreview ? (
-                      <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 py-10 transition-colors hover:border-orange-500 hover:bg-orange-50"
-                      >
-                        <div className="mb-3 rounded-full bg-white p-3 shadow-sm group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors">
-                          <UploadCloud size={24} className="text-slate-400 group-hover:text-orange-600" />
-                        </div>
-                        <p className="text-sm font-medium text-slate-700 group-hover:text-orange-700">Klik untuk unggah foto paket</p>
-                        <p className="mt-1 text-xs text-slate-400">JPG, PNG, maksimal 5MB</p>
-                      </div>
-                    ) : (
-                      <div className="relative overflow-hidden rounded-xl border border-slate-200">
-                        <div className="relative aspect-video w-full sm:aspect-[21/9]">
-                          <Image src={photoPreview} alt="Preview Foto Paket" fill className="object-cover" />
-                        </div>
-                        <div className="absolute right-3 top-3">
-                          <button 
-                            type="button" 
-                            onClick={removePhoto}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-red-600 shadow-sm backdrop-blur-sm hover:bg-red-50 transition-colors"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                        <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 flex items-center gap-2">
-                          <ImageIcon size={16} className="text-slate-400" />
-                          <span className="text-sm font-medium text-slate-700 truncate">{photoFile?.name}</span>
-                        </div>
-                      </div>
-                    )}
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xs font-black text-slate-900">KG</span>
                   </div>
+                  {errors.weight && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.weight.message}]</span>}
                 </div>
-              </section>
+              </div>
 
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-                <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                    <Package size={20} />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900">Data Penerima</h2>
-                </div>
+              {/* Kompartemen Upload Gambar Kanan */}
+              <div className="space-y-2">
+                <label className="text-2xs font-black uppercase tracking-wider text-slate-700">LAMPIRAN VISUAL (WAJIB)</label>
+                <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
 
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Nama Penerima</label>
-                    <input className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" {...register("receiverName")} />
-                    {errors.receiverName && <span className="text-xs font-medium text-red-500">{errors.receiverName.message}</span>}
+                {!photoPreview ? (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="group flex h-[168px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-400 bg-slate-50 text-center p-4 transition-colors hover:border-amber-500 hover:bg-amber-50/20 rounded-sm"
+                  >
+                    <UploadCloud size={22} className="text-slate-900 stroke-[2.5] mb-2" />
+                    <p className="text-3xs font-black text-slate-900 uppercase tracking-wide">AMBIL / UNGHAH FOTO</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Nomor HP Penerima (Opsional)</label>
-                    <input className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" {...register("receiverPhone")} />
-                  </div>
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Email Penerima (Opsional)</label>
-                    <input className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" placeholder="Jika diisi, paket masuk ke inbox akun penerima." type="email" {...register("receiverEmail")} />
-                    {errors.receiverEmail && <span className="text-xs font-medium text-red-500">{errors.receiverEmail.message}</span>}
-                  </div>
-                </div>
-              </section>
-
-              {/* Seksi 2: Pengiriman */}
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-                <div className="mb-6 flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-                    <MapPin size={20} />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900">Rute Pengiriman</h2>
-                </div>
-
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Dikirim Dari (Cabang)</label>
-                    <select 
-                      className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                      {...register("originBranchId")}
+                ) : (
+                  <div className="relative overflow-hidden border-2 border-slate-900 rounded-sm h-[168px]">
+                    <Image src={photoPreview} alt="Preview" fill className="object-cover grayscale" />
+                    <button 
+                      type="button" 
+                      onClick={removePhoto}
+                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center border-2 border-slate-900 bg-white text-rose-600 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] rounded-sm"
                     >
-                      <option value="">Pilih cabang asal...</option>
-                      {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name} - {branch.city}</option>)}
-                    </select>
-                    {errors.originBranchId && <span className="text-xs font-medium text-red-500">{errors.originBranchId.message}</span>}
+                      <X size={12} className="stroke-[3]" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xs px-2 py-1 text-[9px] font-bold uppercase text-white truncate">
+                      {photoFile?.name}
+                    </div>
                   </div>
+                )}
+              </div>
+            </div>
+          </section>
 
+          {/* SEKSI 2 & 3: Disejajarkan Berdampingan (Split Grid Horisontal) */}
+          <div className="grid gap-8 md:grid-cols-2">
+            
+            {/* Bagian Penerima */}
+            <section className="border-4 border-slate-900 bg-white p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+              <div className="mb-6 flex items-center gap-3 border-b-2 border-dashed border-slate-200 pb-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-900 text-white rounded-sm">
+                  <span className="text-3xs font-black">S_02</span>
+                </div>
+                <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">IDENTITAS_PENERIMA</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-2xs font-black uppercase tracking-wider text-slate-700">NAMA LENGKAP</label>
+                  <input className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold uppercase tracking-wide focus:outline-none rounded-sm" {...register("receiverName")} />
+                  {errors.receiverName && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.receiverName.message}]</span>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-2xs font-black uppercase tracking-wider text-slate-700">NOMOR TELEPON (AKTIF)</label>
+                  <input className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold focus:outline-none rounded-sm" {...register("receiverPhone")} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-2xs font-black uppercase tracking-wider text-slate-700">EMAIL REGISTRASI (OPSIONAL)</label>
+                  <input className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold focus:outline-none rounded-sm" placeholder="NOTIFIKASI OTOMATIS" type="email" {...register("receiverEmail")} />
+                  {errors.receiverEmail && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.receiverEmail.message}]</span>}
+                </div>
+              </div>
+            </section>
+
+            {/* Bagian Rute Logistik */}
+            <section className="border-4 border-slate-900 bg-white p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+              <div className="mb-6 flex items-center gap-3 border-b-2 border-dashed border-slate-200 pb-4">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-900 text-white rounded-sm">
+                  <span className="text-3xs font-black">S_03</span>
+                </div>
+                <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">PEMETAAN_RUTE</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Kota Tujuan</label>
-                    <select 
-                      className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                      {...register("destinationBranchId")}
-                    >
-                      <option value="">Pilih kota tujuan...</option>
+                    <label className="text-2xs font-black uppercase tracking-wider text-slate-700">ORIGIN BRANCH</label>
+                    <select className="flex h-11 w-full border-2 border-slate-900 bg-white px-2 text-3xs font-black uppercase focus:outline-none rounded-sm cursor-pointer" {...register("originBranchId")}>
+                      <option value="">[ PILIH CABANG ]</option>
                       {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.city}</option>)}
                     </select>
-                    {errors.destinationBranchId && <span className="text-xs font-medium text-red-500">{errors.destinationBranchId.message}</span>}
+                    {errors.originBranchId && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.originBranchId.message}]</span>}
                   </div>
-
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Detail Alamat Tujuan</label>
-                    <textarea 
-                      className="flex min-h-[100px] w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm transition-colors placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 resize-y" 
-                      placeholder="Masukkan alamat lengkap pengiriman (Jalan, RT/RW, Patokan)..." 
-                      {...register("receiverAddress")} 
-                    />
-                    {errors.receiverAddress && <span className="text-xs font-medium text-red-500">{errors.receiverAddress.message}</span>}
-                  </div>
-
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-sm font-semibold text-slate-700">Catatan (Opsional)</label>
-                    <textarea
-                      className="flex min-h-[84px] w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm transition-colors placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                      placeholder="Patokan, instruksi penerimaan, atau catatan khusus."
-                      {...register("receiverNote")}
-                    />
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            {/* Kanan: Ringkasan & Pembayaran */}
-            <div className="space-y-8">
-              <section className="sticky top-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="bg-slate-950 px-6 py-4 text-white">
-                  <h3 className="text-lg font-bold">Ringkasan Pesanan</h3>
-                </div>
-                
-                <div className="p-6">
-                  <div className="mb-6 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                        <MapPin size={16} className="text-slate-400" />
-                        Metode Penyerahan
-                      </label>
-                      <select 
-                        className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                        {...register("handoverMethod")}
-                      >
-                        <option value="drop_off">Datang ke Cabang</option>
-                        <option value="pickup">Jemput Paket</option>
-                      </select>
-                    </div>
-
-                    <div className="flex items-start gap-3 rounded-lg border border-orange-100 bg-orange-50 p-4">
-                      <ShieldCheck className="mt-0.5 text-orange-500" size={18} />
-                      <div>
-                        {handoverMethod === "drop_off" ? (
-                          <>
-                            <p className="text-sm font-semibold text-orange-800">Datang ke Cabang</p>
-                            <p className="mt-1 text-xs leading-relaxed text-orange-600">Anda perlu mengantar paket ini langsung ke cabang asal yang dipilih.</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm font-semibold text-orange-800">Jemput Paket</p>
-                            <p className="mt-1 text-xs leading-relaxed text-orange-600">Kurir akan mengambil paket di alamat Anda (Tambahan Biaya Rp 10.000). Hanya menerima pembayaran online via Midtrans.</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-6 space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                      <CreditCard size={16} className="text-slate-400" />
-                      Metode Pembayaran
-                    </label>
-                    <select 
-                      className="flex h-12 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm transition-colors focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20" 
-                      {...register("paymentMethod")}
-                    >
-                      {availablePaymentMethods.map((method) => {
-                        return <option key={method} value={method}>{method.toUpperCase().replace("_", " ")}</option>
-                      })}
+                  <div className="space-y-2">
+                    <label className="text-2xs font-black uppercase tracking-wider text-slate-700">DESTINATION</label>
+                    <select className="flex h-11 w-full border-2 border-slate-900 bg-white px-2 text-3xs font-black uppercase focus:outline-none rounded-sm cursor-pointer" {...register("destinationBranchId")}>
+                      <option value="">[ PILIH KOTA ]</option>
+                      {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.city}</option>)}
                     </select>
-                    {errors.paymentMethod && <span className="text-xs font-medium text-red-500">{errors.paymentMethod.message}</span>}
-                  </div>
-
-                  <div className="border-t border-dashed border-slate-200 pt-6">
-                    <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Estimasi Biaya</p>
-                    <div className="mt-3 space-y-2 text-sm text-slate-600">
-                      <div className="flex justify-between"><span>Tarif per kg</span><strong>{rateLoading ? "Memuat..." : rate ? formatCurrency(rate.price_per_kg) : "-"}</strong></div>
-                      <div className="flex justify-between"><span>Berat</span><strong>{Number(values.weight || 0)} kg</strong></div>
-                      <div className="flex justify-between"><span>Biaya pickup</span><strong>{handoverMethod === "pickup" ? formatCurrency(10000) : formatCurrency(0)}</strong></div>
-                    </div>
-                    <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900">{formatCurrency(estimatedPrice)}</span>
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                      Harga di atas adalah estimasi sementara berdasarkan berat paket dan rute aktif.
-                    </p>
-                  </div>
-
-                  <div className="mt-8">
-                    <button 
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-4 text-sm font-bold text-white shadow-lg shadow-orange-500/30 transition-all hover:bg-orange-600 hover:shadow-orange-500/40 disabled:opacity-70 disabled:cursor-not-allowed" 
-                      disabled={submitting} 
-                      type="submit"
-                    >
-                      {submitting ? (
-                        <>
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          Memproses...
-                        </>
-                      ) : (
-                        <>
-                          <Banknote size={18} />
-                          Buat Pesanan Sekarang
-                        </>
-                      )}
-                    </button>
+                    {errors.destinationBranchId && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.destinationBranchId.message}]</span>}
                   </div>
                 </div>
-              </section>
-            </div>
+
+                <div className="space-y-2">
+                  <label className="text-2xs font-black uppercase tracking-wider text-slate-700">ALAMAT DETAIL & CATATAN</label>
+                  <input className="flex h-11 w-full border-2 border-slate-900 bg-white px-4 py-2 text-2xs font-bold uppercase tracking-wide focus:outline-none rounded-sm" placeholder="NAMA JALAN, RT/RW, KECAMATAN" {...register("receiverAddress")} />
+                  {errors.receiverAddress && <span className="text-3xs font-black text-rose-600 uppercase tracking-wide">[! {errors.receiverAddress.message}]</span>}
+                  <input className="flex h-9 w-full border-2 border-slate-200 bg-slate-50/50 px-4 py-1 text-3xs font-medium uppercase focus:outline-none rounded-sm mt-1" placeholder="INSTRUKSI TAMBAHAN / PATOKAN (OPTIONAL)" {...register("receiverNote")} />
+                </div>
+              </div>
+            </section>
+
           </div>
+
+          {/* SEKSI 4: RE-DESIGN TOTAL RINGKASAN & PEMBAYARAN (Horizontal Full Width Manifest) */}
+          <section className="border-4 border-slate-900 bg-slate-950 p-6 text-white shadow-[6px_6px_0px_0px_rgba(251,191,36,1)] rounded-sm">
+            <div className="mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+              <span className="text-3xs font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-xs">FINAL_STAGE</span>
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-200">// KONTROL_TRANSAKSI_DAN_METODE</h3>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-12 items-start">
+              {/* Dropdowns Konfigurasi (Kiri - 5 Kolom) */}
+              <div className="lg:col-span-5 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">HANDOVER METHOD</label>
+                    <select className="flex h-10 w-full border-2 border-slate-700 bg-slate-900 px-2 text-3xs font-black uppercase text-white focus:border-amber-400 focus:outline-none rounded-sm" {...register("handoverMethod")}>
+                      <option value="drop_off">DROP OFF CABANG</option>
+                      <option value="pickup">PICKUP KURIR</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">PAYMENT GATEWAY</label>
+                    <select className="flex h-10 w-full border-2 border-slate-700 bg-slate-900 px-2 text-3xs font-black uppercase text-white focus:border-amber-400 focus:outline-none rounded-sm" {...register("paymentMethod")}>
+                      {availablePaymentMethods.map((method) => (
+                        <option key={method} value={method}>{method.toUpperCase().replace("_", " ")}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="border border-slate-800 bg-slate-900/50 p-2.5 rounded-xs flex gap-2">
+                  <ShieldCheck size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold uppercase text-slate-400 leading-normal">
+                    {handoverMethod === "drop_off" 
+                      ? "MANIFES DROP OFF: ANTAR MUATAN SECARA MANDIRI KE GUDANG NODE ASAL." 
+                      : "MANIFES PICKUP: ARMADA AKAN DATANG MENJEMPUT (+RP 10.000). WAJIB GERBANG ONLINE."
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Rincian Finansial (Tengah - 4 Kolom) */}
+              <div className="lg:col-span-4 border-l-0 lg:border-l border-dashed border-slate-800 pl-0 lg:pl-6 py-2">
+                <div className="space-y-1 text-[10px] font-black uppercase text-slate-400">
+                  <div className="flex justify-between"><span>TARIF BASE / KG :</span><span className="text-white">{rateLoading ? "CALC..." : rate ? formatCurrency(rate.price_per_kg) : "N/A"}</span></div>
+                  <div className="flex justify-between"><span>TOTAL MUATAN   :</span><span className="text-white">{Number(values.weight || 0)} KG</span></div>
+                  <div className="flex justify-between"><span>BIAYA AMBIL    :</span><span className="text-white">{handoverMethod === "pickup" ? formatCurrency(10000) : formatCurrency(0)}</span></div>
+                </div>
+                <div className="mt-3 border-t border-slate-800 pt-2 flex items-baseline justify-between">
+                  <span className="text-3xs font-black text-amber-400 uppercase tracking-wider">AGGREGATE TOTAL:</span>
+                  <span className="text-xl font-black tracking-tight text-white">{formatCurrency(estimatedPrice)}</span>
+                </div>
+              </div>
+
+              {/* Tombol Eksekusi Final (Kanan - 3 Kolom) */}
+              <div className="lg:col-span-3 h-full flex items-center pt-2 lg:pt-0">
+                <button 
+                  className="flex w-full h-14 items-center justify-center gap-2 border-2 border-slate-950 bg-amber-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] hover:bg-amber-300 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)] text-2xs uppercase tracking-widest transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={submitting} 
+                  type="submit"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin border-2 border-slate-950 border-t-transparent rounded-full" />
+                      SUBMITTING...
+                    </>
+                  ) : (
+                    <>
+                      <Banknote size={14} className="stroke-[2.5]" />
+                      PROSES PESANAN
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </section>
+
         </form>
       </div>
     </CustomerNavbarShell>

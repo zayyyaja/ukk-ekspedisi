@@ -13,19 +13,22 @@ export function CashierShell({
   onSearch?: (value: string) => void;
 }) {
   return (
-    <div className="px-4 py-8 lg:px-10">
+    <div className="px-4 py-8 lg:px-10 font-body">
       {onSearch ? (
-        <div className="mb-6 flex h-12 w-full max-w-xl items-center gap-3 rounded-2xl bg-slate-100 px-4 text-slate-500">
-          <Search size={20} />
+        /* Kolom Pencarian Bergaya Manifes Kargo */
+        <div className="mb-8 flex h-12 w-full max-w-xl items-center gap-3 border-2 border-ink bg-white px-4 text-ink rounded-app shadow-stamp-xs focus-within:-translate-x-px focus-within:-translate-y-px focus-within:shadow-stamp-sm transition-all">
+          <Search size={18} className="stroke-[2.5] shrink-0" />
           <input
-            className="w-full bg-transparent text-sm outline-none"
+            className="w-full bg-transparent font-mono text-xs font-bold uppercase tracking-wide text-ink outline-none placeholder:text-steel/40"
             onChange={(event) => onSearch(event.target.value)}
-            placeholder="Cari resi, nama pelanggan, atau paket..."
+            placeholder="CARI RESI, NAMA PELANGGAN, ATAU ITEM..."
             type="search"
             value={search ?? ""}
           />
         </div>
       ) : null}
+      
+      {/* Konten Utama */}
       {children}
     </div>
   );
@@ -33,9 +36,12 @@ export function CashierShell({
 
 export function CashierSettingsHint() {
   return (
-    <div className="mt-8 flex items-center gap-3 rounded-lg bg-orange-50 p-4 text-orange-700">
-      <Settings size={18} />
-      Data dashboard diperbarui otomatis setiap 10 detik.
+    /* Kotak Informasi Hint Bergaya Label Peringatan Mesin Logistik */
+    <div className="mt-8 flex items-center gap-3 border-2 border-ink bg-amber-400 p-4 font-mono text-xs font-black uppercase tracking-wide text-ink rounded-app shadow-stamp-xs">
+      <Settings size={16} className="stroke-[2.5] animate-[spin_4s_linear_infinite]" />
+      <span>
+        [SISTEM] DATA DASHBOARD DIPERBARUI OTOMATIS SETIAP 10 DETIK.
+      </span>
     </div>
   );
 }

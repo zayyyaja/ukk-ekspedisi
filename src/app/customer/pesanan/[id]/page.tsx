@@ -131,48 +131,6 @@ function useShipmentDetail(id: string) {
   });
 }
 
-function usePayment(shipment: Shipment | undefined, shipmentId: string, onSync: () => void) {
-  return useMutation({
-    mutationFn: async () => {
-      const method = shipment?.payments?.payment_method;
-      const response = await apiPost<{ redirectUrl?: string | null }>(
-        `/api/v1/customer/shipments/${shipmentId}/payments/online`,
-        { paymentMethod: method && method !== "cash" ? method : "qris" },
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
-      if (data.redirectUrl) {
-        window.location.assign(data.redirectUrl);
-        return;
-      }
-      toast.error("Link pembayaran Midtrans belum tersedia.");
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Pembayaran gagal dibuka.");
-    },
-  });
-}
-
-function useCancelOrder(shipmentId: string, onSuccess: () => void) {
-  return useMutation({
-    mutationFn: async () => {
-      const response = await apiPatch(
-        `/api/v1/customer/shipments/${shipmentId}/cancel`,
-        {},
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Pesanan berhasil dibatalkan.");
-      onSuccess();
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Gagal membatalkan pesanan.");
-    },
-  });
-}
-
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -188,6 +146,7 @@ export default function CustomerOrderDetailPage() {
     error,
     refetch,
   } = useShipmentDetail(params.id);
+  
   const currentUser = useQuery({
     queryKey: ["customer-current-user"],
     queryFn: async () => {
@@ -196,13 +155,48 @@ export default function CustomerOrderDetailPage() {
     },
   });
 
-  const paymentMutation = usePayment(shipment, params.id, () => refetch());
-
-  const cancelMutation = useCancelOrder(params.id, () => {
-    setShowCancelDialog(false);
-    refetch();
+  // Mutasi Pembayaran Online Midtrans
+  const paymentMutation = useMutation({
+    mutationFn: async () => {
+      const method = shipment?.payments?.payment_method;
+      const response = await apiPost<{ redirectUrl?: string | null }>(
+        `/api/v1/customer/shipments/${params.id}/payments/online`,
+        { paymentMethod: method && method !== "cash" ? method : "qris" },
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.redirectUrl) {
+        window.location.assign(data.redirectUrl);
+        return;
+      }
+      toast.error("Link pembayaran Midtrans belum tersedia.");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Pembayaran gagal dibuka.");
+    },
   });
 
+  // Mutasi Pembatalan Pesanan
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiPatch(
+        `/api/v1/customer/shipments/${params.id}/cancel`,
+        {},
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Pesanan berhasil dibatalkan.");
+      setShowCancelDialog(false);
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Gagal membatalkan pesanan.");
+    },
+  });
+
+  // Sinkronisasi status pembayaran otomatis
   const paymentSync = useMutation({
     mutationFn: async () => {
       const response = await apiPost(
@@ -259,8 +253,10 @@ export default function CustomerOrderDetailPage() {
   if (isError || !shipment || !derivedState) {
     return (
       <CustomerNavbarShell>
-        <div className="alert error">
-          {error instanceof Error ? error.message : "Detail pesanan tidak ditemukan."}
+        <div className="mx-auto max-w-6xl p-4 sm:p-6 font-mono">
+          <div className="border-4 border-slate-900 bg-rose-100 p-4 text-xs font-black uppercase tracking-wider text-rose-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+            [ SYSTEM_CRITICAL ]: {error instanceof Error ? error.message : "Detail pesanan tidak ditemukan."}
+          </div>
         </div>
       </CustomerNavbarShell>
     );
@@ -272,7 +268,6 @@ export default function CustomerOrderDetailPage() {
   const deliveryProofPhoto = getShipmentDeliveryProof(data);
   const origin = data.branches_shipments_origin_branch_idTobranches;
   const destination = data.branches_shipments_destination_branch_idTobranches;
-  const sender = data.customers_shipments_sender_idTocustomers;
   const receiver = data.customers_shipments_receiver_idTocustomers;
   const handoverLabel = data.handover_method === "pickup" ? "Jemput Paket" : "Drop off";
 
@@ -286,7 +281,7 @@ export default function CustomerOrderDetailPage() {
 
   return (
     <CustomerNavbarShell>
-      <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8 font-mono select-none pb-16">
         <BackLink />
 
         <ShipmentAlerts
@@ -295,23 +290,24 @@ export default function CustomerOrderDetailPage() {
           isCashPending={derivedState.isCash && paymentStatus === "pending"}
         />
 
-        {/* Resi Number Section */}
-        <div className="overflow-hidden rounded-2xl border-2 border-orange-500 bg-orange-500 shadow-sm">
-          <div className="px-6 py-5 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-100">
-              Nomor Resi Pengiriman
+        {/* Resi Number Section - Gaya Papan Kontainer Kargo */}
+        <div className="overflow-hidden border-4 border-slate-900 bg-amber-400 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+          <div className="px-6 py-5 text-center relative">
+            <div className="absolute top-2 left-2 text-[9px] font-black text-slate-900/40 tracking-wider">// CORE_MANIFEST_ID</div>
+            <p className="text-3xs font-black uppercase tracking-[0.25em] text-slate-900">
+              NOMOR RESI PENGIRIMAN LOGISTIK
             </p>
-
-            <p className="mt-2 font-mono text-3xl font-black tracking-widest text-white">
-              {data.tracking_number}
+            <p className="mt-2 font-mono text-2xl sm:text-4xl font-black tracking-widest text-slate-950 uppercase">
+              {data.tracking_number || "[ MENUNGGU_VERIFIKASI ]"}
             </p>
           </div>
         </div>
 
         {/* Main Layout - 2 Columns */}
-        <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-          {/* LEFT COLUMN */}
-          <div className="space-y-5">
+        <div className="grid gap-6 lg:grid-cols-[1fr_380px] items-start">
+          
+          {/* KOLOM KIRI (7 Kolom konten utama) */}
+          <div className="space-y-6">
             <PackageHeroCard
               packagePhoto={packagePhoto}
               packageName={packageName}
@@ -333,13 +329,13 @@ export default function CustomerOrderDetailPage() {
 
             <TrackingTimeline shipment={data} />
 
-            {deliveryProofPhoto ? (
+            {deliveryProofPhoto && (
               <DeliveryProofCard photoUrl={deliveryProofPhoto} />
-            ) : null}
+            )}
           </div>
 
-          {/* RIGHT COLUMN - Payment Summary */}
-          <div className="space-y-5">
+          {/* KOLOM KANAN (Ringkasan Pembayaran & Aksi) */}
+          <div className="space-y-6 lg:sticky lg:top-24">
             <PaymentSummary
               shipment={data}
               packageName={packageName}
@@ -354,6 +350,7 @@ export default function CustomerOrderDetailPage() {
               onDownload={() => downloadReceipt(data)}
             />
           </div>
+
         </div>
       </div>
 
@@ -375,10 +372,10 @@ function BackLink() {
   return (
     <Link
       href="/customer/lacak-paket"
-      className="group inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-orange-600"
+      className="group inline-flex items-center gap-2 text-2xs font-black uppercase tracking-wider text-slate-600 transition-colors hover:text-slate-950"
     >
-      <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
-      Kembali ke Daftar Pesanan
+      <ArrowLeft size={14} className="stroke-[2.5] transition-transform group-hover:-translate-x-1" />
+      [ ESC ]: KEMBALI KE DAFTAR PESANAN
     </Link>
   );
 }
@@ -393,41 +390,40 @@ function ShipmentAlerts({
   isCashPending: boolean;
 }) {
   return (
-    <>
+    <div className="space-y-3">
       {showPaymentFinish && (
-        <div className="alert success">
-          Pembayaran selesai diproses. Sistem sedang menyinkronkan status dari Midtrans.
+        <div className="border-4 border-slate-900 bg-emerald-50 p-4 text-3xs font-black uppercase tracking-wider text-emerald-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+          // STATUS_SYNC_OK: Pembayaran selesai diproses. Sistem sedang menyinkronkan status dari Midtrans.
         </div>
       )}
       {isPendingAdditional && (
-        <div className="alert warning">
-          Terdapat selisih biaya hasil validasi fisik oleh kasir. Silakan lunasi kekurangan
-          untuk melanjutkan pengiriman.
+        <div className="border-4 border-slate-900 bg-amber-50 p-4 text-3xs font-black uppercase tracking-wider text-amber-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm flex items-start gap-2">
+          <AlertTriangle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+          <span>SISTEM_INFO: Terdapat selisih biaya hasil validasi fisik oleh kasir. Silakan lunasi kekurangan untuk melanjutkan pengiriman.</span>
         </div>
       )}
       {isCashPending && (
-        <div className="alert">
-          Pembayaran cash menunggu konfirmasi kasir. Bawa paket dan nomor resi ini ke cabang
-          asal sebelum batas 24 jam.
+        <div className="border-4 border-slate-900 bg-sky-50 p-4 text-3xs font-black uppercase tracking-wider text-sky-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+          HOLD_WARNING: Pembayaran cash menunggu konfirmasi kasir. Bawa paket dan nomor resi ini ke cabang asal sebelum batas waktu 24 jam berakhir.
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 function DeliveryProofCard({ photoUrl }: { photoUrl: string }) {
   return (
-    <article className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
-      <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-4">
-        <h2 className="text-lg font-bold text-emerald-900">Bukti Paket Telah Diterima</h2>
-        <p className="mt-1 text-sm text-emerald-700">
-          Foto penyerahan dari kurir saat paket sampai di tujuan.
+    <article className="border-4 border-slate-900 bg-white shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
+      <div className="border-b-4 border-slate-900 bg-emerald-400 px-5 py-3">
+        <h2 className="text-xs font-black uppercase tracking-wider text-slate-950">// BUKTI_SERAH_TERIMA_TERKIRIM</h2>
+        <p className="mt-0.5 text-3xs font-bold text-slate-800 uppercase">
+          Dokumentasi fisik oleh kurir di lokasi tujuan penyerahan.
         </p>
       </div>
-      <div className="p-6">
+      <div className="p-4 bg-slate-900">
         <img
           alt="Bukti paket telah diterima"
-          className="h-64 w-full rounded-2xl object-cover"
+          className="h-64 w-full border-2 border-white object-cover rounded-xs"
           src={photoUrl}
         />
       </div>
@@ -447,43 +443,43 @@ function PackageHeroCard({
   shipmentDate: string;
 }) {
   return (
-    <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-orange-50 to-slate-100">
+    <article className="border-4 border-slate-900 bg-white shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
+      <div className="relative aspect-[16/9] w-full bg-slate-100 border-b-2 border-slate-900">
         {packagePhoto ? (
           <Image
             src={packagePhoto}
             alt={packageName}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            className="object-cover"
             sizes="(max-width: 1024px) 100vw, 640px"
             priority
             unoptimized={packagePhoto.startsWith("/uploads/")}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white/80 shadow-lg backdrop-blur">
-                <Package size={48} className="text-orange-500" />
+          <div className="flex h-full w-full items-center justify-center bg-slate-50">
+            <div className="text-center p-4">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center border-4 border-slate-900 bg-amber-400 text-slate-950 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+                <Package size={28} className="stroke-[2.5]" />
               </div>
-              <p className="mt-4 text-sm font-medium text-slate-500">
-                Foto paket belum tersedia
+              <p className="mt-3 text-3xs font-black uppercase tracking-wider text-slate-400">
+                [ VISUAL_NOT_AVAILABLE ]: Foto manifes belum diambil oleh petugas loker
               </p>
             </div>
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
-            Paket Ekspedisi
+        <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+          <p className="text-3xs font-black uppercase tracking-widest text-amber-400">
+            // CARGO_ITEM_DESC
           </p>
-          <h1 className="mt-1 text-2xl font-bold leading-tight sm:text-3xl">
+          <h1 className="mt-1 text-xl font-black uppercase tracking-wide leading-tight sm:text-2xl">
             {packageName}
           </h1>
-          <div className="mt-2 flex items-center gap-2 text-sm text-slate-200">
-            <Calendar size={14} />
-            <span>Dipesan pada {formatDate(shipmentDate)}</span>
+          <div className="mt-2 flex items-center gap-2 text-3xs font-bold uppercase tracking-wider text-slate-300">
+            <Calendar size={12} className="text-amber-400" />
+            <span>REGISTRASI_SYSTEM: {formatDate(shipmentDate)}</span>
           </div>
         </div>
       </div>
@@ -519,112 +515,71 @@ function StatusSection({
     .join(", ");
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      {/* Status Badges */}
+    <div className="border-4 border-slate-900 bg-white p-5 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm space-y-5">
+      {/* Status Badges Grill */}
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Shipment Status */}
-        <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-              <Package size={18} className="text-orange-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Status Pengiriman
-              </p>
-              <div className="mt-1">
-                <StatusBadge status={shipmentStatus} />
-              </div>
+        <div className="flex items-center gap-3 border-2 border-slate-900 bg-slate-50 p-3 rounded-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-950 text-white rounded-xs">
+            <Package size={16} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-3xs font-black uppercase tracking-wider text-slate-400">
+              STATUS PENGIRIMAN
+            </p>
+            <div className="mt-1 inline-block">
+              <StatusBadge status={shipmentStatus} />
             </div>
           </div>
         </div>
 
-        {/* Payment Status */}
-        <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-              <CreditCard size={18} className="text-orange-600" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Status Pembayaran
-              </p>
-              <div className="mt-1">
-                <StatusBadge status={paymentStatus} />
-              </div>
+        <div className="flex items-center gap-3 border-2 border-slate-900 bg-slate-50 p-3 rounded-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-950 text-white rounded-xs">
+            <CreditCard size={16} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-3xs font-black uppercase tracking-wider text-slate-400">
+              STATUS OTORISASI BILLING
+            </p>
+            <div className="mt-1 inline-block">
+              <StatusBadge status={paymentStatus} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Receiver Info - Complete */}
+      {/* Receiver Info Block - Mirip Label Pengiriman Paket */}
       {hasReceiverInfo && (
-        <div className="mt-4 overflow-hidden rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white">
-          {/* Header */}
-          <div className="flex items-center gap-3 border-b border-orange-100 bg-orange-100/50 px-4 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500 shadow-sm">
-              <User size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-orange-700">
-                Informasi Penerima
-              </p>
-              <p className="mt-0.5 text-base font-bold text-slate-900">
-                {receiver?.name ?? "-"}
-              </p>
-            </div>
+        <div className="border-4 border-slate-900 bg-white rounded-sm overflow-hidden shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]">
+          <div className="flex items-center gap-3 border-b-2 border-slate-900 bg-slate-900 px-4 py-2.5 text-white">
+            <User size={14} className="text-amber-400" />
+            <span className="text-3xs font-black uppercase tracking-widest">// ALAMAT_PENGIRIMAN_MANIFES</span>
           </div>
 
-          {/* Details */}
-          <div className="space-y-0 divide-y divide-orange-100">
-            {/* Phone */}
-            {receiver?.phone && (
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                  <Phone size={14} className="text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Nomor Telepon
-                  </p>
-                  <p className="mt-0.5 text-sm font-medium text-slate-900">
-                    {receiver.phone}
-                  </p>
-                </div>
-              </div>
-            )}
+          <div className="p-4 space-y-3 text-3xs font-bold uppercase tracking-wide">
+            <div className="border-b border-slate-200 pb-2">
+              <span className="text-slate-400 block text-[9px] font-black">// NAMA_PENERIMA</span>
+              <span className="text-xs font-black text-slate-900">{receiver?.name ?? "-"}</span>
+            </div>
 
-            {/* Email */}
-            {receiver?.email && (
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                  <Mail size={14} className="text-orange-600" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {receiver?.phone && (
+                <div>
+                  <span className="text-slate-400 block text-[9px] font-black"><Phone size={8} className="inline mr-1" />TELEPON</span>
+                  <span className="text-slate-900 font-black">{receiver.phone}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Email
-                  </p>
-                  <p className="mt-0.5 truncate text-sm font-medium text-slate-900">
-                    {receiver.email}
-                  </p>
+              )}
+              {receiver?.email && (
+                <div className="min-w-0">
+                  <span className="text-slate-400 block text-[9px] font-black"><Mail size={8} className="inline mr-1" />EMAIL</span>
+                  <span className="text-slate-900 font-black truncate block">{receiver.email}</span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Address */}
             {fullAddress && (
-              <div className="flex items-start gap-3 px-4 py-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                  <MapPin size={14} className="text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Alamat Tujuan
-                  </p>
-                  <p className="mt-0.5 text-sm font-medium leading-relaxed text-slate-900">
-                    {fullAddress}
-                  </p>
-                </div>
+              <div className="border-t border-slate-200 pt-2 mt-2 bg-slate-50 p-2 border-2 border-dashed border-slate-300">
+                <span className="text-slate-400 block text-[9px] font-black"><MapPin size={8} className="inline mr-1" />ALAMAT DESTINASI LENGKAP</span>
+                <p className="text-slate-900 font-black normal-case leading-normal mt-0.5">{fullAddress}</p>
               </div>
             )}
           </div>
@@ -644,48 +599,238 @@ function RouteInfo({
   weight: number | string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2">
-        <Truck size={18} className="text-orange-600" />
-        <h3 className="text-base font-bold text-slate-900">Rute Pengiriman</h3>
+    <div className="border-4 border-slate-900 bg-white p-5 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+      <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-3 mb-4">
+        <Truck size={16} className="text-slate-900" />
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">DIAGRAM_RUTE_LOGISTIK</h3>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto_1fr]">
-        {/* Origin */}
-        <div className="rounded-xl bg-slate-50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            <Warehouse size={14} />
-            Asal
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] items-center">
+        {/* Origin Node */}
+        <div className="border-2 border-slate-900 bg-slate-50 p-3 rounded-sm">
+          <div className="flex items-center gap-1.5 text-3xs font-black uppercase tracking-wider text-slate-400">
+            <Warehouse size={12} />
+            ORIGIN_HUB_ASAL
           </div>
-          <p className="mt-2 text-base font-bold text-slate-900">{origin?.name ?? "-"}</p>
-          <p className="text-sm text-slate-500">{origin?.city ?? "-"}</p>
+          <p className="mt-1 text-xs font-black text-slate-900 truncate">{origin?.name ?? "-"}</p>
+          <p className="text-3xs font-bold text-slate-500 uppercase">{origin?.city ?? "-"}</p>
         </div>
 
-        {/* Arrow */}
-        <div className="flex items-center justify-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
-            <ArrowRight size={18} className="text-orange-600" />
+        {/* Arrow Node */}
+        <div className="flex justify-center">
+          <div className="flex h-8 w-8 items-center justify-center border-2 border-slate-900 bg-amber-400 text-slate-950 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-xs">
+            <ArrowRight size={16} className="stroke-[2.5]" />
           </div>
         </div>
 
-        {/* Destination */}
-        <div className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-orange-600">
-            <MapPin size={14} />
-            Tujuan
+        {/* Destination Node */}
+        <div className="border-2 border-slate-900 bg-amber-50/50 p-3 rounded-sm">
+          <div className="flex items-center gap-1.5 text-3xs font-black uppercase tracking-wider text-amber-700">
+            <MapPin size={12} />
+            DESTINATION_TUJUAN
           </div>
-          <p className="mt-2 text-base font-bold text-slate-900">{destination?.name ?? "-"}</p>
-          <p className="text-sm text-slate-500">{destination?.city ?? "-"}</p>
+          <p className="mt-1 text-xs font-black text-slate-900 truncate">{destination?.name ?? "-"}</p>
+          <p className="text-3xs font-bold text-slate-500 uppercase">{destination?.city ?? "-"}</p>
         </div>
       </div>
 
-      {/* Weight */}
-      <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3">
-        <Scale size={16} className="text-orange-600" />
-        <span className="text-sm font-semibold text-slate-700">Berat Paket</span>
-        <span className="ml-auto text-base font-bold text-slate-900">{weight} kg</span>
+      {/* Cargo Mass Weight */}
+      <div className="mt-4 flex items-center justify-between border-2 border-slate-900 bg-slate-950 px-4 py-2 text-white rounded-sm text-3xs font-black uppercase">
+        <div className="flex items-center gap-2">
+          <Scale size={14} className="text-amber-400" />
+          <span>BOBOT TIMBANG MASSA (WEIGHT)</span>
+        </div>
+        <span className="text-sm font-black text-amber-400">{weight} KG</span>
       </div>
     </div>
+  );
+}
+
+function getTrackingStatusIndex(status: string) {
+  const index = STATUS_ORDER.indexOf(status as (typeof STATUS_ORDER)[number]);
+  return index === -1 ? -1 : index;
+}
+
+function TrackingTimeline({ shipment }: { shipment: Shipment }) {
+  const trackings = useMemo(
+    () =>
+      [...(shipment.shipment_trackings ?? [])].sort(
+        (a, b) => new Date(a.tracked_at).getTime() - new Date(b.tracked_at).getTime(),
+      ),
+    [shipment.shipment_trackings],
+  );
+
+  const currentStatusIndex = useMemo(
+    () => getTrackingStatusIndex(shipment.status),
+    [shipment.status],
+  );
+
+  const currentTrackingId = useMemo(() => {
+    if (trackings.length === 0) return null;
+    const matched = trackings.filter(t => getTrackingStatusIndex(t.status) === currentStatusIndex);
+    if (matched.length > 0) return matched[matched.length - 1]?.id ?? null;
+    const reached = trackings.filter(t => getTrackingStatusIndex(t.status) <= currentStatusIndex);
+    return reached[reached.length - 1]?.id ?? trackings[trackings.length - 1]?.id ?? null;
+  }, [trackings, currentStatusIndex]);
+
+  const progressPercent = useMemo(() => {
+    if (currentStatusIndex < 0) return 0;
+    return Math.round(((currentStatusIndex + 1) / STATUS_ORDER.length) * 100);
+  }, [currentStatusIndex]);
+
+  return (
+    <section className="border-4 border-slate-900 bg-white shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
+      <div className="border-b-4 border-slate-900 bg-slate-50 px-5 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-3xs font-black uppercase tracking-widest text-slate-400">
+              // NODE_PROGRESS_MONITOR
+            </p>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">TIMELINE TRACKING RESI</h2>
+          </div>
+          <div className="flex items-center gap-3 bg-slate-900 text-white px-3 py-1.5 border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(251,191,36,1)] rounded-xs self-start sm:self-center">
+            <span className="text-2xs font-black text-amber-400">{progressPercent}% SYNCED</span>
+          </div>
+        </div>
+
+        <HorizontalStepper currentStatusIndex={currentStatusIndex} />
+      </div>
+
+      <div className="p-5">
+        {trackings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-slate-300 bg-slate-50 rounded-sm">
+            <Package size={32} className="text-slate-300 mb-2 stroke-[1.5]" />
+            <p className="text-3xs font-black uppercase text-slate-400 tracking-wide">
+              [ WAITING_CARGO_HANDOVER ]: MENUNGGU SERAH TERIMA KASIR
+            </p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">
+              Alur logistik eksternal akan aktif setelah validasi pos cabang dilakukan.
+            </p>
+          </div>
+        ) : (
+          <ol className="relative space-y-0">
+            {trackings.map((tracking, index) => {
+              const statusIndex = getTrackingStatusIndex(tracking.status);
+              const isActive = currentStatusIndex >= 0 && statusIndex >= 0 && statusIndex <= currentStatusIndex;
+              const nextTracking = trackings[index + 1];
+              const nextStatusIndex = nextTracking ? getTrackingStatusIndex(nextTracking.status) : -1;
+              const isNextActive = currentStatusIndex >= 0 && nextStatusIndex >= 0 && nextStatusIndex <= currentStatusIndex;
+
+              return (
+                <TimelineItem
+                  key={tracking.id}
+                  tracking={tracking}
+                  isActive={isActive}
+                  isCurrent={tracking.id === currentTrackingId}
+                  isLast={index === trackings.length - 1}
+                  isNextActive={isNextActive}
+                />
+              );
+            })}
+          </ol>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function formatStepLabel(step: (typeof STATUS_ORDER)[number]) {
+  return step.replaceAll("_", " ");
+}
+
+function HorizontalStepper({ currentStatusIndex }: { currentStatusIndex: number }) {
+  return (
+    <div className="mt-6 grid grid-cols-6 relative">
+      {STATUS_ORDER.map((step, index) => {
+        const isActive = currentStatusIndex >= 0 && index <= currentStatusIndex;
+        const isCurrent = index === currentStatusIndex;
+        const isLineActive = currentStatusIndex >= 0 && index < currentStatusIndex;
+
+        return (
+          <div key={step} className="relative flex flex-col items-center">
+            {index < STATUS_ORDER.length - 1 && (
+              <span
+                aria-hidden
+                className={`absolute top-3.5 z-0 h-1 w-full -translate-y-1/2 border-y border-slate-900 transition-colors ${
+                  isLineActive ? "bg-slate-900" : "bg-slate-200"
+                }`}
+                style={{ left: "50%", right: "-50%" }}
+              />
+            )}
+
+            <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center">
+              <div className={`h-6 w-6 border-2 border-slate-900 flex items-center justify-center rounded-xs transition-all ${
+                !isActive ? "bg-white text-slate-300" : isCurrent ? "bg-amber-400 text-slate-950 scale-110 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)]" : "bg-slate-900 text-white"
+              }`}>
+                {isActive ? <span className="text-[10px] font-black">✓</span> : <span className="h-1 w-1 bg-slate-300 rounded-full" />}
+              </div>
+            </div>
+
+            <p className={`mt-2 hidden text-center text-[8px] font-black uppercase leading-tight tracking-wider sm:block truncate w-full px-1 ${
+              isActive ? "text-slate-950" : "text-slate-400"
+            }`}>
+              {formatStepLabel(step)}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TimelineItem({
+  tracking,
+  isActive,
+  isCurrent,
+  isLast,
+  isNextActive,
+}: {
+  tracking: NonNullable<Shipment["shipment_trackings"]>[number];
+  isActive: boolean;
+  isCurrent: boolean;
+  isLast: boolean;
+  isNextActive: boolean;
+}) {
+  const connectorActive = isActive && isNextActive;
+
+  return (
+    <li className="relative grid grid-cols-[36px_1fr] gap-4 pb-6 last:pb-0">
+      {!isLast && (
+        <span className={`absolute left-[15px] top-7 bottom-0 w-1 border-r-2 border-slate-900 transition-colors ${
+          connectorActive ? "bg-slate-900" : "bg-slate-200"
+        }`} />
+      )}
+
+      <div className="relative z-10 flex justify-center pt-0.5">
+        <div className={`flex h-8 w-8 items-center justify-center border-2 border-slate-900 rounded-xs shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] transition-all ${
+          isActive ? (isCurrent ? "bg-amber-400 text-slate-950" : "bg-slate-900 text-white") : "bg-white text-slate-300"
+        }`}>
+          <span className="text-2xs font-black">{isActive ? "✓" : "◦"}</span>
+        </div>
+      </div>
+
+      <div className={`border-2 border-slate-900 p-4 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] rounded-sm transition-all ${
+        isActive ? (isCurrent ? "bg-amber-50/40" : "bg-slate-50/70") : "bg-white opacity-60"
+      }`}>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-slate-300 pb-1.5 mb-1.5">
+          <strong className={`text-2xs font-black uppercase tracking-wider ${isActive ? "text-slate-950" : "text-slate-400"}`}>
+            [{tracking.status.replaceAll("_", " ")}]
+          </strong>
+          <span className="text-[10px] font-bold text-slate-400">
+            {formatDate(tracking.tracked_at)}
+          </span>
+        </div>
+        <p className="text-xs font-bold text-slate-700 leading-normal">
+          {tracking.description ?? "-"}
+        </p>
+        {tracking.location && (
+          <p className="mt-1.5 flex items-center gap-1 text-3xs font-black uppercase tracking-wider text-slate-400">
+            <MapPin size={10} className="text-amber-500" />
+            LOC: {tracking.location}
+          </p>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -715,87 +860,85 @@ function PaymentSummary({
   onDownload: () => void;
 }) {
   return (
-    <article className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-5 text-white">
-        <p className="text-xs font-semibold uppercase tracking-wider text-orange-400">
-          Ringkasan Pembayaran
+    <article className="border-4 border-slate-900 bg-white shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
+      {/* Billing Console Header */}
+      <div className="bg-slate-900 p-5 text-white border-b-4 border-slate-900">
+        <p className="text-3xs font-black uppercase tracking-widest text-amber-400">
+          // AGGREGATE_BILLING_SUMMARY
         </p>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-3xl font-black">
+        <div className="mt-1 flex items-baseline gap-1">
+          <span className="text-2xl font-black tracking-tight text-white">
             {formatCurrency(shipment.total_price)}
           </span>
         </div>
         <div className="mt-3">
-          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-200 backdrop-blur">
-            {shipment.payments?.payment_method === "cash"
-              ? "Cash"
-              : shipment.payments?.payment_method?.toUpperCase() ?? "-"}
+          <span className="border border-white bg-white/10 px-2 py-0.5 text-3xs font-black uppercase tracking-wider text-slate-100 rounded-xs">
+            METHOD: {shipment.payments?.payment_method === "cash" ? "CASH" : (shipment.payments?.payment_method?.toUpperCase() ?? "-")}
           </span>
         </div>
       </div>
 
-      {/* Details */}
-      <div className="space-y-3 p-6">
-        <SummaryRow label="Nama Paket" value={packageName} />
-        <SummaryRow label="Berat" value={`${shipment.total_weight} kg`} />
-        <SummaryRow label="Metode Penyerahan" value={handoverLabel} />
-        <SummaryRow label="Tanggal" value={formatDate(shipment.shipment_date)} />
+      {/* Bill Matrix Rows */}
+      <div className="p-4 space-y-2.5 text-3xs font-bold uppercase tracking-wide">
+        <SummaryRow label="DESK_PAKET" value={packageName} />
+        <SummaryRow label="MASSA_BOBOT" value={`${shipment.total_weight} kg`} />
+        <SummaryRow label="METODE_DROP" value={handoverLabel} />
+        <SummaryRow label="LOG_REG_DATE" value={formatDate(shipment.shipment_date)} />
 
-        <div className="my-3 border-t border-dashed border-slate-200" />
+        <div className="my-2 border-t-2 border-dashed border-slate-200" />
 
         <SummaryRow
-          label="Biaya Pengiriman"
+          label="GRAND_TOTAL_TAGIHAN"
           value={formatCurrency(shipment.total_price)}
           highlight
         />
       </div>
 
-      {/* Actions */}
-      <div className="space-y-2 border-t border-slate-100 bg-slate-50 p-5">
+      {/* Action Gateway Buttons Terminal */}
+      <div className="space-y-3 border-t-4 border-slate-900 bg-slate-50 p-4">
         {canPay && (
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orange-600 hover:shadow-md disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center gap-2 border-2 border-slate-950 bg-amber-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm disabled:opacity-50"
             disabled={isPaying}
             onClick={onPay}
             type="button"
           >
-            <CreditCard size={18} />
+            <CreditCard size={14} className="stroke-[2.5]" />
             {paymentLabel}
           </button>
         )}
 
         {paymentStatus === "paid" && (
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-orange-600 hover:shadow-md"
+            className="flex h-11 w-full items-center justify-center gap-2 border-2 border-slate-950 bg-emerald-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm"
             onClick={onDownload}
             type="button"
           >
-            <Download size={18} />
-            Download Resi PDF
+            <Download size={14} className="stroke-[2.5]" />
+            DOWNLOAD RESI PDF
           </button>
         )}
 
         {canCancel && (
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-white px-6 py-3 text-sm font-semibold text-red-600 transition-all hover:border-red-300 hover:bg-red-50"
+            className="flex h-11 w-full items-center justify-center gap-2 border-2 border-rose-900 bg-white font-black text-rose-900 shadow-[3px_3px_0px_0px_rgba(225,29,72,1)] hover:bg-rose-50 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm"
             onClick={onCancel}
             type="button"
           >
-            <XCircle size={18} />
-            Batalkan Pesanan
+            <XCircle size={14} />
+            BATALKAN PESANAN
           </button>
         )}
 
         {shipment.status === "cancelled" && (
-          <div className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-700">
-            Pesanan Telah Dibatalkan
+          <div className="border-2 border-rose-900 bg-rose-100 p-3 text-center text-3xs font-black uppercase text-rose-950 rounded-sm">
+            // TERMINATED: PESANAN TELAH DIBATALKAN
           </div>
         )}
 
         {paymentStatus === "failed" && !canPay && (
-          <div className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-700">
-            Pesanan Kedaluwarsa
+          <div className="border-2 border-rose-900 bg-rose-100 p-3 text-center text-3xs font-black uppercase text-rose-950 rounded-sm">
+            // EXPIRED: BATAS OTORISASI BERAKHIR
           </div>
         )}
       </div>
@@ -814,269 +957,11 @@ function SummaryRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-slate-500">{label}</span>
-      <span
-        className={`font-semibold ${highlight ? "text-lg text-orange-600" : "text-sm text-slate-900"
-          }`}
-      >
+      <span className="text-slate-400 font-bold text-[10px]">{label}</span>
+      <span className={`font-black ${highlight ? "text-base text-slate-950 bg-amber-400 px-1" : "text-slate-900"}`}>
         {value}
       </span>
     </div>
-  );
-}
-
-function getTrackingStatusIndex(status: string) {
-  const index = STATUS_ORDER.indexOf(status as (typeof STATUS_ORDER)[number]);
-  return index === -1 ? -1 : index;
-}
-
-function TrackingTimeline({ shipment }: { shipment: Shipment }) {
-  const trackings = useMemo(
-    () =>
-      [...(shipment.shipment_trackings ?? [])].sort(
-        (a, b) => new Date(a.tracked_at).getTime() - new Date(b.tracked_at).getTime(),
-      ),
-    [shipment.shipment_trackings],
-  );
-
-  const currentStatusIndex = useMemo(
-    () => getTrackingStatusIndex(shipment.status),
-    [shipment.status],
-  );
-
-  const currentTrackingId = useMemo(() => {
-    if (trackings.length === 0) {
-      return null;
-    }
-
-    const matched = trackings.filter(
-      (tracking) => getTrackingStatusIndex(tracking.status) === currentStatusIndex,
-    );
-
-    if (matched.length > 0) {
-      return matched[matched.length - 1]?.id ?? null;
-    }
-
-    const reached = trackings.filter(
-      (tracking) => getTrackingStatusIndex(tracking.status) <= currentStatusIndex,
-    );
-
-    return reached[reached.length - 1]?.id ?? trackings[trackings.length - 1]?.id ?? null;
-  }, [trackings, currentStatusIndex]);
-
-  const progressPercent = useMemo(() => {
-    if (currentStatusIndex < 0) {
-      return 0;
-    }
-
-    return Math.round(((currentStatusIndex + 1) / STATUS_ORDER.length) * 100);
-  }, [currentStatusIndex]);
-
-  return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-orange-50 to-white px-6 py-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-orange-600">
-              Progress Pengiriman
-            </p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">Timeline Tracking</h2>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-black text-orange-600">{progressPercent}%</p>
-            <p className="text-xs text-slate-500">Selesai</p>
-          </div>
-        </div>
-
-        <HorizontalStepper currentStatusIndex={currentStatusIndex} />
-      </div>
-
-      <div className="p-6">
-        {trackings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-              <Package size={28} className="text-slate-400" />
-            </div>
-            <p className="mt-4 text-sm font-medium text-slate-600">
-              Menunggu konfirmasi dari ekspedisi
-            </p>
-            <p className="mt-1 text-xs text-slate-400">
-              Timeline akan muncul setelah paket diproses
-            </p>
-          </div>
-        ) : (
-          <ol className="relative space-y-0">
-            {trackings.map((tracking, index) => {
-              const statusIndex = getTrackingStatusIndex(tracking.status);
-              const isActive =
-                currentStatusIndex >= 0 &&
-                statusIndex >= 0 &&
-                statusIndex <= currentStatusIndex;
-              const nextTracking = trackings[index + 1];
-              const nextStatusIndex = nextTracking
-                ? getTrackingStatusIndex(nextTracking.status)
-                : -1;
-              const isNextActive =
-                currentStatusIndex >= 0 &&
-                nextStatusIndex >= 0 &&
-                nextStatusIndex <= currentStatusIndex;
-
-              return (
-                <TimelineItem
-                  key={tracking.id}
-                  tracking={tracking}
-                  isActive={isActive}
-                  isCurrent={tracking.id === currentTrackingId}
-                  isLast={index === trackings.length - 1}
-                  isNextActive={isNextActive}
-                />
-              );
-            })}
-          </ol>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function formatStepLabel(step: (typeof STATUS_ORDER)[number]) {
-  return step.replaceAll("_", " ");
-}
-
-function HorizontalStepper({ currentStatusIndex }: { currentStatusIndex: number }) {
-  return (
-    <div className="mt-5 grid grid-cols-6">
-      {STATUS_ORDER.map((step, index) => {
-        const isActive = currentStatusIndex >= 0 && index <= currentStatusIndex;
-        const isCurrent = index === currentStatusIndex;
-        const isLineActive = currentStatusIndex >= 0 && index < currentStatusIndex;
-
-        return (
-          <div key={step} className="relative flex flex-col items-center px-0.5">
-            {index < STATUS_ORDER.length - 1 ? (
-              <span
-                aria-hidden
-                className={`absolute top-4 z-0 h-0.5 -translate-y-1/2 transition-colors ${
-                  isLineActive ? "bg-orange-500" : "bg-slate-200"
-                }`}
-                style={{
-                  left: "calc(50% + 1rem)",
-                  right: "calc(-50% + 1rem)",
-                }}
-              />
-            ) : null}
-
-            <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-visible">
-              <StepIndicator isActive={isActive} isCurrent={isCurrent} />
-            </div>
-
-            <p
-              className={`mt-2 hidden min-h-8 w-full px-0.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-wide sm:block ${
-                isActive ? "text-orange-600" : "text-slate-400"
-              }`}
-            >
-              {formatStepLabel(step)}
-            </p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function StepIndicator({ isActive, isCurrent }: { isActive: boolean; isCurrent: boolean }) {
-  const baseClass =
-    "flex h-8 w-8 items-center justify-center rounded-full transition-all";
-  const stateClass = !isActive
-    ? "bg-slate-200"
-    : isCurrent
-      ? "bg-orange-500 ring-4 ring-orange-100"
-      : "bg-orange-500";
-
-  return (
-    <div className={`${baseClass} ${stateClass}`}>
-      {isActive ? (
-        <CheckCircle2 size={16} className="text-white" />
-      ) : (
-        <Circle size={16} className="text-slate-400" />
-      )}
-    </div>
-  );
-}
-
-function TimelineItem({
-  tracking,
-  isActive,
-  isCurrent,
-  isLast,
-  isNextActive,
-}: {
-  tracking: NonNullable<Shipment["shipment_trackings"]>[number];
-  isActive: boolean;
-  isCurrent: boolean;
-  isLast: boolean;
-  isNextActive: boolean;
-}) {
-  const connectorActive = isActive && isNextActive;
-
-  return (
-    <li className="relative grid grid-cols-[32px_1fr] gap-4 pb-6 last:pb-0">
-      {!isLast && (
-        <span
-          className={`absolute left-[15px] top-8 bottom-0 w-0.5 transition-colors ${
-            connectorActive ? "bg-orange-500" : "bg-slate-200"
-          }`}
-        />
-      )}
-
-      <div className="relative z-10 flex justify-center pt-1">
-        {isActive ? (
-          <span
-            className={`flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 transition-all ${
-              isCurrent ? "ring-4 ring-orange-100" : ""
-            }`}
-          >
-            <CheckCircle2 size={16} className="text-white" />
-          </span>
-        ) : (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-200 bg-white">
-            <Circle size={12} className="text-slate-400" />
-          </span>
-        )}
-      </div>
-
-      <div
-        className={`rounded-2xl p-4 transition-all ${
-          isActive
-            ? isCurrent
-              ? "border border-orange-200 bg-gradient-to-br from-orange-50 to-white shadow-sm"
-              : "border border-orange-100 bg-orange-50/70"
-            : "bg-slate-50"
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <strong
-            className={`text-sm font-bold capitalize ${
-              isActive ? "text-orange-700" : "text-slate-900"
-            }`}
-          >
-            {tracking.status.replaceAll("_", " ")}
-          </strong>
-          <span className={`text-xs font-medium ${isActive ? "text-orange-600/80" : "text-slate-500"}`}>
-            {formatDate(tracking.tracked_at)}
-          </span>
-        </div>
-        <p className={`mt-1.5 text-sm ${isActive ? "text-slate-700" : "text-slate-600"}`}>
-          {tracking.description ?? "-"}
-        </p>
-        {tracking.location && (
-          <p className={`mt-1 flex items-center gap-1 text-xs ${isActive ? "text-orange-600/70" : "text-slate-400"}`}>
-            <MapPin size={12} />
-            {tracking.location}
-          </p>
-        )}
-      </div>
-    </li>
   );
 }
 
@@ -1096,37 +981,36 @@ function CancelConfirmationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
         onClick={() => !isPending && onOpenChange(false)}
       />
 
-      <div className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-          <AlertTriangle size={28} className="text-red-600" />
+      <div className="relative w-full max-w-md border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-sm font-mono">
+        <div className="flex h-12 w-12 items-center justify-center border-2 border-slate-900 bg-rose-400 text-slate-950 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+          <AlertTriangle size={24} className="stroke-[2.5]" />
         </div>
 
-        <h3 className="mt-4 text-xl font-bold text-slate-900">Batalkan Pesanan?</h3>
-        <p className="mt-2 text-sm text-slate-600">
-          Pesanan yang dibatalkan tidak dapat dikembalikan. Apakah Anda yakin ingin
-          melanjutkan?
+        <h3 className="mt-4 text-sm font-black uppercase tracking-wider text-slate-900">TERMINASI MANIFES CARGO?</h3>
+        <p className="mt-2 text-3xs font-bold text-slate-500 uppercase leading-normal">
+          Pesanan yang telah dibatalkan secara permanen tidak dapat dipulihkan kembali oleh enkripsi sistem. Konfirmasi tindakan Anda?
         </p>
 
         <div className="mt-6 flex gap-3">
           <button
-            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
+            className="flex-1 h-10 border-2 border-slate-900 bg-white text-3xs font-black uppercase tracking-wider text-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] hover:bg-slate-50 active:translate-x-[1px] active:translate-y-[1px] transition-all rounded-sm disabled:opacity-50"
             onClick={() => onOpenChange(false)}
             type="button"
             disabled={isPending}
           >
-            Tidak, Kembali
+            TIDAK, KEMBALI
           </button>
           <button
-            className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+            className="flex-1 h-10 border-2 border-slate-950 bg-rose-600 text-3xs font-black uppercase tracking-wider text-white shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] hover:bg-rose-700 active:translate-x-[1px] active:translate-y-[1px] transition-all rounded-sm disabled:opacity-50"
             onClick={onConfirm}
             type="button"
             disabled={isPending}
           >
-            {isPending ? "Memproses..." : "Ya, Batalkan"}
+            {isPending ? "MEMPROSES..." : "YA, BATALKAN"}
           </button>
         </div>
       </div>
@@ -1137,17 +1021,15 @@ function CancelConfirmationDialog({
 function LoadingSkeleton() {
   return (
     <CustomerNavbarShell>
-      <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
-        <div className="h-10 w-32 animate-pulse rounded-lg bg-slate-200" />
-        <div className="h-20 animate-pulse rounded-2xl border-2 border-orange-200 bg-slate-200" />
+      <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6 font-mono">
+        <div className="h-6 w-48 bg-slate-200 border-2 border-slate-300 animate-pulse rounded-sm" />
+        <div className="h-20 bg-slate-200 border-4 border-slate-300 animate-pulse rounded-sm" />
         <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
           <div className="space-y-5">
-            <div className="h-[400px] animate-pulse rounded-3xl bg-slate-200" />
-            <div className="h-64 animate-pulse rounded-2xl bg-slate-200" />
-            <div className="h-48 animate-pulse rounded-2xl bg-slate-200" />
-            <div className="h-96 animate-pulse rounded-3xl bg-slate-200" />
+            <div className="h-64 bg-slate-200 border-4 border-slate-300 animate-pulse rounded-sm" />
+            <div className="h-40 bg-slate-200 border-4 border-slate-300 animate-pulse rounded-sm" />
           </div>
-          <div className="h-[600px] animate-pulse rounded-3xl bg-slate-200" />
+          <div className="h-96 bg-slate-200 border-4 border-slate-300 animate-pulse rounded-sm" />
         </div>
       </div>
     </CustomerNavbarShell>

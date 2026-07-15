@@ -29,7 +29,7 @@ export default function CustomerInboxPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiGet<NotificationItem[]>("/api/v1/customer/notifications?limit=50")
+    apiGet<NotificationItem[]>("/api/v2/customer/notifications?limit=50")
       .then((response) => setItems(response.data))
       .catch((currentError) => {
         setError(currentError instanceof Error ? currentError.message : "Gagal memuat inbox.");
@@ -43,7 +43,7 @@ export default function CustomerInboxPage() {
     }
 
     try {
-      await apiPatch(`/api/v1/customer/notifications/${notification.id}/read`, {});
+      await apiPatch(`/api/v2/customer/notifications/${notification.id}/read`, {});
       setItems((current) =>
         current.map((item) =>
           item.id === notification.id ? { ...item, is_read: true } : item,

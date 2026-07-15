@@ -58,7 +58,7 @@ function useShipmentPayment() {
     mutationFn: async (shipment: Shipment) => {
       const method = shipment.payments?.payment_method;
       const response = await apiPost<{ redirectUrl?: string | null }>(
-        `/api/v1/customer/shipments/${shipment.id}/payments/online`,
+        `/api/v2/customer/shipments/${shipment.id}/payments/online`,
         {
           paymentMethod: method && method !== "cash" ? method : "qris",
         }
@@ -87,7 +87,7 @@ export function CustomerTracker() {
     queryKey: ["customer-shipments"],
     queryFn: async () => {
       const response = await apiGet<Shipment[]>(
-        "/api/v1/customer/shipments?limit=10"
+        "/api/v2/customer/shipments?limit=10"
       );
       return response.data;
     },

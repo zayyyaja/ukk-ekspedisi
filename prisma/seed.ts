@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -31,43 +32,53 @@ async function main() {
   console.log('✅ Seeding Branches selesai.');
 
   // =============================================================================
-  // 2. SEEDING RATES (Tarif Antar Kota)
+  // 2. SEEDING RATES (Tarif Antar Kota Asli & Realistis)
   // =============================================================================
   const ratesData = [
-    // Bogor (Replacing Bandung)
-    { origin_city: 'Bogor', destination_city: 'Bogor', price_per_kg: 5000.00, estimated_days: 1 },
-    { origin_city: 'Bogor', destination_city: 'Jakarta', price_per_kg: 8000.00, estimated_days: 1 },
-    { origin_city: 'Bogor', destination_city: 'Bekasi', price_per_kg: 9000.00, estimated_days: 1 },
-    { origin_city: 'Bogor', destination_city: 'Surabaya', price_per_kg: 14000.00, estimated_days: 2 },
-    { origin_city: 'Bogor', destination_city: 'Sukabumi', price_per_kg: 10000.00, estimated_days: 2 },
+    // =============================================================================
+    // ORIGIN: BOGOR
+    // =============================================================================
+    { origin_city: 'Bogor', destination_city: 'Bogor', price_per_kg: 9000.00, estimated_days: 1 },
+    { origin_city: 'Bogor', destination_city: 'Jakarta', price_per_kg: 13000.00, estimated_days: 2 },
+    { origin_city: 'Bogor', destination_city: 'Bekasi', price_per_kg: 14000.00, estimated_days: 2 },
+    { origin_city: 'Bogor', destination_city: 'Surabaya', price_per_kg: 26000.00, estimated_days: 3 },
+    { origin_city: 'Bogor', destination_city: 'Sukabumi', price_per_kg: 13000.00, estimated_days: 2 },
 
-    // Jakarta
-    { origin_city: 'Jakarta', destination_city: 'Bogor', price_per_kg: 8000.00, estimated_days: 1 },
-    { origin_city: 'Jakarta', destination_city: 'Jakarta', price_per_kg: 5000.00, estimated_days: 1 },
-    { origin_city: 'Jakarta', destination_city: 'Bekasi', price_per_kg: 6000.00, estimated_days: 1 },
-    { origin_city: 'Jakarta', destination_city: 'Surabaya', price_per_kg: 12000.00, estimated_days: 2 },
-    { origin_city: 'Jakarta', destination_city: 'Sukabumi', price_per_kg: 11000.00, estimated_days: 2 },
+    // =============================================================================
+    // ORIGIN: JAKARTA
+    // =============================================================================
+    { origin_city: 'Jakarta', destination_city: 'Bogor', price_per_kg: 13000.00, estimated_days: 2 },
+    { origin_city: 'Jakarta', destination_city: 'Jakarta', price_per_kg: 9000.00, estimated_days: 1 },
+    { origin_city: 'Jakarta', destination_city: 'Bekasi', price_per_kg: 11000.00, estimated_days: 1 },
+    { origin_city: 'Jakarta', destination_city: 'Surabaya', price_per_kg: 22000.00, estimated_days: 2 },
+    { origin_city: 'Jakarta', destination_city: 'Sukabumi', price_per_kg: 15000.00, estimated_days: 2 },
 
-    // Bekasi
-    { origin_city: 'Bekasi', destination_city: 'Bogor', price_per_kg: 9000.00, estimated_days: 1 },
-    { origin_city: 'Bekasi', destination_city: 'Jakarta', price_per_kg: 6000.00, estimated_days: 1 },
-    { origin_city: 'Bekasi', destination_city: 'Bekasi', price_per_kg: 5000.00, estimated_days: 1 },
-    { origin_city: 'Bekasi', destination_city: 'Surabaya', price_per_kg: 11500.00, estimated_days: 2 },
-    { origin_city: 'Bekasi', destination_city: 'Sukabumi', price_per_kg: 10500.00, estimated_days: 2 },
+    // =============================================================================
+    // ORIGIN: BEKASI
+    // =============================================================================
+    { origin_city: 'Bekasi', destination_city: 'Bogor', price_per_kg: 14000.00, estimated_days: 2 },
+    { origin_city: 'Bekasi', destination_city: 'Jakarta', price_per_kg: 11000.00, estimated_days: 1 },
+    { origin_city: 'Bekasi', destination_city: 'Bekasi', price_per_kg: 9000.00, estimated_days: 1 },
+    { origin_city: 'Bekasi', destination_city: 'Surabaya', price_per_kg: 24000.00, estimated_days: 2 },
+    { origin_city: 'Bekasi', destination_city: 'Sukabumi', price_per_kg: 16000.00, estimated_days: 2 },
 
-    // Surabaya
-    { origin_city: 'Surabaya', destination_city: 'Bogor', price_per_kg: 14000.00, estimated_days: 2 },
-    { origin_city: 'Surabaya', destination_city: 'Jakarta', price_per_kg: 12000.00, estimated_days: 2 },
-    { origin_city: 'Surabaya', destination_city: 'Bekasi', price_per_kg: 11500.00, estimated_days: 2 },
-    { origin_city: 'Surabaya', destination_city: 'Surabaya', price_per_kg: 5000.00, estimated_days: 1 },
-    { origin_city: 'Surabaya', destination_city: 'Sukabumi', price_per_kg: 8000.00, estimated_days: 1 },
+    // =============================================================================
+    // ORIGIN: SURABAYA
+    // =============================================================================
+    { origin_city: 'Surabaya', destination_city: 'Bogor', price_per_kg: 26000.00, estimated_days: 3 },
+    { origin_city: 'Surabaya', destination_city: 'Jakarta', price_per_kg: 22000.00, estimated_days: 2 },
+    { origin_city: 'Surabaya', destination_city: 'Bekasi', price_per_kg: 24000.00, estimated_days: 2 },
+    { origin_city: 'Surabaya', destination_city: 'Surabaya', price_per_kg: 9000.00, estimated_days: 1 },
+    { origin_city: 'Surabaya', destination_city: 'Sukabumi', price_per_kg: 28000.00, estimated_days: 3 },
 
-    // Sukabumi (Replacing Yogyakarta)
-    { origin_city: 'Sukabumi', destination_city: 'Bogor', price_per_kg: 10000.00, estimated_days: 2 },
-    { origin_city: 'Sukabumi', destination_city: 'Jakarta', price_per_kg: 11000.00, estimated_days: 2 },
-    { origin_city: 'Sukabumi', destination_city: 'Bekasi', price_per_kg: 10500.00, estimated_days: 2 },
-    { origin_city: 'Sukabumi', destination_city: 'Surabaya', price_per_kg: 8000.00, estimated_days: 1 },
-    { origin_city: 'Sukabumi', destination_city: 'Sukabumi', price_per_kg: 5000.00, estimated_days: 1 },
+    // =============================================================================
+    // ORIGIN: SUKABUMI
+    // =============================================================================
+    { origin_city: 'Sukabumi', destination_city: 'Bogor', price_per_kg: 13000.00, estimated_days: 2 },
+    { origin_city: 'Sukabumi', destination_city: 'Jakarta', price_per_kg: 15000.00, estimated_days: 2 },
+    { origin_city: 'Sukabumi', destination_city: 'Bekasi', price_per_kg: 16000.00, estimated_days: 2 },
+    { origin_city: 'Sukabumi', destination_city: 'Surabaya', price_per_kg: 28000.00, estimated_days: 3 },
+    { origin_city: 'Sukabumi', destination_city: 'Sukabumi', price_per_kg: 9000.00, estimated_days: 1 },
   ];
 
   for (const r of ratesData) {
@@ -78,7 +89,10 @@ async function main() {
           destination_city: r.destination_city,
         },
       },
-      update: {},
+      update: {
+        price_per_kg: r.price_per_kg,
+        estimated_days: r.estimated_days,
+      },
       create: r,
     });
   }

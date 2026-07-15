@@ -34,7 +34,7 @@ export default function CustomerPaymentPage() {
 
     async function preparePayment() {
       try {
-        const shipmentResponse = await apiGet<Shipment>(`/api/v1/customer/shipments/${params.id}`);
+        const shipmentResponse = await apiGet<Shipment>(`/api/v2/customer/shipments/${params.id}`);
         setShipment(shipmentResponse.data);
 
         if (shipmentResponse.data.payments?.payment_status === "paid") {
@@ -42,7 +42,7 @@ export default function CustomerPaymentPage() {
         }
 
         const paymentResponse = await apiPost<MidtransPayment>(
-          `/api/v1/customer/shipments/${params.id}/payments/online`,
+          `/api/v2/customer/shipments/${params.id}/payments/online`,
           { paymentMethod },
         );
         setPayment(paymentResponse.data);

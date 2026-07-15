@@ -34,7 +34,7 @@ export function SystemCaptcha({ value, error, onChange }: SystemCaptchaProps) {
           <img
             alt="Captcha login"
             className="h-13.5 w-45 border-2 border-ink bg-white object-contain rounded-app"
-            src={`/api/v1/auth/captcha?v=${version}`}
+            src={`/api/v2/auth/captcha?v=${version}`}
           />
           
           {/* Tombol Refresh - Menggunakan style penekanan stamp tanpa warna oranye */}

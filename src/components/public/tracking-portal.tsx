@@ -37,7 +37,7 @@ export function TrackingPortal() {
     setShipment(null);
 
     try {
-      const response = await apiGet<PublicShipment>(`/api/v1/public/tracking/${encodeURIComponent(normalized)}`);
+      const response = await apiGet<PublicShipment>(`/api/v2/public/tracking/${encodeURIComponent(normalized)}`);
       setShipment(response.data);
     } catch (currentError) {
       setError(currentError instanceof Error ? currentError.message : "Resi tidak ditemukan.");

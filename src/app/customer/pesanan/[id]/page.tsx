@@ -123,7 +123,7 @@ function useShipmentDetail(id: string) {
   return useQuery({
     queryKey: ["customer-shipment", id],
     queryFn: async () => {
-      const response = await apiGet<Shipment>(`/api/v1/customer/shipments/${id}`);
+      const response = await apiGet<Shipment>(`/api/v2/customer/shipments/${id}`);
       return response.data;
     },
     refetchInterval: 4_000,
@@ -160,7 +160,7 @@ export default function CustomerOrderDetailPage() {
     mutationFn: async () => {
       const method = shipment?.payments?.payment_method;
       const response = await apiPost<{ redirectUrl?: string | null }>(
-        `/api/v1/customer/shipments/${params.id}/payments/online`,
+        `/api/v2/customer/shipments/${params.id}/payments/online`,
         { paymentMethod: method && method !== "cash" ? method : "qris" },
       );
       return response.data;
@@ -181,7 +181,7 @@ export default function CustomerOrderDetailPage() {
   const cancelMutation = useMutation({
     mutationFn: async () => {
       const response = await apiPatch(
-        `/api/v1/customer/shipments/${params.id}/cancel`,
+        `/api/v2/customer/shipments/${params.id}/cancel`,
         {},
       );
       return response.data;
@@ -200,7 +200,7 @@ export default function CustomerOrderDetailPage() {
   const paymentSync = useMutation({
     mutationFn: async () => {
       const response = await apiPost(
-        `/api/v1/customer/shipments/${params.id}/payments/sync`,
+        `/api/v2/customer/shipments/${params.id}/payments/sync`,
       );
       return response.data;
     },

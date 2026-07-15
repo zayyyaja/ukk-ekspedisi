@@ -171,279 +171,279 @@ define(["./workbox-f52fd911"], function (e) {
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/branches/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/branches/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/branches/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/branches/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/customers/%5Bid%5D/activate/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/customers/%5Bid%5D/activate/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/customers/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/customers/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/customers/%5Bid%5D/suspend/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/customers/%5Bid%5D/suspend/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/customers/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/customers/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/dashboard/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/dashboard/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/payments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/payments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/payments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/payments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/rates/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/rates/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/rates/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/rates/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/shipments/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/shipments/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/shipments/%5Bid%5D/status/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/shipments/%5Bid%5D/status/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/shipments/receive/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/shipments/receive/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/shipments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/shipments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/trackings/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/trackings/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/trackings/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/trackings/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/users/%5Bid%5D/activate/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/users/%5Bid%5D/activate/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/users/%5Bid%5D/deactivate/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/users/%5Bid%5D/deactivate/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/users/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/users/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/users/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/users/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/vehicles/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/vehicles/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/vehicles/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/vehicles/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/admin/vehicles/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/admin/vehicles/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/auth/captcha/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/auth/captcha/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/auth/logout/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/auth/logout/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/auth/me/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/auth/me/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/auth/refresh/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/auth/refresh/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/dashboard/summary/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/dashboard/summary/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/%5Bid%5D/assign-courier/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/%5Bid%5D/confirm/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/%5Bid%5D/confirm/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/%5Bid%5D/reject/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/%5Bid%5D/reject/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/recent/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/recent/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/orders/verify-resi/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/orders/verify-resi/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/payments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/payments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/payments/%5Bid%5D/verify-cash/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/payments/%5Bid%5D/verify-cash/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/payments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/payments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/cashier/reports/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/cashier/reports/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/courier/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/courier/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/courier/shipments/%5Bid%5D/status/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/courier/shipments/%5Bid%5D/status/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/courier/shipments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/courier/shipments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/auth/login/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/auth/login/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/auth/register/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/auth/register/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/auth/resend-verification/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/auth/resend-verification/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/auth/verify-email/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/auth/verify-email/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/notifications/%5Bid%5D/read/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/notifications/%5Bid%5D/read/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/notifications/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/notifications/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/notifications/summary/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/notifications/summary/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/payments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/payments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/profile/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/profile/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/shipments/%5Bid%5D/cancel/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/shipments/%5Bid%5D/cancel/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/shipments/%5Bid%5D/payments/online/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/shipments/%5Bid%5D/payments/online/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/shipments/%5Bid%5D/payments/sync/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/shipments/%5Bid%5D/payments/sync/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/shipments/%5Bid%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/customer/shipments/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/customer/shipments/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/manager/dashboard/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/manager/dashboard/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/manager/payments/summary/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/manager/payments/summary/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/owner/dashboard/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/owner/dashboard/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/owner/payments/summary/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/owner/payments/summary/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/public/branches/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/public/branches/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/public/rates/check/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/public/rates/check/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/public/tracking/%5BtrackingNumber%5D/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/public/tracking/%5BtrackingNumber%5D/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/staff/auth/login/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/staff/auth/login/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/staff/upload/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/staff/upload/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/upload/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/upload/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {
-          url: "/_next/static/chunks/app/api/v1/webhooks/midtrans/route-06ae0e00bfbb5b63.js",
+          url: "/_next/static/chunks/app/api/v2/webhooks/midtrans/route-06ae0e00bfbb5b63.js",
           revision: "06ae0e00bfbb5b63",
         },
         {

@@ -68,7 +68,7 @@ export function CustomerNavbarShell({
         if (mounted) setLoading(false);
       });
 
-    apiGet<{ unreadCount: number }>("/api/v1/customer/notifications/summary")
+    apiGet<{ unreadCount: number }>("/api/v2/customer/notifications/summary")
       .then((response) => {
         if (mounted) setUnreadCount(response.data.unreadCount ?? 0);
       })

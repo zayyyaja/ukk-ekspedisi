@@ -60,7 +60,7 @@ function CashierCreateOrderContent() {
   const branches = useQuery({
     queryKey: ["cashier-create-order-branches"],
     queryFn: async () => {
-      const response = await apiGet<Branch[]>("/api/v1/public/branches?limit=100");
+      const response = await apiGet<Branch[]>("/api/v2/public/branches?limit=100");
       return response.data;
     },
   });
@@ -72,7 +72,7 @@ function CashierCreateOrderContent() {
       if (photoFile) {
         const formData = new FormData();
         formData.append("file", photoFile);
-        const uploadRes = await fetch("/api/v1/staff/upload", {
+        const uploadRes = await fetch("/api/v2/staff/upload", {
           method: "POST",
           body: formData,
         });

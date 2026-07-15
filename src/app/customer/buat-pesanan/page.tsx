@@ -68,7 +68,7 @@ export default function CustomerBuatPesananPage() {
   const destinationBranch = branches.find((branch) => Number(branch.id) === Number(values.destinationBranchId));
 
   useEffect(() => {
-    apiGet<Branch[]>("/api/v1/public/branches?limit=100")
+    apiGet<Branch[]>("/api/v2/public/branches?limit=100")
       .then((response) => setBranches(response.data))
       .catch((currentError) => setError(currentError instanceof Error ? currentError.message : "Gagal memuat cabang."));
   }, []);
@@ -86,7 +86,7 @@ export default function CustomerBuatPesananPage() {
     }
 
     setRateLoading(true);
-    apiGet<RateResult[]>("/api/v1/public/rates/check", {
+    apiGet<RateResult[]>("/api/v2/public/rates/check", {
       originCity: originBranch.city,
       destinationCity: destinationBranch.city,
       limit: 1,
@@ -137,7 +137,7 @@ export default function CustomerBuatPesananPage() {
       const formData = new FormData();
       formData.append("file", photoFile);
       
-      const uploadRes = await fetch("/api/v1/upload", {
+      const uploadRes = await fetch("/api/v2/upload", {
         method: "POST",
         body: formData,
       });
@@ -149,7 +149,7 @@ export default function CustomerBuatPesananPage() {
       
       const photoUrl = uploadData.data.url;
 
-      const response = await apiPost<Shipment>("/api/v1/customer/shipments", {
+      const response = await apiPost<Shipment>("/api/v2/customer/shipments", {
         originBranchId: input.originBranchId,
         destinationBranchId: input.destinationBranchId,
         receiver: {
@@ -170,7 +170,7 @@ export default function CustomerBuatPesananPage() {
       }
 
       const paymentResponse = await apiPost<MidtransPaymentResponse>(
-        `/api/v1/customer/shipments/${response.data.id}/payments/online`,
+        `/api/v2/customer/shipments/${response.data.id}/payments/online`,
         { paymentMethod: input.paymentMethod },
       );
 

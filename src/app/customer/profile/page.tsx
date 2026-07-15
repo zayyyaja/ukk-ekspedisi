@@ -102,7 +102,7 @@ export default function CustomerProfilePage() {
       }
 
       const response = await apiPatchForm<{ photo?: string | null }>(
-        "/api/v1/customer/profile",
+        "/api/v2/customer/profile",
         formData,
       );
 

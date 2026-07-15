@@ -24,7 +24,7 @@ export function RateSection() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    apiGet<PublicBranch[]>("/api/v1/public/branches", { limit: 100 })
+    apiGet<PublicBranch[]>("/api/v2/public/branches", { limit: 100 })
       .then((response) => {
         setBranches(response.data);
         if (response.data.length > 0) {
@@ -49,7 +49,7 @@ export function RateSection() {
     setEmpty(false);
     setError(false);
 
-    apiGet<PublicRate[]>("/api/v1/public/rates/check", {
+    apiGet<PublicRate[]>("/api/v2/public/rates/check", {
       originCity,
       destinationCity,
       limit: 1,

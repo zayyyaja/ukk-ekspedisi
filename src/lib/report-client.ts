@@ -24,41 +24,41 @@ function params(filters?: ReportFilters) {
 }
 
 export async function getAdminShipmentReport(filters?: ReportFilters) {
-  return (await apiGet<Shipment[]>(`/api/v1/admin/shipments?${params(filters)}`)).data;
+  return (await apiGet<Shipment[]>(`/api/v2/admin/shipments?${params(filters)}`)).data;
 }
 
 export async function getAdminPaymentReport(filters?: ReportFilters) {
-  return (await apiGet<Payment[]>(`/api/v1/admin/payments?${params(filters)}`)).data;
+  return (await apiGet<Payment[]>(`/api/v2/admin/payments?${params(filters)}`)).data;
 }
 
 export async function getAdminCustomerReport(filters?: ReportFilters) {
-  return (await apiGet<CustomerRecord[]>(`/api/v1/admin/customers?${params(filters)}`)).data;
+  return (await apiGet<CustomerRecord[]>(`/api/v2/admin/customers?${params(filters)}`)).data;
 }
 
 export async function getAdminStaffReport(filters?: ReportFilters) {
-  return (await apiGet<StaffUser[]>(`/api/v1/admin/users?${params(filters)}`)).data;
+  return (await apiGet<StaffUser[]>(`/api/v2/admin/users?${params(filters)}`)).data;
 }
 
 export async function getAdminBranchReport(filters?: ReportFilters) {
-  return (await apiGet<Branch[]>(`/api/v1/admin/branches?${params(filters)}`)).data;
+  return (await apiGet<Branch[]>(`/api/v2/admin/branches?${params(filters)}`)).data;
 }
 
 export async function getCashierPaymentReport(filters?: ReportFilters) {
-  return (await apiGet<Payment[]>(`/api/v1/cashier/payments?${params(filters)}`)).data;
+  return (await apiGet<Payment[]>(`/api/v2/cashier/payments?${params(filters)}`)).data;
 }
 
 export async function getManagerRevenueReport() {
-  return (await apiGet<Record<string, unknown>>("/api/v1/manager/payments/summary")).data;
+  return (await apiGet<Record<string, unknown>>("/api/v2/manager/payments/summary")).data;
 }
 
 export async function getManagerShipmentReport(filters?: ReportFilters) {
-  return (await apiGet<Shipment[]>(`/api/v1/admin/shipments?${params(filters)}`)).data;
+  return (await apiGet<Shipment[]>(`/api/v2/admin/shipments?${params(filters)}`)).data;
 }
 
 export async function getManagerBranchPerformanceReport() {
-  return (await apiGet<DashboardSummary>("/api/v1/manager/dashboard")).data;
+  return (await apiGet<DashboardSummary>("/api/v2/manager/dashboard")).data;
 }
 
 export async function getManagerCourierPerformanceReport(filters?: ReportFilters) {
-  return (await apiGet<Shipment[]>(`/api/v1/admin/shipments?${params(filters)}`)).data;
+  return (await apiGet<Shipment[]>(`/api/v2/admin/shipments?${params(filters)}`)).data;
 }

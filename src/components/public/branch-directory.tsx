@@ -14,7 +14,7 @@ export function BranchDirectory() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiGet<PublicBranch[]>("/api/v1/public/branches", { limit: 100 })
+    apiGet<PublicBranch[]>("/api/v2/public/branches", { limit: 100 })
       .then((response) => {
         setBranches(response.data.length > 0 ? response.data : fallbackBranches);
         setError("");

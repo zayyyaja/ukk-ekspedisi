@@ -252,7 +252,7 @@ export default function CustomerOrderListPage() {
     queryKey: ["customer-shipments"],
     queryFn: async () => {
       const response = await apiGet<Shipment[]>(
-        "/api/v1/customer/shipments?limit=100",
+        "/api/v2/customer/shipments?limit=100",
       );
       return response.data;
     },
@@ -265,7 +265,7 @@ export default function CustomerOrderListPage() {
       const response = await apiPost<{
         redirectUrl?: string | null;
       }>(
-        `/api/v1/customer/shipments/${shipment.id}/payments/online`,
+        `/api/v2/customer/shipments/${shipment.id}/payments/online`,
         {
           paymentMethod: method && method !== "cash" ? method : "qris",
         },

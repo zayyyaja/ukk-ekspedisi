@@ -80,7 +80,7 @@ export async function PATCH(request: NextRequest) {
 
     return successResponse("Profile berhasil diperbarui", customer);
   } catch (error) {
-    console.error("[PATCH /api/v1/customer/profile]", error);
+    console.error("[PATCH /api/v2/customer/profile]", error);
     return handleApiError(error);
   }
 }

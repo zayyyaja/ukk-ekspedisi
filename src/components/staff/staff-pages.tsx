@@ -303,7 +303,7 @@ function exportSimpleAdminPdf(
 
 export function AdminDashboardPage() {
   const { data, loading, error } = useApiData<DashboardSummary>(
-    "/api/v1/admin/dashboard",
+    "/api/v2/admin/dashboard",
     {
       totalCustomers: 0,
       totalStaff: 0,
@@ -466,7 +466,7 @@ export function BranchesPage({ readOnly = false }: { readOnly?: boolean }) {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator(readOnly ? "manager" : "admin");
   const { data, loading, error } = useApiData<Branch[]>(
-    "/api/v1/admin/branches?limit=100",
+    "/api/v2/admin/branches?limit=100",
     [],
     refresh,
   );
@@ -477,12 +477,12 @@ export function BranchesPage({ readOnly = false }: { readOnly?: boolean }) {
   );
 
   async function save(formData: FormData) {
-    await apiPost("/api/v1/admin/branches", Object.fromEntries(formData));
+    await apiPost("/api/v2/admin/branches", Object.fromEntries(formData));
     setRefresh((value) => value + 1);
   }
 
   async function remove(id: string) {
-    await apiDelete(`/api/v1/admin/branches/${id}`);
+    await apiDelete(`/api/v2/admin/branches/${id}`);
     setRefresh((value) => value + 1);
   }
 
@@ -633,7 +633,7 @@ export function StaffUsersPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("admin");
   const { data, loading, error } = useApiData<StaffUser[]>(
-    "/api/v1/admin/users?limit=100",
+    "/api/v2/admin/users?limit=100",
     [],
     refresh,
   );
@@ -645,7 +645,7 @@ export function StaffUsersPage() {
 
   async function create(formData: FormData) {
     const body = Object.fromEntries(formData);
-    await apiPost("/api/v1/admin/users", {
+    await apiPost("/api/v2/admin/users", {
       ...body,
       branchId: body.branchId ? Number(body.branchId) : null,
     });
@@ -654,7 +654,7 @@ export function StaffUsersPage() {
 
   async function toggle(id: string, active: boolean) {
     await apiPatch(
-      `/api/v1/admin/users/${id}/${active ? "activate" : "deactivate"}`,
+      `/api/v2/admin/users/${id}/${active ? "activate" : "deactivate"}`,
       {},
     );
     setRefresh((value) => value + 1);
@@ -739,7 +739,7 @@ export function CustomersPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("admin");
   const { data, loading, error } = useApiData<CustomerRecord[]>(
-    "/api/v1/admin/customers?limit=100",
+    "/api/v2/admin/customers?limit=100",
     [],
   );
   const filtered = data.filter((customer) =>
@@ -802,13 +802,13 @@ export function CustomersPage() {
 export function RatesPage() {
   const [refresh, setRefresh] = useState(0);
   const { data, loading, error } = useApiData<Rate[]>(
-    "/api/v1/admin/rates?limit=100",
+    "/api/v2/admin/rates?limit=100",
     [],
     refresh,
   );
   async function create(formData: FormData) {
     const body = Object.fromEntries(formData);
-    await apiPost("/api/v1/admin/rates", {
+    await apiPost("/api/v2/admin/rates", {
       originCity: body.originCity,
       destinationCity: body.destinationCity,
       pricePerKg: Number(body.pricePerKg),
@@ -817,7 +817,7 @@ export function RatesPage() {
     setRefresh((value) => value + 1);
   }
   async function remove(id: string) {
-    await apiDelete(`/api/v1/admin/rates/${id}`);
+    await apiDelete(`/api/v2/admin/rates/${id}`);
     setRefresh((value) => value + 1);
   }
   const columns: ColumnDef<Rate>[] = [
@@ -870,13 +870,13 @@ export function RatesPage() {
 export function VehiclesPage() {
   const [refresh, setRefresh] = useState(0);
   const { data, loading, error } = useApiData<Vehicle[]>(
-    "/api/v1/admin/vehicles?limit=100",
+    "/api/v2/admin/vehicles?limit=100",
     [],
     refresh,
   );
   async function create(formData: FormData) {
     const body = Object.fromEntries(formData);
-    await apiPost("/api/v1/admin/vehicles", {
+    await apiPost("/api/v2/admin/vehicles", {
       plateNumber: body.plateNumber,
       type: body.type,
       courierId: Number(body.courierId),
@@ -884,7 +884,7 @@ export function VehiclesPage() {
     setRefresh((value) => value + 1);
   }
   async function remove(id: string) {
-    await apiDelete(`/api/v1/admin/vehicles/${id}`);
+    await apiDelete(`/api/v2/admin/vehicles/${id}`);
     setRefresh((value) => value + 1);
   }
   const columns: ColumnDef<Vehicle>[] = [
@@ -1109,8 +1109,8 @@ export function ShipmentsPage({
   );
   const endpoint =
     mode === "courier"
-      ? "/api/v1/courier/shipments?limit=100"
-      : "/api/v1/admin/shipments?limit=100";
+      ? "/api/v2/courier/shipments?limit=100"
+      : "/api/v2/admin/shipments?limit=100";
   const { data, loading, error } = useApiData<Shipment[]>(
     `${endpoint}${status ? `&status=${status}` : ""}`,
     [],
@@ -1146,8 +1146,8 @@ export function ShipmentsPage({
   async function updateStatus(id: string, nextStatus: string, photo?: string) {
     const path =
       mode === "courier"
-        ? `/api/v1/courier/shipments/${id}/status`
-        : `/api/v1/admin/shipments/${id}/status`;
+        ? `/api/v2/courier/shipments/${id}/status`
+        : `/api/v2/admin/shipments/${id}/status`;
     try {
       await apiPatch(path, {
         status: nextStatus,
@@ -1188,7 +1188,7 @@ export function ShipmentsPage({
     setRowBusy((current) => ({ ...current, [id]: true }));
     clearRowError(id);
     try {
-      await apiPatch(`/api/v1/admin/shipments/${id}/assign-courier`, {
+      await apiPatch(`/api/v2/admin/shipments/${id}/assign-courier`, {
         courierCode,
       });
       toast.success("Kurir pengantaran berhasil ditugaskan.");
@@ -1214,7 +1214,7 @@ export function ShipmentsPage({
     setRowBusy((current) => ({ ...current, [id]: true }));
     clearRowError(id);
     try {
-      await apiPost("/api/v1/admin/shipments/receive", {
+      await apiPost("/api/v2/admin/shipments/receive", {
         shipmentId: id,
         trackingNumber,
       });
@@ -1293,7 +1293,7 @@ export function ShipmentsPage({
                 onClick={async () => {
                   try {
                     const response = await apiGet<Shipment>(
-                      `/api/v1/admin/shipments/${row.original.id}`,
+                      `/api/v2/admin/shipments/${row.original.id}`,
                     );
                     setDetailShipment(response.data);
                   } catch (error) {
@@ -1503,7 +1503,7 @@ export function ShipmentsPage({
                   try {
                     const formData = new FormData();
                     formData.append("file", photoFile);
-                    const uploadRes = await fetch("/api/v1/staff/upload", {
+                    const uploadRes = await fetch("/api/v2/staff/upload", {
                       method: "POST",
                       body: formData,
                     });
@@ -1719,8 +1719,8 @@ export function PaymentsPage({
 }) {
   const endpoint =
     mode === "cashier"
-      ? "/api/v1/cashier/payments?limit=100"
-      : "/api/v1/admin/payments?limit=100";
+      ? "/api/v2/cashier/payments?limit=100"
+      : "/api/v2/admin/payments?limit=100";
   const [status, setStatus] = useState("");
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator(
@@ -1846,14 +1846,14 @@ export function CashVerificationPage() {
   });
   const reportGenerator = useReportGenerator("cashier");
   const { data, loading, error } = useApiData<Payment[]>(
-    "/api/v1/cashier/payments?limit=100&paymentStatus=pending&paymentMethod=cash",
+    "/api/v2/cashier/payments?limit=100&paymentStatus=pending&paymentMethod=cash",
     [],
     refresh,
   );
   async function verify(payment: Payment) {
     const paidAmount = window.prompt("Paid amount", String(payment.amount));
     if (!paidAmount) return;
-    await apiPatch(`/api/v1/cashier/payments/${payment.id}/verify-cash`, {
+    await apiPatch(`/api/v2/cashier/payments/${payment.id}/verify-cash`, {
       paidAmount: Number(paidAmount),
     });
     setRefresh((value) => value + 1);
@@ -1924,7 +1924,7 @@ export function CashVerificationPage() {
 
 export function CourierDashboardPage() {
   const { data, loading, error } = useApiData<Shipment[]>(
-    "/api/v1/courier/shipments?limit=100",
+    "/api/v2/courier/shipments?limit=100",
     [],
   );
   const recentShipments = [...data]
@@ -1988,7 +1988,7 @@ export function ManagerDashboardPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("manager");
   const { data, loading, error } = useApiData<DashboardSummary>(
-    "/api/v1/manager/dashboard",
+    "/api/v2/manager/dashboard",
     {
       totalCustomers: 0,
       totalStaff: 0,
@@ -2073,7 +2073,7 @@ export function ManagerAnalyticsPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("manager");
   const { data, loading, error } = useApiData<Record<string, unknown>>(
-    "/api/v1/manager/payments/summary",
+    "/api/v2/manager/payments/summary",
     {},
   );
   const chart = useMemo(
@@ -2147,7 +2147,7 @@ export function OwnerDashboardPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("owner");
   const { data, loading, error } = useApiData<DashboardSummary>(
-    "/api/v1/owner/dashboard",
+    "/api/v2/owner/dashboard",
     {
       totalCustomers: 0,
       totalStaff: 0,
@@ -2235,7 +2235,7 @@ export function OwnerAnalyticsPage() {
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
   const reportGenerator = useReportGenerator("owner");
   const { data, loading, error } = useApiData<Record<string, unknown>>(
-    "/api/v1/owner/payments/summary",
+    "/api/v2/owner/payments/summary",
     {},
   );
   const chart = useMemo(

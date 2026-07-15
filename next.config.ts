@@ -3,6 +3,7 @@ import path from "node:path";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   outputFileTracingRoot: path.join(process.cwd()),
   reactStrictMode: true,
   images: {
@@ -68,3 +69,5 @@ export default withPWA({
     },
   ],
 })(nextConfig);
+
+module.exports = nextConfig;

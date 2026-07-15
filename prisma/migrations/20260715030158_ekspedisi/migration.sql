@@ -13,6 +13,23 @@ CREATE TABLE `branches` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `customer_notifications` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `customer_id` BIGINT UNSIGNED NOT NULL,
+    `shipment_id` BIGINT UNSIGNED NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `message` TEXT NOT NULL,
+    `is_read` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+
+    INDEX `idx_customer_notifications_customer_id`(`customer_id`),
+    INDEX `idx_customer_notifications_is_read`(`is_read`),
+    INDEX `idx_customer_notifications_shipment_id`(`shipment_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `customers` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
@@ -175,6 +192,12 @@ CREATE TABLE `vehicles` (
     INDEX `idx_vehicles_courier_id`(`courier_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `customer_notifications` ADD CONSTRAINT `fk_customer_notifications_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `customer_notifications` ADD CONSTRAINT `fk_customer_notifications_shipment_id` FOREIGN KEY (`shipment_id`) REFERENCES `shipments`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `payments` ADD CONSTRAINT `fk_payments_shipment_id` FOREIGN KEY (`shipment_id`) REFERENCES `shipments`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

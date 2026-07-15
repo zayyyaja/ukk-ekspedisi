@@ -1,11 +1,57 @@
+# ============================================================
+# .dockerignore — file yang TIDAK dikopi ke Docker build context
+# Ini mempercepat build dan mencegah file sensitif masuk image
+# ============================================================
+
+# Dependencies (akan diinstall ulang di dalam container)
 node_modules
+npm-debug.log*
+
+# Next.js build output
 .next
-.git
-.cursor
-.agents
-*.log
+out
+
+# Environment files (jangan pernah masuk image!)
 .env
-.env.*
-!/.env.example
-public/uploads/*
-!public/uploads/.gitkeep
+.env.local
+.env.*.local
+.env.docker
+
+# Version control
+.git
+.gitignore
+
+# Docker files sendiri (tidak perlu di dalam image)
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+setup.sh
+nginx/
+mysql/
+
+# Development files
+*.log
+.eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test files
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage
+
+# Prisma — KECUALI schema dan migrations yang diperlukan
+# (prisma/schema.prisma dan prisma/migrations/ harus ikut)
+prisma/seed.ts

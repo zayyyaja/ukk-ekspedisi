@@ -64,8 +64,8 @@ function OrdersContent() {
     <CashierShell branchName={summary.data?.branch?.name} search={filters.search} onSearch={(search) => setFilters((current) => ({ ...current, search, page: 1 }))}>
       <div className="flex flex-col gap-5">
         <div>
-          <h1 className="text-3xl font-bold">Pesanan</h1>
-          <p className="mt-2 text-slate-500">Semua pesanan cabang dengan filter riwayat.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-ink">Pesanan</h1>
+          <p className="mt-2 text-sm font-medium text-muted">Semua pesanan cabang dengan filter riwayat.</p>
         </div>
         <CashierFiltersBar filters={filters} onChange={setFilters} table />
         <CashierOrderTable

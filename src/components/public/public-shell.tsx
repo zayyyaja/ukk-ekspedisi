@@ -5,8 +5,7 @@ import { PublicNavbar } from "@/components/layout/public-navbar";
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
-    // Mengubah bg-paper & text-ink menjadi warna standar yang bersih dan anti-error
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-mono antialiased">
+    <div className="min-h-screen bg-background text-ink font-body antialiased selection:bg-primary/20">
       <PublicNavbar />
       
       {/* Konten halaman utama (seperti Hero Section dll) */}

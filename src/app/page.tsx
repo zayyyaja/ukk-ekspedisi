@@ -7,7 +7,7 @@ import { RateSection } from "@/components/public/rate-section";
 
 // Mengubah metadata ke bahasa yang lebih membumi dan jelas fungsinya
 export const metadata: Metadata = {
-  title: "Danish Ekspedisi | Cek Resi & Kirim Paket Logistik",
+  title: "DRG-EKSPEDISI | Cek Resi & Kirim Paket Logistik",
   description:
     "Aplikasi pengiriman kargo dan paket logistik domestik. Cek ongkir murah, buat pesanan mudah, dan pantau resi real-time.",
 };

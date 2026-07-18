@@ -11,7 +11,7 @@ export function createVehicle(input: CreateVehicleInput) {
       type: input.type as vehicles_type,
       courier_id: BigInt(input.courierId ?? 0),
     },
-    include: { users: true },
+    include: { users: { select: { id: true, name: true, courier_code: true, role: true } } },
   });
 }
 
@@ -23,7 +23,7 @@ export function updateVehicle(id: number, input: UpdateVehicleInput) {
       type: input.type as vehicles_type | undefined,
       courier_id: input.courierId ? BigInt(input.courierId) : undefined,
     },
-    include: { users: true },
+    include: { users: { select: { id: true, name: true, courier_code: true, role: true } } },
   });
 }
 
@@ -34,7 +34,7 @@ export function deleteVehicle(id: number) {
 export function findVehicleById(id: number) {
   return prisma.vehicles.findUnique({
     where: { id: BigInt(id) },
-    include: { users: true },
+    include: { users: { select: { id: true, name: true, courier_code: true, role: true } } },
   });
 }
 
@@ -46,7 +46,7 @@ export function findVehicles(where: Prisma.vehiclesWhereInput, skip: number, tak
       skip,
       take,
       orderBy: { created_at: "desc" },
-      include: { users: true },
+      include: { users: { select: { id: true, name: true, courier_code: true, role: true } } },
     }),
   ]);
 }
@@ -55,12 +55,13 @@ export function assignCourierVehicle(id: number, courierId: number) {
   return prisma.vehicles.update({
     where: { id: BigInt(id) },
     data: { courier_id: BigInt(courierId) },
-    include: { users: true },
+    include: { users: { select: { id: true, name: true, courier_code: true, role: true } } },
   });
 }
 
 export function findActiveCourier(id: number) {
   return prisma.users.findFirst({
     where: { id: BigInt(id), role: users_role.courier, is_active: true },
+    select: { id: true, name: true, courier_code: true },
   });
 }

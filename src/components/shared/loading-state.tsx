@@ -10,31 +10,31 @@ export function LoadingState({
   rows?: number;
 }) {
   return (
-    <div className="w-full border-4 border-slate-900 bg-slate-50 p-6 font-mono shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md">
+    <div className="w-full rounded-2xl border border-border bg-surface p-6 shadow-sm">
       <div className="space-y-5">
         
-        {/* Status Loading dengan Spinner Kasar */}
-        <div className="flex items-center gap-2.5 border-b-2 border-dashed border-slate-900 pb-3 text-xs font-black uppercase tracking-wider text-slate-900">
-          <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
-          <span>[ FETCHING ] {title.toUpperCase()}...</span>
+        {/* Loading Indicator */}
+        <div className="flex items-center gap-2.5 border-b border-border pb-3 text-sm font-semibold text-muted">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>{title}...</span>
         </div>
         
-        {/* Baris Pembacaan Log (Skeleton Kustom Brutalist) */}
+        {/* Skeleton Rows */}
         <div className="space-y-3">
           {Array.from({ length: rows }).map((_, index) => (
             <div 
               key={index}
-              className="flex items-center gap-3 border-2 border-slate-900 bg-white p-2.5 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm animate-pulse"
+              className="flex items-center gap-3 rounded-xl border border-border bg-slate-50/50 p-2.5 animate-pulse"
               style={{ animationDelay: `${index * 150}ms` }}
             >
-              {/* Indikator Blok Kecil Depan */}
-              <div className="h-3 w-6 bg-slate-900 shrink-0" />
+              {/* Skeleton Block */}
+              <div className="h-3 w-6 rounded-sm bg-slate-200 shrink-0" />
               
-              {/* Garis Baris Data Tiruan */}
-              <div className="h-2 w-full bg-slate-200" />
+              {/* Skeleton Line */}
+              <div className="h-2 w-full rounded-sm bg-slate-100" />
               
-              {/* Variasi Panjang Ujung Baris Biar Realistis */}
-              <div className={`h-2 bg-slate-200 hidden sm:block`} style={{ width: `${(index % 3 + 1) * 20}%` }} />
+              {/* Skeleton Variation */}
+              <div className="hidden h-2 rounded-sm bg-slate-100 sm:block" style={{ width: `${(index % 3 + 1) * 20}%` }} />
             </div>
           ))}
         </div>

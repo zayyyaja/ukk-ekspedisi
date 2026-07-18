@@ -1,5 +1,17 @@
-node_modules
-# Keep environment variables out of version control
-.env
+node_modules/
+.next/
+out/
 
-.next
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+*.log
+coverage/
+scratch/
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -20,29 +20,29 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "w-full border-4 border-slate-900 bg-white p-8 font-mono shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md",
+        "w-full rounded-2xl border border-border bg-surface p-8 shadow-sm",
         className
       )}
     >
       <div className="mx-auto flex   max-w-md flex-col items-center justify-center text-center">
-        {/* Kontainer Ikon Brutalist */}
-        <div className="flex h-14 w-14 items-center justify-center border-2 border-slate-900 bg-amber-400 text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] rounded-sm">
-          <Icon className="h-6 w-6 stroke-[2.5]" />
+        {/* Icon Container */}
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+          <Icon className="h-6 w-6" />
         </div>
 
-        {/* Blok Informasi Status Kosong */}
+        {/* Empty State Info */}
         <div className="mt-5 space-y-1.5">
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-            [ NIHIL ] {title.toUpperCase()}
+          <h3 className="text-base font-semibold tracking-tight text-ink">
+            {title}
           </h3>
-          <p className="text-2xs font-bold uppercase tracking-wide text-slate-500 max-w-xs mx-auto leading-relaxed">
+          <p className="mx-auto max-w-xs text-sm text-muted">
             {description}
           </p>
         </div>
 
         {/* Slot Tombol Tindakan Tambahan */}
         {action ? (
-          <div className="mt-6 w-full border-t-2 border-dashed border-slate-900 pt-5">
+          <div className="mt-6 w-full pt-2">
             {action}
           </div>
         ) : null}

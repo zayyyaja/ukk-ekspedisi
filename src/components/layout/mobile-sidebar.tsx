@@ -18,10 +18,11 @@ import { cn } from "@/lib/utils";
 type MenuItem = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
 };
 
 function isActive(pathname: string, href: string) {
+  if (href === "/customer") return pathname === "/customer";
   return href.endsWith("/dashboard") ? pathname === href : pathname.startsWith(href);
 }
 
@@ -39,60 +40,58 @@ export function MobileSidebar({
     <Sheet onOpenChange={setOpen} open={open}>
       {/* Trigger Button - Neo-Brutalist Border & Stamp Shadow */}
       <SheetTrigger asChild>
-        <Button 
-          className="lg:hidden border-2 border-ink bg-paper text-ink hover:bg-ink/5 shadow-stamp-sm transition-all active:translate-x-0 active:translate-y-0" 
-          size="icon" 
-          type="button" 
-          variant="ghost"
+        <button
+          className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-border/40 bg-surface text-ink hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+          type="button"
         >
-          <Menu className="h-5 w-5 stroke-[2.5]" />
-          <span className="sr-only">Buka Menu Manifest</span>
-        </Button>
+          <Menu className="h-5 w-5" strokeWidth={1.5} />
+          <span className="sr-only">Open Menu</span>
+        </button>
       </SheetTrigger>
 
       {/* Sidebar Content - Solid Paper Background, Thick Ink Border */}
-      <SheetContent 
-        className="bg-paper border-r-4 border-ink text-ink p-6 w-70 sm:w-[320px]" 
+      <SheetContent
+        className="bg-surface border-r border-border/40 text-ink p-0 w-72 max-w-[calc(100vw-3rem)] sm:w-[320px] flex flex-col"
         side="left"
       >
-        <SheetHeader className="border-b-2 border-ink pb-5">
+        <SheetHeader className="border-b border-border/40 p-6 flex-shrink-0 text-left">
           {/* Brand/System Context Sublabel */}
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-4 h-2 bg-cargo-amber border border-ink rounded-2px" />
-            <span className="font-mono text-[9px] font-bold tracking-widest text-steel uppercase">
-              danishEkspedisi // panel
+            <div className="w-3 h-1.5 bg-primary rounded-full" />
+            <span className="text-[10px] font-bold tracking-tight text-muted uppercase">
+              DRG-EKSPEDISI
             </span>
           </div>
-          
+
           {/* Sidebar Title - Bold Uppercase Display */}
-          <SheetTitle className="text-left font-display text-lg font-black tracking-tighter text-ink uppercase">
+          <SheetTitle className="text-left text-lg font-semibold tracking-tight text-ink uppercase">
             {title}
           </SheetTitle>
         </SheetHeader>
 
         {/* Navigation Menu Grid */}
-        <nav className="mt-6 grid gap-2">
+        <nav className="flex-1 overflow-y-auto px-4 py-6 grid gap-1.5 content-start">
           {menu.map((item) => {
             const Icon = item.icon;
             const isCurrentActive = isActive(pathname, item.href);
-            
+
             return (
               <Link
                 className={cn(
-                  "flex items-center gap-3 border-2 px-4 py-3 text-xs font-display font-bold uppercase tracking-wider transition-all rounded-app",
+                  "flex items-center gap-3 px-4 py-3 text-sm font-medium tracking-tight transition-colors rounded-xl",
                   isCurrentActive
-                    ? "bg-ink text-paper border-ink shadow-stamp-sm"
-                    : "text-ink border-transparent hover:bg-ink/5 hover:border-ink"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted hover:bg-slate-50 hover:text-ink"
                 )}
                 href={item.href}
                 key={`${item.href}-${item.label}`}
                 onClick={() => setOpen(false)}
               >
                 {/* Icon Wrapper dynamic sizing */}
-                <Icon className={cn(
-                  "h-4 w-4 stroke-[2.5] transition-transform",
-                  isCurrentActive && "scale-105"
-                )} />
+                <Icon
+                  className={cn("h-4 w-4 transition-transform", isCurrentActive && "text-primary")}
+                  strokeWidth={isCurrentActive ? 2 : 1.5}
+                />
                 <span>{item.label}</span>
               </Link>
             );
@@ -100,8 +99,10 @@ export function MobileSidebar({
         </nav>
 
         {/* Footer info inside sidebar for system branding */}
-        <div className="absolute bottom-6 left-6 right-6 border-t border-ink/10 pt-4 font-mono text-[9px] text-steel uppercase tracking-widest">
-          SYSTEM LEVEL: SECURE GATEWAY
+        <div className="flex-shrink-0 p-6 border-t border-border/40 bg-slate-50/50 mt-auto">
+          <div className="text-[10px] font-semibold text-muted uppercase tracking-tight text-center">
+            DRG-EKSPEDISI SYSTEM
+          </div>
         </div>
       </SheetContent>
     </Sheet>

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-
 import midtransClient from "midtrans-client";
+import { env } from "@/config/env";
 
 type SnapTransactionPayload = {
   transaction_details: {
@@ -21,71 +21,41 @@ type MidtransNotificationPayload = {
   signature_key: string;
 };
 
-function isProduction() {
-  return process.env.MIDTRANS_IS_PRODUCTION === "true";
-}
+// Singleton instances
+let snapClient: InstanceType<typeof midtransClient.Snap> | null = null;
+let coreApiClient: InstanceType<typeof midtransClient.CoreApi> | null = null;
 
 export function getMidtransSnap() {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
-
-  if (!serverKey || !clientKey) {
-    throw new Error("Midtrans credentials are not configured");
+  if (!snapClient) {
+    snapClient = new midtransClient.Snap({
+      isProduction: env.MIDTRANS_IS_PRODUCTION,
+      serverKey: env.MIDTRANS_SERVER_KEY,
+      clientKey: env.MIDTRANS_CLIENT_KEY,
+    });
   }
-
-  return new midtransClient.Snap({
-    isProduction: isProduction(),
-    serverKey,
-    clientKey,
-  });
+  return snapClient;
 }
 
 export function getMidtransCoreApi() {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-  const clientKey = process.env.MIDTRANS_CLIENT_KEY;
-
-  if (!serverKey || !clientKey) {
-    throw new Error("Midtrans credentials are not configured");
+  if (!coreApiClient) {
+    coreApiClient = new midtransClient.CoreApi({
+      isProduction: env.MIDTRANS_IS_PRODUCTION,
+      serverKey: env.MIDTRANS_SERVER_KEY,
+      clientKey: env.MIDTRANS_CLIENT_KEY,
+    });
   }
-
-  return new midtransClient.CoreApi({
-    isProduction: isProduction(),
-    serverKey,
-    clientKey,
-  });
+  return coreApiClient;
 }
 
 export async function createSnapTransaction(payload: SnapTransactionPayload) {
-  if (
-    process.env.NODE_ENV !== "production" &&
-    (!process.env.MIDTRANS_SERVER_KEY || !process.env.MIDTRANS_CLIENT_KEY)
-  ) {
-    const orderId = payload.transaction_details.order_id;
-
-    return {
-      token: `dev-snap-token-${orderId}`,
-      redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${orderId}`,
-    };
-  }
-
   return getMidtransSnap().createTransaction(payload);
 }
 
 export function verifyMidtransSignature(payload: MidtransNotificationPayload) {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-
-  if (!serverKey) {
-    if (process.env.NODE_ENV !== "production") {
-      return true;
-    }
-
-    throw new Error("MIDTRANS_SERVER_KEY is not configured");
-  }
-
   const signature = crypto
     .createHash("sha512")
     .update(
-      `${payload.order_id}${payload.status_code}${payload.gross_amount}${serverKey}`,
+      `${payload.order_id}${payload.status_code}${payload.gross_amount}${env.MIDTRANS_SERVER_KEY}`,
     )
     .digest("hex");
 

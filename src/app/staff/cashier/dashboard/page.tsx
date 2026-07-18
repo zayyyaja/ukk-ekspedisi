@@ -84,7 +84,7 @@ function DashboardContent() {
       </div>
 
       <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={<ShoppingBag />} label="Pesanan Pending" value={data?.pendingOrders ?? 0} tone="orange" description="Menunggu pembayaran atau proses awal." />
+        <SummaryCard icon={<ShoppingBag />} label="Pesanan Pending" value={data?.pendingOrders ?? 0} tone="amber" description="Menunggu pembayaran atau proses awal." />
         <SummaryCard icon={<Clipboard />} label="Pembayaran / Pesanan Gagal" value={data?.failedOrCancelled ?? 0} tone="red" description="Perlu perhatian." />
         <SummaryCard icon={<WalletCards />} label="Pembayaran Hari Ini" value={data?.paidToday ?? 0} tone="green" description="Transaksi berhasil." />
         <SummaryCard icon={<BarChart3 />} label="Total Pemasukan" value={formatCurrency(data?.totalRevenue ?? 0)} tone="slate" />
@@ -127,23 +127,24 @@ function SummaryCard({
   label: string;
   value: string | number;
   description?: string;
-  tone: "orange" | "red" | "green" | "slate";
+  tone: "primary" | "red" | "green" | "slate" | "amber";
 }) {
-  const colors = {
-    orange: "bg-orange-100 text-orange-600",
-    red: "bg-red-100 text-red-600",
-    green: "bg-emerald-100 text-emerald-600",
+  const styles = {
+    primary: "bg-blue-50 text-blue-700",
+    red: "bg-red-50 text-red-600",
+    green: "bg-green-50 text-green-700",
     slate: "bg-slate-100 text-slate-700",
+    amber: "bg-amber-50 text-amber-700",
   };
 
   return (
     <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
       <div className="flex items-center gap-4">
-        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${colors[tone]}`}>{icon}</div>
+        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${styles[tone]}`}>{icon}</div>
         <div>
-          <p className="font-semibold text-slate-700">{label}</p>
-          <div className="mt-2 text-3xl font-bold">{value}</div>
-          {description ? <p className="mt-2 text-sm font-semibold text-orange-600">{description}</p> : null}
+          <p className="text-sm font-medium text-slate-600">{label}</p>
+          <p className="text-3xl font-bold text-slate-900">{value}</p>
+          {description ? <p className="mt-2 text-sm font-semibold text-blue-700">{description}</p> : null}
         </div>
       </div>
     </div>

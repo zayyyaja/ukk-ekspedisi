@@ -38,49 +38,49 @@ export function BranchDirectory() {
   }, [branches, query]);
 
   return (
-    <main className="min-h-screen bg-paper py-16 text-ink">
-      <div className="mx-auto w-full max-w-7xl px-6 lg:px-10 space-y-10">
+    <main className="min-h-screen bg-surface py-24 text-ink font-body">
+      <div className="page-container space-y-12">
         
-        {/* Header - Tipografi Manifes Kargo yang Tegas */}
-        <header className="max-w-3xl border-l-4 border-ink pl-5 space-y-2">
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-steel">
-            DIREKTORI CABANG // danishEkspedisi
+        {/* Header */}
+        <header className="max-w-2xl mx-auto text-center space-y-4">
+          <span className="inline-flex items-center gap-1.5 bg-primary/5 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-primary rounded-full">
+            Network Directory
           </span>
-          <h1 className="font-display text-3xl font-black uppercase tracking-tight text-ink sm:text-4xl">
-            Temukan Hub &amp; Cabang Terdekat
+          <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+            Find your local hub.
           </h1>
-          <p className="font-body text-sm leading-relaxed text-steel">
-            Cari lokasi drop off resmi, kontak hub operasional, dan area jangkauan logistik pengiriman barang Anda secara transparan.
+          <p className="text-base leading-relaxed text-muted">
+            Locate official drop-off points, operational hub contacts, and our transparent domestic logistics coverage area.
           </p>
         </header>
 
         {/* Section Utama Pembungkus Panel */}
-        <section className="space-y-6">
+        <section className="space-y-10 max-w-5xl mx-auto w-full">
           
-          {/* Bar Pencarian - Desain Neo-Brutalist Border Tebal & Stamp Shadow */}
-          <div className="relative h-14 w-full border-2 border-ink bg-paper rounded-app shadow-stamp-sm focus-within:shadow-stamp focus-within:-translate-x-px focus-within:-translate-y-px transition-all">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink stroke-[2.5]" />
+          {/* Bar Pencarian */}
+          <div className="relative h-16 w-full max-w-2xl mx-auto overflow-hidden rounded-xl border border-border bg-surface shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+            <Search className="absolute left-6 top-1/2 h-6 w-6 -translate-y-1/2 text-muted" />
             <input
-              className="w-full h-full bg-transparent pl-12 pr-4 font-body text-xs font-bold uppercase tracking-wider text-ink outline-none placeholder:text-steel/50"
+              className="h-full w-full bg-transparent pl-16 pr-6 text-base font-medium text-ink outline-none placeholder:text-muted"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="CARI NAMA CABANG, KOTA OPERASIONAL, ALAMAT HUB, ATAU TELEPON..."
+              placeholder="Search branch name, city, or address..."
               type="search"
               value={query}
             />
           </div>
 
-          {/* Alert Status Sistem - Error Box Khas Dokumen Industrial */}
+          {/* Alert Status Sistem */}
           {error && (
-            <div className="border-2 border-dashed border-red-600 bg-red-50 p-4 font-mono text-xs font-bold uppercase tracking-wide text-red-700 rounded-app">
-              [SYSTEM ERROR]: {error}
+            <div className="rounded-2xl border border-red-200 bg-red-50/50 p-4 text-sm font-semibold text-red-800 shadow-sm">
+              {error}
             </div>
           )}
           
-          {/* Loading State - Geometris Minimalis */}
+          {/* Loading State */}
           {loading && (
-            <div className="flex items-center gap-3 border-2 border-ink border-dashed p-8 justify-center font-mono text-xs font-bold uppercase tracking-widest text-steel bg-ink/1 rounded-app">
-              <div className="w-4 h-4 border-2 border-ink border-t-transparent rounded-full animate-spin" />
-              Memuat manifes daftar cabang...
+            <div className="flex items-center justify-center gap-3 rounded-2xl border border-border border-dashed bg-slate-50/50 p-12 text-sm font-semibold text-muted">
+              <div className="h-5 w-5 animate-spin rounded-full border-[3px] border-primary border-t-transparent" />
+              Memuat daftar cabang...
             </div>
           )}
 
@@ -89,40 +89,40 @@ export function BranchDirectory() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredBranches.map((branch) => (
                 <article 
-                  className="group relative border-2 border-ink bg-paper p-5 rounded-app shadow-stamp-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp transition-all flex flex-col justify-between" 
+                  className="group flex flex-col justify-between rounded-2xl border border-border/60 bg-surface p-6 shadow-sm transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-0.5" 
                   key={branch.id}
                 >
                   <div>
-                    {/* Badge Icon - Kotak Cargo Amber Tebal */}
-                    <div className="mb-4 flex h-11 w-11 items-center justify-center border-2 border-ink bg-cargo-amber text-ink rounded-app shadow-stamp-sm group-hover:scale-105 transition-transform">
-                      <Building2 className="h-5 w-5 stroke-[2.5]" />
+                    {/* Badge Icon */}
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Building2 className="h-6 w-6" />
                     </div>
                     
                     {/* Nama dan Kota Cabang */}
-                    <h2 className="font-display text-sm font-black uppercase tracking-tight text-ink">
+                    <h2 className="text-lg font-semibold tracking-tight text-ink">
                       {branch.name}
                     </h2>
-                    <p className="mt-1 font-mono text-[10px] font-bold text-steel tracking-wide uppercase border-b border-ink/10 pb-3">
-                      REGIO: {branch.city}
+                    <p className="mt-1 mb-5 border-b border-border/50 pb-5 text-[11px] font-bold text-primary uppercase tracking-wider">
+                      Area: {branch.city}
                     </p>
                     
                     {/* Detail Kontak Fisik Hub */}
-                    <div className="mt-4 grid gap-3 font-body text-xs text-steel">
-                      <p className="flex gap-2.5 items-start">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-ink stroke-[2.5]" />
+                    <div className="mt-5 grid gap-4 text-sm text-muted">
+                      <p className="flex items-start gap-3">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                         <span className="leading-snug">{branch.address}</span>
                       </p>
-                      <p className="flex items-center gap-2.5">
-                        <Phone className="h-4 w-4 text-ink stroke-[2.5]" />
-                        <span className="font-mono tracking-wide">{branch.phone}</span>
+                      <p className="flex items-center gap-3">
+                        <Phone className="h-4 w-4 text-slate-400" />
+                        <span className="font-medium text-ink">{branch.phone}</span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Penanda Stamp Pojok Bawah Kartu */}
-                  <div className="mt-5 border-t border-dashed border-ink/10 pt-3 flex justify-between items-center font-mono text-[9px] text-steel/60 uppercase tracking-widest">
+                  {/* Footer Card */}
+                  <div className="mt-8 flex items-center justify-between pt-4 text-[10px] font-bold uppercase tracking-tight text-muted/60">
                     <span>ID: #{branch.id}</span>
-                    <span className="bg-ink/4 px-1.5 py-0.5 border border-ink/10 rounded-2px text-ink font-bold">Verified</span>
+                    <span className="rounded-full bg-emerald-50 text-emerald-600 px-2.5 py-1">Verified</span>
                   </div>
                 </article>
               ))}
@@ -131,12 +131,12 @@ export function BranchDirectory() {
 
           {/* Tampilan Data Kosong / Tidak Ditemukan */}
           {!loading && filteredBranches.length === 0 && (
-            <div className="border-2 border-dashed border-ink/20 bg-ink/1 p-12 text-center rounded-app space-y-2">
-              <strong className="block font-display text-sm font-black uppercase tracking-wider text-ink">
-                [!] KATA KUNCI CABANG TIDAK DIKENALI
+            <div className="space-y-2 rounded-2xl border border-dashed border-border/60 bg-surface p-16 text-center shadow-sm">
+              <strong className="block text-base font-semibold text-ink">
+                No branches found
               </strong>
-              <span className="block font-body text-xs text-steel">
-                Gunakan kata kunci pencarian yang lebih umum seperti nama kota besar atau nama jalan hub logistik.
+              <span className="block text-sm text-muted">
+                Try searching with a broader keyword, like a major city or street name.
               </span>
             </div>
           )}

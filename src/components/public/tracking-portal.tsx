@@ -47,59 +47,59 @@ export function TrackingPortal() {
   }
 
   return (
-    <main className="min-h-screen bg-paper py-16 text-ink">
-      <div className="mx-auto w-full max-w-7xl px-6 lg:px-10 space-y-10">
+    <main className="min-h-screen bg-surface py-24 text-ink font-body">
+      <div className="page-container space-y-12">
         
-        {/* Header Portal - Desain Khas Manifes Dokumen Logistik */}
-        <header className="max-w-3xl border-l-4 border-ink pl-5 space-y-2">
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-steel">
-            REAL-TIME TRACKING SYSTEM // danishEkspedisi
+        {/* Header Portal */}
+        <header className="max-w-2xl mx-auto text-center space-y-4">
+          <span className="inline-flex items-center gap-1.5 bg-primary/5 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-primary rounded-full">
+            Global Tracking System
           </span>
-          <h1 className="font-display text-3xl font-black uppercase tracking-tight text-ink sm:text-4xl">
-            Lacak Posisi Paket Real-Time
+          <h1 className="text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
+            Track your shipment.
           </h1>
-          <p className="font-body text-sm leading-relaxed text-steel">
-            Masukkan kode resi manifes unik Anda untuk memantau status distribusi, lokasi transit, dan riwayat perjalanan kargo secara transparan.
+          <p className="text-base leading-relaxed text-muted">
+            Enter your tracking number for real-time updates on your cargo's location, transit history, and estimated arrival.
           </p>
         </header>
 
         {/* Section Kontainer Pencarian & Hasil */}
-        <section className="space-y-6">
+        <section className="space-y-10 max-w-4xl mx-auto w-full">
           
-          {/* Form Pencarian Resi - Gaya Komponen Neo-Brutalist Tebal */}
+          {/* Form Pencarian Resi */}
           <form
-            className="grid gap-4 sm:grid-cols-[1fr_auto]"
+            className="flex flex-col sm:flex-row gap-4 w-full"
             onSubmit={(event) => {
               event.preventDefault();
               void searchTracking();
             }}
           >
-            {/* Input Wrapper dengan Efek Fokus Angkat */}
-            <div className="relative h-14 w-full border-2 border-ink bg-paper rounded-app shadow-stamp-sm focus-within:shadow-stamp focus-within:-translate-x-px focus-within:-translate-y-px transition-all">
-              <PackageSearch className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink stroke-[2.5]" />
+            {/* Input Wrapper */}
+            <div className="relative h-16 w-full flex-1 overflow-hidden rounded-xl border border-border bg-surface shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20">
+              <PackageSearch className="absolute left-6 top-1/2 h-6 w-6 -translate-y-1/2 text-muted" />
               <input
-                className="w-full h-full bg-transparent pl-12 pr-4 font-body text-xs font-bold uppercase tracking-wider text-ink outline-none placeholder:text-steel/50"
+                className="h-full w-full bg-transparent pl-16 pr-6 text-base font-medium uppercase tracking-wider text-ink outline-none placeholder:text-muted placeholder:normal-case placeholder:font-normal"
                 onChange={(event) => setTrackingNumber(event.target.value)}
-                placeholder="CONTOH: ANTR-2026-0001"
+                placeholder="e.g. ANTR-2026-0001"
                 value={trackingNumber}
               />
             </div>
             
-            {/* Tombol Cari - Cetakan Stamp Aksen Cargo Amber */}
+            {/* Tombol Cari */}
             <button 
-              className="h-14 px-8 border-2 border-ink bg-cargo-amber font-display text-xs font-black uppercase tracking-wider text-ink shadow-stamp-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm rounded-app disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2" 
+              className="inline-flex h-16 items-center justify-center gap-2 rounded-xl bg-primary px-10 text-sm font-semibold text-primary-foreground shadow-md transition-transform active:scale-[0.98] hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 cursor-pointer shrink-0"
               disabled={loading} 
               type="submit"
             >
-              <Search className="h-4 w-4 stroke-[2.5]" />
-              {loading ? "Mencari..." : "Cari resi"}
+              <Search className="h-5 w-5" />
+              {loading ? "Searching..." : "Track Package"}
             </button>
           </form>
 
           {/* Alert Error Sistem */}
           {error && (
-            <div className="border-2 border-dashed border-red-600 bg-red-50 p-4 font-mono text-xs font-bold uppercase tracking-wide text-red-700 rounded-app">
-              [MANIFEST ERROR]: {error}
+            <div className="rounded-2xl border border-red-200 bg-red-50/50 p-4 text-sm font-semibold text-red-800 shadow-sm">
+              {error}
             </div>
           )}
 
@@ -108,77 +108,73 @@ export function TrackingPortal() {
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               
               {/* Kartu Informasi Utama Paket */}
-              <article className="border-2 border-ink bg-paper p-6 rounded-app shadow-stamp-sm flex flex-col justify-between">
+              <article className="flex flex-col justify-between rounded-2xl border border-border bg-surface p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                 <div>
-                  <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-steel">
-                    NOMOR RESI MANIFEST
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-tight">
+                    Tracking Number
                   </p>
-                  <h2 className="mt-1 font-display text-2xl font-black uppercase tracking-tight text-ink">
+                  <h2 className="mt-1 text-3xl font-bold tracking-tight text-ink uppercase">
                     {shipment.tracking_number}
                   </h2>
-                  <div className="mt-4 flex">
+                  <div className="mt-6 flex">
                     <StatusBadge status={shipment.status} />
                   </div>
                   
                   {/* Daftar Rincian Cabang & Tanggal */}
-                  <dl className="mt-6 grid gap-4 border-t-2 border-ink border-dashed pt-5 text-xs">
+                  <dl className="mt-10 grid gap-6 border-t border-border/50 pt-8 text-sm">
                     <div>
-                      <dt className="font-mono text-[10px] font-black uppercase text-steel tracking-wider">
-                        Hub Cabang Asal
+                      <dt className="text-xs font-semibold text-muted uppercase tracking-wider">
+                        Origin Hub
                       </dt>
-                      <dd className="mt-1 font-body font-bold text-ink uppercase">
+                      <dd className="mt-1.5 font-semibold text-ink text-base">
                         {shipment.branches_shipments_origin_branch_idTobranches?.name ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="font-mono text-[10px] font-black uppercase text-steel tracking-wider">
-                        Hub Cabang Tujuan
+                      <dt className="text-xs font-semibold text-muted uppercase tracking-wider">
+                        Destination Hub
                       </dt>
-                      <dd className="mt-1 font-body font-bold text-ink uppercase">
+                      <dd className="mt-1.5 font-semibold text-ink text-base">
                         {shipment.branches_shipments_destination_branch_idTobranches?.name ?? "-"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="font-mono text-[10px] font-black uppercase text-steel tracking-wider">
-                        Tanggal Registrasi Pengiriman
+                      <dt className="text-xs font-semibold text-muted uppercase tracking-wider">
+                        Shipment Date
                       </dt>
-                      <dd className="mt-1 font-mono font-bold text-ink">
+                      <dd className="mt-1.5 font-semibold text-ink text-base">
                         {shipment.shipment_date ? formatDate(shipment.shipment_date) : "-"}
                       </dd>
                     </div>
                   </dl>
                 </div>
-
-                <div className="mt-6 border-t border-ink/10 pt-3 text-right font-mono text-[9px] text-steel/60 uppercase tracking-widest">
-                  SECURE HUB VERIFIED
-                </div>
               </article>
 
               {/* Kartu Timeline Riwayat Perjalanan Paket */}
-              <article className="border-2 border-ink bg-paper p-6 rounded-app shadow-stamp-sm">
-                <h2 className="font-display text-base font-black uppercase tracking-tight text-ink border-b-2 border-ink pb-3 mb-6">
-                  TIMELINE LOGISTIK DISPATCH
+              <article className="rounded-2xl border border-border bg-surface p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h2 className="mb-8 border-b border-border/50 pb-4 text-sm font-semibold tracking-tight uppercase text-muted">
+                  Transit History
                 </h2>
                 
                 {/* Jalur Linier Linimasa Paket */}
-                <ol className="relative border-l-2 border-ink pl-6 ml-2 space-y-6">
+                <ol className="relative ml-4 space-y-8 border-l-2 border-primary/20 pl-8">
                   {(shipment.shipment_trackings ?? []).map((tracking) => (
                     <li key={tracking.id} className="relative">
-                      {/* Node Node Penanda Geometris Pengganti Bullet Lingkaran */}
-                      <div className="absolute -left-7.75 top-1 w-3 h-3 border-2 border-ink bg-cargo-amber rounded-2px shadow-stamp-xs" />
+                      {/* Node Node Penanda */}
+                      <div className="absolute -left-[41px] top-1.5 h-4 w-4 rounded-full border-[3px] border-surface bg-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]" />
                       
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2.5">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-3">
                           <StatusBadge status={tracking.status} />
-                          <span className="font-mono text-[10px] font-bold text-steel">
+                          <span className="text-[11px] font-bold text-muted uppercase tracking-tight">
                             {formatDate(tracking.tracked_at)}
                           </span>
                         </div>
-                        <p className="font-display text-xs font-black uppercase text-ink tracking-tight">
+                        <p className="text-base font-semibold text-ink">
                           {tracking.location}
                         </p>
                         {tracking.description && (
-                          <p className="font-body text-xs text-steel leading-relaxed">
+                          <p className="text-sm text-muted leading-relaxed">
                             {tracking.description}
                           </p>
                         )}
@@ -189,9 +185,9 @@ export function TrackingPortal() {
 
                 {/* State Jika Timeline Masih Kosong */}
                 {(shipment.shipment_trackings ?? []).length === 0 && (
-                  <p className="font-body text-xs text-steel italic border-2 border-dashed border-ink/20 p-4 text-center bg-ink/1 rounded-app">
-                    Belum ada riwayat manifes tracking yang tercatat untuk paket ini.
-                  </p>
+                  <div className="rounded-xl border border-dashed border-border bg-slate-50/50 p-8 text-center text-sm font-medium text-muted">
+                    Transit history is currently empty.
+                  </div>
                 )}
               </article>
 

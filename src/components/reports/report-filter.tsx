@@ -23,59 +23,58 @@ export function ReportFilter({
   }
 
   return (
-    <section className="w-full border-4 border-slate-900 bg-amber-50 p-6 font-mono shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md">
-      {/* Header Kecil Filter */}
-      <div className="mb-6 border-b-2 border-dashed border-slate-900 pb-3">
-        <span className="inline-block bg-slate-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-          KONTROL PARAMETER
-        </span>
-        <h4 className="mt-1 text-xs font-black uppercase tracking-wide text-slate-900">
-          FILTER FILTER MANIFES & LOG FILING
-        </h4>
+    <section className="w-full">
+      {/* Filter Header */}
+      <div className="mb-4 border-b border-border/40 pb-3 flex items-center gap-2.5">
+        <div className="flex items-center justify-center text-muted">
+          <Calendar size={16} strokeWidth={1.5} />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold tracking-tight text-ink">
+            Parameter Filter
+          </h4>
+        </div>
       </div>
 
       {/* Grid Input Fields */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Input: From Date */}
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 text-2xs font-black uppercase tracking-wider text-slate-700">
-            <Calendar size={12} className="stroke-[2.5]" />
-            PERIODE AWAL (FROM)
+          <label className="text-[11px] font-semibold text-muted">
+            Periode Awal
           </label>
           <input
             onChange={(event) => setField("fromDate", event.target.value)}
             type="date"
             value={value.fromDate ?? ""}
-            className="h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all focus:-translate-x-px focus:-translate-y-px focus:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] focus:outline-none rounded-sm"
+            className="h-10 w-full rounded-xl border border-border/40 bg-slate-50/50 px-3 text-sm font-medium text-ink transition-colors focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary"
           />
         </div>
 
         {/* Input: To Date */}
         <div className="flex flex-col gap-1.5">
-          <label className="flex items-center gap-1.5 text-2xs font-black uppercase tracking-wider text-slate-700">
-            <Calendar size={12} className="stroke-[2.5]" />
-            BATAS AKHIR (TO)
+          <label className="text-[11px] font-semibold text-muted">
+            Batas Akhir
           </label>
           <input
             onChange={(event) => setField("toDate", event.target.value)}
             type="date"
             value={value.toDate ?? ""}
-            className="h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all focus:-translate-x-px focus:-translate-y-px focus:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] focus:outline-none rounded-sm"
+            className="h-10 w-full rounded-xl border border-border/40 bg-slate-50/50 px-3 text-sm font-medium text-ink transition-colors focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary"
           />
         </div>
 
         {/* Input: Branch ID (Conditional) */}
         {showBranch && (
           <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-1.5 text-2xs font-black uppercase tracking-wider text-slate-700">
-              <MapPin size={12} className="stroke-[2.5]" />
-              KODE HUB / CABANG
+            <label className="text-[11px] font-semibold text-muted">
+              Kode Cabang
             </label>
             <input
               onChange={(event) => setField("branchId", event.target.value)}
-              placeholder="[ INPUT KODE HUB ]"
+              placeholder="Masukkan kode..."
               value={value.branchId ?? ""}
-              className="h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all placeholder:text-slate-400 focus:-translate-x-px focus:-translate-y-px focus:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] focus:outline-none rounded-sm"
+              className="h-10 w-full rounded-xl border border-border/40 bg-slate-50/50 px-3 text-sm font-medium text-ink transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary"
             />
           </div>
         )}
@@ -83,34 +82,33 @@ export function ReportFilter({
         {/* Input: Status (Conditional) */}
         {showStatus && (
           <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-1.5 text-2xs font-black uppercase tracking-wider text-slate-700">
-              <Layers size={12} className="stroke-[2.5]" />
-              STATUS KLIRING ARMADA
+            <label className="text-[11px] font-semibold text-muted">
+              Status
             </label>
             <div className="relative">
               <select
                 onChange={(event) => setField("status", event.target.value)}
                 value={value.status ?? ""}
-                className="h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-black uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all focus:-translate-x-px focus:-translate-y-px focus:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] focus:outline-none rounded-sm cursor-pointer appearance-none"
-                style={{ backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'black\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'6 9 12 15 18 9\'></polyline></svg>")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+                className="h-10 w-full appearance-none rounded-xl border border-border/40 bg-slate-50/50 px-3 pr-8 text-sm font-medium text-ink transition-colors focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary cursor-pointer"
+                style={{ backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'6 9 12 15 18 9\'></polyline></svg>")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
               >
-                <option value="">[ SEMUA STATUS ]</option>
-                <option value="pending">PENDING / ANTRIAN</option>
-                <option value="paid">PAID / LUNAS</option>
-                <option value="failed">FAILED / GAGAL</option>
-                <option value="delivered">DELIVERED / TIBA</option>
-                <option value="cancelled">CANCELLED / BATAL</option>
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
           </div>
         )}
       </div>
 
-      {/* Validasi Error Interval Tanggal */}
+      {/* Error Validation */}
       {invalid && (
-        <div className="mt-5 flex items-center gap-2.5 border-2 border-slate-900 bg-red-100 p-3 text-2xs font-black uppercase tracking-wide text-red-800 rounded-sm">
-          <AlertTriangle size={14} className="shrink-0 stroke-[2.5] text-red-600" />
-          <span>[ANOMALI TIMELINE] TANGGAL AWAL TIDAK BOLEH MELEBIHI BATAS AKHIR LOG DATA.</span>
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-600">
+          <AlertTriangle size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" />
+          <span>Tanggal awal tidak boleh melebihi batas akhir.</span>
         </div>
       )}
     </section>

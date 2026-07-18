@@ -17,6 +17,7 @@ import {
   updatePaymentStatus,
   updatePaymentTransactionReference,
 } from "@/repositories/payment.repository";
+import { env } from "@/config/env";
 import { createSnapTransaction, getMidtransTransactionStatus, verifyMidtransSignature } from "@/lib/midtrans";
 import {
   ForbiddenError,
@@ -230,7 +231,7 @@ export async function createOnlinePayment(
   const orderId = `EXP-${payment.shipments.tracking_number}-${Date.now()}`;
   const amount = toNumber(payment.amount);
   const sender = payment.shipments.customers_shipments_sender_idTocustomers;
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const appUrl = env.APP_URL;
   const transaction = (await createSnapTransaction({
     transaction_details: {
       order_id: orderId,
@@ -504,7 +505,7 @@ export async function getManagerPaymentSummary(currentUser: AuthUser) {
 
   const revenueByMethod = methodSummary.reduce<Record<string, number>>(
     (summary, method) => {
-      summary[method.payment_method] = toNumber(method._sum.amount ?? 0);
+      summary[method.payment_method] = toNumber(method._sum?.amount ?? 0);
 
       return summary;
     },
@@ -515,7 +516,7 @@ export async function getManagerPaymentSummary(currentUser: AuthUser) {
       const branchName =
         branchNames.get(branch.origin_branch_id.toString()) ??
         `Branch #${branch.origin_branch_id.toString()}`;
-      summary[branchName] = toNumber(branch._sum.total_price ?? 0);
+      summary[branchName] = toNumber(branch._sum?.total_price ?? 0);
 
       return summary;
     },
@@ -523,7 +524,11 @@ export async function getManagerPaymentSummary(currentUser: AuthUser) {
   );
   const totalByStatus = statusSummary.reduce<Record<string, number>>(
     (summary, status) => {
-      summary[status.payment_status] = status._count._all;
+      const count =
+        typeof status._count === "number"
+          ? status._count
+          : (status._count as any)?._all ?? 0;
+      summary[status.payment_status] = count;
 
       return summary;
     },

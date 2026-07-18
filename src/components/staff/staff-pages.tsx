@@ -16,23 +16,25 @@ import {
   X,
   FileSpreadsheet,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { PdfExportButton } from "@/components/reports/pdf-export-button";
 import { ReportFilter } from "@/components/reports/report-filter";
 import { StatusBadge } from "@/components/status-badge";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ActionMenu } from "@/components/staff/action-menu";
-import { DashboardChart } from "@/components/staff/dashboard-chart";
-import { DataTable } from "@/components/staff/data-table";
+import { addUpdateToQueue, getPendingUpdatesForTracking, type OfflineUpdate } from "@/lib/offline-queue";
+import dynamic from "next/dynamic";
+import { EnterpriseTable } from "@/components/shared/enterprise-table";
+const DashboardChart = dynamic(() => import("@/components/staff/dashboard-chart").then(m => m.DashboardChart), { ssr: false });
 import { FilterBar } from "@/components/staff/filter-bar";
 import { PageHeader } from "@/components/staff/page-header";
 import { StatCard } from "@/components/staff/stat-card";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/auth-client";
 import { formatCurrency, formatDate } from "@/lib/customer-format";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import {
   getAdminBranchReport,
   getAdminCustomerReport,
@@ -74,7 +76,6 @@ function useApiData<T>(path: string, fallback: T, refreshKey = 0) {
       const response = await apiGet<T>(path);
       return response.data;
     },
-    refetchInterval: 4_000,
   });
 
   return {
@@ -100,28 +101,28 @@ function StatePanel({
 }) {
   if (loading) {
     return (
-      <div className="flex w-full items-center gap-3 border-4 border-slate-900 bg-white p-5 font-mono text-sm font-black uppercase text-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
-        <Loader2 className="animate-spin text-amber-500 stroke-3" size={18} />
-        <span>[ TRANSMISI DATA ] MEMUAT MANIFES GUDANG...</span>
+      <div className="flex w-full items-center gap-3 border border-border/40 bg-surface p-5 text-sm font-medium text-muted rounded-2xl shadow-sm">
+        <Loader2 className="animate-spin text-primary shrink-0" size={18} />
+        <span>Memuat data…</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex w-full flex-col gap-4 border-4 border-slate-900 bg-rose-100 p-5 font-mono text-sm shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm">
-        <div className="flex items-center gap-2.5 font-black text-rose-900 uppercase">
-          <AlertTriangle className="stroke-3" size={18} />
-          <span>[ GALAT SISTEM ] INTERUPSI JARINGAN OPERASIONAL</span>
+      <div className="flex w-full flex-col gap-4 border border-rose-200 bg-rose-50 p-5 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2.5 font-semibold text-rose-700">
+          <AlertTriangle className="shrink-0" size={18} />
+          <span>Terjadi kesalahan saat memuat data</span>
         </div>
-        <p className="font-bold text-rose-950/80 uppercase text-xs tracking-wide">{error}</p>
+        <p className="text-sm font-medium text-rose-600">{error}</p>
         {onRetry && (
           <button
-            className="w-fit inline-flex h-9 items-center justify-center border-2 border-slate-900 bg-white px-4 text-2xs font-black uppercase tracking-wider text-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)]"
+            className="w-fit inline-flex h-9 items-center justify-center border border-border/50 bg-surface px-4 text-xs font-semibold text-ink shadow-sm transition-all rounded-lg cursor-pointer hover:bg-slate-50 focus-visible:outline-none"
             onClick={onRetry}
             type="button"
           >
-            MUAT ULANG DATA
+            Muat Ulang
           </button>
         )}
       </div>
@@ -131,8 +132,23 @@ function StatePanel({
   return null;
 }
 
+const STATUS_TRANSLATION: Record<string, string> = {
+  pending: "Menunggu",
+  picked_up: "Dijemput",
+  in_transit: "Dalam proses",
+  arrived_at_branch: "Tiba di cabang",
+  out_for_delivery: "Sedang dikirim",
+  delivered: "Selesai",
+  cancelled: "Dibatalkan",
+  paid: "Lunas",
+  failed: "Gagal",
+};
+
 function chartData(record?: Record<string, number>) {
-  return Object.entries(record ?? {}).map(([name, value]) => ({ name, value }));
+  return Object.entries(record ?? {}).map(([name, value]) => ({ 
+    name: STATUS_TRANSLATION[name] || name, 
+    value 
+  }));
 }
 
 function validateReportFilters(filters: ReportFilters) {
@@ -181,7 +197,7 @@ function reportOptions(
   };
 }
 
-function exportSimpleAdminPdf(
+async function exportSimpleAdminPdf(
   title: string,
   filename: string,
   columns: string[],
@@ -189,6 +205,9 @@ function exportSimpleAdminPdf(
   generator: ReportGenerator,
   filters: ReportFilters,
 ) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
   // 1. Logika penentuan posisi halaman (Kaku & Otomatis sesuai bawaan asli)
   const orientation = columns.length > 6 ? "l" : "p";
   const doc = new jsPDF(orientation, "mm", "a4");
@@ -208,7 +227,7 @@ function exportSimpleAdminPdf(
   doc.setFont("courier", "bold");
   doc.setFontSize(16);
   doc.text(title.toUpperCase(), 20, 24);
-  
+
   doc.setFont("courier", "normal");
   doc.setFontSize(8.5);
   const currentIsoDate = new Date().toISOString().split('T')[0];
@@ -218,7 +237,7 @@ function exportSimpleAdminPdf(
   // METRIC SUMMARY CARD (TOTAL DATA SINGLE BOX)
   // ==========================================
   const startY = 44;
-  const cardWidth = orientation === "l" ? 55 : 50; 
+  const cardWidth = orientation === "l" ? 55 : 50;
   const cardHeight = 18;
 
   doc.setFillColor(255, 255, 255); // Putih Solid
@@ -320,31 +339,34 @@ export function AdminDashboardPage() {
     },
   );
 
+  const shipmentChartData = useMemo(() => chartData(data.shipmentChart), [data.shipmentChart]);
+  const paymentChartData = useMemo(() => chartData(data.paymentChart), [data.paymentChart]);
+
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Admin dashboard"
+        title="Dashboard admin"
         description="Ringkasan operasional global ekspedisi."
       />
       <StatePanel error={error} loading={loading} />
       {!loading && !error && (
         <>
           {/* Grid Metrik Utama Kontainer */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <StatCard icon={Users} label="Total Customer" value={data.totalCustomers} />
-            <StatCard icon={Users} label="Total Staff" value={data.totalStaff} />
-            <StatCard icon={Building2} label="Total Branch" value={data.totalBranches} />
-            <StatCard icon={Truck} label="Total Vehicle" value={data.totalVehicles} />
-            <StatCard icon={PackageCheck} label="Total Shipment" value={data.totalShipments} />
-            <StatCard icon={CreditCard} label="Total Revenue" value={formatCurrency(data.totalRevenue)} />
-            <StatCard label="Pending Shipment" value={data.totalPendingShipment} />
-            <StatCard label="Delivered Shipment" value={data.totalDeliveredShipment} />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <StatCard label="Total pelanggan" value={data.totalCustomers} />
+            <StatCard label="Total staf" value={data.totalStaff} />
+            <StatCard label="Total cabang" value={data.totalBranches} />
+            <StatCard label="Total kendaraan" value={data.totalVehicles} />
+            <StatCard label="Total pengiriman" value={data.totalShipments} />
+            <StatCard label="Total pendapatan" value={formatCurrency(data.totalRevenue)} />
+            <StatCard label="Menunggu" value={data.totalPendingShipment} color="warning" />
+            <StatCard label="Selesai" value={data.totalDeliveredShipment} color="success" />
           </div>
-          
+
           {/* Grid Dual Chart */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <DashboardChart data={chartData(data.shipmentChart)} title="Shipment by Status" />
-            <DashboardChart data={chartData(data.paymentChart)} title="Payment by Status" />
+            <DashboardChart data={shipmentChartData} title="Pengiriman berdasarkan status" />
+            <DashboardChart data={paymentChartData} title="Pembayaran berdasarkan status" />
           </div>
 
           <RecentTables payments={data.recentPayments} shipments={data.recentShipments} />
@@ -364,22 +386,22 @@ function RecentTables({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* Panel Log Shipment */}
-      <section className="w-full border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md">
-        <div className="mb-4 flex items-center gap-2 border-b-2 border-slate-900 pb-2">
-          <FileText className="text-slate-900 stroke-[2.5]" size={16} />
-          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
-            Recent Shipments Log
+      <section className="w-full border border-border/40 bg-surface p-6 shadow-sm rounded-2xl">
+        <div className="mb-4 flex items-center gap-2 border-b border-border/40 pb-2">
+          <FileText className="text-muted" size={16} />
+          <h2 className="text-lg font-semibold tracking-tight text-ink">
+            Riwayat pengiriman terbaru
           </h2>
         </div>
         <SimpleShipmentTable shipments={shipments} />
       </section>
 
       {/* Panel Log Payment */}
-      <section className="w-full border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md">
-        <div className="mb-4 flex items-center gap-2 border-b-2 border-slate-900 pb-2">
-          <CreditCard className="text-slate-900 stroke-[2.5]" size={16} />
-          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
-            Recent Payments Log
+      <section className="w-full border border-border/40 bg-surface p-6 shadow-sm rounded-2xl">
+        <div className="mb-4 flex items-center gap-2 border-b border-border/40 pb-2">
+          <CreditCard className="text-muted" size={16} />
+          <h2 className="text-lg font-semibold tracking-tight text-ink">
+            Riwayat pembayaran terbaru
           </h2>
         </div>
         <SimplePaymentTable payments={payments} />
@@ -388,74 +410,36 @@ function RecentTables({
   );
 }
 
+const shipmentColumns: ColumnDef<Shipment>[] = [
+  { accessorKey: "tracking_number", header: "Resi", cell: ({ row }) => <span className="font-semibold text-ink">{row.original.tracking_number}</span> },
+  { id: "origin", header: "Asal", cell: ({ row }) => row.original.branches_shipments_origin_branch_idTobranches?.city ?? "-" },
+  { id: "destination", header: "Tujuan", cell: ({ row }) => row.original.branches_shipments_destination_branch_idTobranches?.city ?? "-" },
+  { accessorKey: "status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+  { accessorKey: "total_price", header: "Total", cell: ({ row }) => <span className="font-semibold text-ink">{formatCurrency(row.original.total_price)}</span> },
+];
+
 function SimpleShipmentTable({ shipments }: { shipments: Shipment[] }) {
-  if (shipments.length === 0) {
-    return (
-      <p className="text-2xs font-black uppercase tracking-wider text-slate-400 py-4 text-center border-2 border-dashed border-slate-900/10">
-        [ KOSONG ] Belum ada data shipment.
-      </p>
-    );
-  }
+  const slicedShipments = useMemo(() => shipments.slice(0, 8), [shipments]);
   return (
-    <div className="w-full overflow-x-auto border-2 border-slate-900 rounded-sm">
-      <table className="w-full border-collapse text-left text-2xs font-mono">
-        <thead>
-          <tr className="border-b-2 border-slate-900 bg-slate-900 text-amber-400">
-            <th className="p-2.5 font-black uppercase tracking-wider">Resi</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Origin</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Destination</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Status</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Total</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y border-slate-900">
-          {shipments.slice(0, 8).map((shipment) => (
-            <tr key={shipment.id} className="odd:bg-slate-50 hover:bg-amber-50/20 transition-colors">
-              <td className="p-2.5 font-bold text-slate-950">{shipment.tracking_number}</td>
-              <td className="p-2.5 text-slate-700">{shipment.branches_shipments_origin_branch_idTobranches?.city ?? "-"}</td>
-              <td className="p-2.5 text-slate-700">{shipment.branches_shipments_destination_branch_idTobranches?.city ?? "-"}</td>
-              <td className="p-2.5"><StatusBadge status={shipment.status} /></td>
-              <td className="p-2.5 font-black text-slate-950">{formatCurrency(shipment.total_price)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="w-full">
+      <EnterpriseTable columns={shipmentColumns} data={slicedShipments} emptyTitle="Belum ada pengiriman" emptyDescription="Belum ada data pengiriman." pageSize={8} />
     </div>
   );
 }
 
+const paymentColumns: ColumnDef<Payment>[] = [
+  { id: "resi", header: "Resi", cell: ({ row }) => <span className="font-semibold text-ink">{row.original.shipments?.tracking_number ?? "-"}</span> },
+  { accessorKey: "amount", header: "Jumlah", cell: ({ row }) => <span className="font-semibold text-ink">{formatCurrency(row.original.amount)}</span> },
+  { accessorKey: "payment_method", header: "Metode", cell: ({ row }) => <span className="font-semibold uppercase text-ink">{row.original.payment_method}</span> },
+  { accessorKey: "payment_status", header: "Status", cell: ({ row }) => <StatusBadge status={row.original.payment_status} /> },
+  { accessorKey: "payment_date", header: "Tanggal", cell: ({ row }) => <span className="text-muted">{formatDate(row.original.payment_date)}</span> },
+];
+
 function SimplePaymentTable({ payments }: { payments: Payment[] }) {
-  if (payments.length === 0) {
-    return (
-      <p className="text-2xs font-black uppercase tracking-wider text-slate-400 py-4 text-center border-2 border-dashed border-slate-900/10">
-        [ KOSONG ] Belum ada data payment.
-      </p>
-    );
-  }
+  const slicedPayments = useMemo(() => payments.slice(0, 8), [payments]);
   return (
-    <div className="w-full overflow-x-auto border-2 border-slate-900 rounded-sm">
-      <table className="w-full border-collapse text-left text-2xs font-mono">
-        <thead>
-          <tr className="border-b-2 border-slate-900 bg-slate-900 text-amber-400">
-            <th className="p-2.5 font-black uppercase tracking-wider">Resi</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Amount</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Method</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Status</th>
-            <th className="p-2.5 font-black uppercase tracking-wider">Date</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y border-slate-900">
-          {payments.slice(0, 8).map((payment) => (
-            <tr key={payment.id} className="odd:bg-slate-50 hover:bg-amber-50/20 transition-colors">
-              <td className="p-2.5 font-bold text-slate-950">{payment.shipments?.tracking_number ?? "-"}</td>
-              <td className="p-2.5 font-black text-slate-900">{formatCurrency(payment.amount)}</td>
-              <td className="p-2.5 text-slate-700 uppercase font-bold">{payment.payment_method}</td>
-              <td className="p-2.5"><StatusBadge status={payment.payment_status} /></td>
-              <td className="p-2.5 text-slate-600">{formatDate(payment.payment_date)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="w-full">
+      <EnterpriseTable columns={paymentColumns} data={slicedPayments} emptyTitle="No Payments" emptyDescription="Belum ada data payment." pageSize={8} />
     </div>
   );
 }
@@ -486,7 +470,9 @@ export function BranchesPage({ readOnly = false }: { readOnly?: boolean }) {
     setRefresh((value) => value + 1);
   }
 
-  const columns: ColumnDef<Branch>[] = [
+  const removeCallback = useCallback((id: string) => remove(id), []);
+
+  const columns = useMemo<ColumnDef<Branch>[]>(() => [
     { header: "Name", accessorKey: "name" },
     { header: "City", accessorKey: "city" },
     { header: "Address", accessorKey: "address" },
@@ -498,67 +484,76 @@ export function BranchesPage({ readOnly = false }: { readOnly?: boolean }) {
           <span className="text-2xs font-bold uppercase text-slate-400">[ READ ONLY ]</span>
         ) : (
           <button
-            className="inline-flex h-7 items-center justify-center border border-slate-900 bg-rose-500 px-3 text-3xs font-black uppercase tracking-wider text-white shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none"
-            onClick={() => remove(row.original.id)}
+            className="inline-flex h-8 items-center justify-center border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 shadow-sm transition-all rounded-lg cursor-pointer hover:bg-rose-100 focus-visible:outline-none"
+            onClick={() => removeCallback(row.original.id)}
             type="button"
           >
             Delete
           </button>
         ),
     },
-  ];
+  ], [readOnly, removeCallback]);
 
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title={readOnly ? "Branches" : "Admin branches"}
+        title={readOnly ? "Cabang" : "Cabang admin"}
         description={
           readOnly ? "Read only branch monitoring." : "Kelola cabang ekspedisi."
         }
       />
-      {!readOnly && (
-        <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex-1 max-w-md"><ReportFilter onChange={setReportFilters} value={reportFilters} /></div>
-          <PdfExportButton
-            label="Export Branch PDF"
-            onExport={async () => {
-              validateReportFilters(reportFilters);
-              const reportData = await getAdminBranchReport(reportFilters);
-              exportSimpleAdminPdf(
-                "Laporan Branch Admin",
-                "laporan-branch-admin.pdf",
-                ["No", "Name", "City", "Address", "Phone"],
-                reportData.map((branch, index) => [
-                  index + 1,
-                  branch.name,
-                  branch.city,
-                  branch.address,
-                  branch.phone,
-                ]),
-                reportGenerator,
-                reportFilters,
-              );
-            }}
-          />
-        </div>
-      )}
+      <div className="flex flex-col gap-4">
+        {!readOnly && (
+          <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
+            <ReportFilter onChange={setReportFilters} value={reportFilters} />
+            <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
+              <PdfExportButton
+              label="Export Branch PDF"
+              onExport={async () => {
+                validateReportFilters(reportFilters);
+                const reportData = await getAdminBranchReport(reportFilters);
+                exportSimpleAdminPdf(
+                  "Laporan Branch Admin",
+                  "laporan-branch-admin.pdf",
+                  ["No", "Name", "City", "Address", "Phone"],
+                  reportData.map((branch, index) => [
+                    index + 1,
+                    branch.name,
+                    branch.city,
+                    branch.address,
+                    branch.phone,
+                  ]),
+                  reportGenerator,
+                  reportFilters,
+                );
+              }}
+              />
+            </div>
+          </div>
+        )}
+        <FilterBar onSearch={setSearch} search={search} />
+      </div>
       {!readOnly && (
         <MasterForm
           fields={["name", "city", "address", "phone"]}
           onSubmit={save}
-          title="Create branch"
+          title="Tambah cabang"
         />
       )}
-      <FilterBar onSearch={setSearch} search={search} />
       <StatePanel
         error={error}
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={filtered} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={filtered} />}
     </section>
   );
 }
+
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function MasterForm({
   title,
@@ -591,39 +586,56 @@ function MasterForm({
   }
 
   return (
-    <form className="w-full border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md space-y-4" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-2">
-        <FileSpreadsheet className="text-slate-900 stroke-[2.5]" size={16} />
-        <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">{title}</h2>
-      </div>
-      
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
-        {fields.map((field) => (
-          <div className="flex flex-col gap-1" key={field}>
-            <label className="text-3xs font-black uppercase tracking-wider text-slate-500">[ {field} ]</label>
-            <input
-              className="h-10 w-full border-2 border-slate-900 bg-white px-3 text-2xs font-bold uppercase tracking-wide text-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] focus:outline-none focus:bg-amber-50/20 rounded-sm"
-              name={field}
-              type={field.toLowerCase().includes("password") ? "password" : "text"}
-            />
-          </div>
-        ))}
-      </div>
-
-      {error && (
-        <div className="border-2 border-slate-900 bg-rose-100 p-3 text-3xs font-black uppercase tracking-wide text-rose-900 rounded-sm">
-          ⚠️ ERROR: {error}
+    <Card className="w-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="text-muted" size={18} />
+          <CardTitle>{title}</CardTitle>
         </div>
-      )}
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            {fields.map((field, index) => {
+              const labelMap: Record<string, string> = {
+                name: "Nama",
+                email: "Alamat email",
+                password: "Kata sandi",
+                role: "Peran",
+                branchId: "Cabang",
+                city: "Kota",
+                address: "Alamat",
+                phone: "Nomor telepon",
+                plateNumber: "Plat nomor",
+                type: "Jenis kendaraan",
+                courierId: "ID kurir",
+              };
+              const label = labelMap[field] || field.replace(/_/g, ' ');
+              const isLastOdd = index === fields.length - 1 && fields.length % 2 !== 0;
+              return (
+              <div className={cn("flex flex-col gap-1.5", isLastOdd && "sm:col-span-2")} key={field}>
+                <label className="text-xs font-semibold text-ink">{label}</label>
+                <Input
+                  name={field}
+                  type={field.toLowerCase().includes("password") ? "password" : "text"}
+                />
+              </div>
+            )})}
+          </div>
 
-      <button
-        className="inline-flex h-10 items-center justify-center border-2 border-slate-900 bg-amber-400 px-5 text-2xs font-black uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] disabled:opacity-50 disabled:pointer-events-none"
-        disabled={busy}
-        type="submit"
-      >
-        {busy ? "MENYIMPAN DOKUMEN..." : "SIMPAN DATA REGISTRASI"}
-      </button>
-    </form>
+          {error && (
+            <div className="flex w-full items-center gap-2 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">
+              <AlertTriangle size={16} />
+              {error}
+            </div>
+          )}
+
+          <Button disabled={busy} type="submit" className="w-fit">
+            {busy ? "Menyimpan..." : "Simpan Data"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -660,7 +672,9 @@ export function StaffUsersPage() {
     setRefresh((value) => value + 1);
   }
 
-  const columns: ColumnDef<StaffUser>[] = [
+  const toggleCallback = useCallback((id: string, active: boolean) => toggle(id, active), []);
+
+  const columns = useMemo<ColumnDef<StaffUser>[]>(() => [
     { header: "Name", accessorKey: "name" },
     { header: "Email", accessorKey: "email" },
     { header: "Role", accessorKey: "role" },
@@ -668,7 +682,7 @@ export function StaffUsersPage() {
     {
       header: "Status",
       cell: ({ row }) => (
-        <span className={`text-3xs font-black uppercase px-2 py-0.5 border ${row.original.is_active ? "bg-emerald-400 text-slate-950 border-slate-900" : "bg-slate-200 text-slate-500 border-slate-400"}`}>
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${row.original.is_active ? "'bg-emerald-50 text-emerald-600 border-emerald-100'" : "'bg-slate-50 text-slate-500 border-border/40'"}`}>
           {row.original.is_active ? "Active" : "Inactive"}
         </span>
       ),
@@ -677,25 +691,26 @@ export function StaffUsersPage() {
       header: "Action",
       cell: ({ row }) => (
         <button
-          className="inline-flex h-7 items-center justify-center border border-slate-900 bg-white px-3 text-3xs font-black uppercase tracking-wider text-slate-900 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] active:translate-x-[0.5px] active:translate-y-[0.5px]"
-          onClick={() => toggle(row.original.id, !row.original.is_active)}
+          className="inline-flex h-8 items-center justify-center border border-border/50 bg-surface px-3 text-xs font-semibold text-ink shadow-sm transition-all rounded-lg cursor-pointer hover:bg-slate-50 focus-visible:outline-none"
+          onClick={() => toggleCallback(row.original.id, !row.original.is_active)}
           type="button"
         >
           {row.original.is_active ? "Deactivate" : "Activate"}
         </button>
       ),
     },
-  ];
+  ], [toggleCallback]);
 
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Admin staff"
-        description="Tambah dan aktifkan staff internal."
+        title="Staf admin"
+        description="Tambah dan aktifkan staf internal."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex-1 max-w-md"><ReportFilter onChange={setReportFilters} value={reportFilters} /></div>
-        <PdfExportButton
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
+        <ReportFilter onChange={setReportFilters} value={reportFilters} />
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
+          <PdfExportButton
           label="Export Staff PDF"
           onExport={async () => {
             validateReportFilters(reportFilters);
@@ -716,20 +731,21 @@ export function StaffUsersPage() {
               reportFilters,
             );
           }}
-        />
+          />
+        </div>
       </div>
+      <FilterBar onSearch={setSearch} search={search} />
       <MasterForm
         fields={["name", "email", "password", "role", "branchId"]}
         onSubmit={create}
-        title="Create staff"
+        title="Tambah staf"
       />
-      <FilterBar onSearch={setSearch} search={search} />
       <StatePanel
         error={error}
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={filtered} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={filtered} />}
     </section>
   );
 }
@@ -747,7 +763,7 @@ export function CustomersPage() {
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
-  const columns: ColumnDef<CustomerRecord>[] = [
+  const columns = useMemo<ColumnDef<CustomerRecord>[]>(() => [
     { header: "Name", accessorKey: "name" },
     { header: "Email", accessorKey: "email" },
     { header: "City", accessorKey: "city" },
@@ -755,21 +771,22 @@ export function CustomersPage() {
     {
       header: "Verified",
       cell: ({ row }) => (
-        <span className={`text-3xs font-black uppercase px-2 py-0.5 border ${row.original.email_verified_at ? "bg-emerald-400 text-slate-950 border-slate-900" : "bg-amber-100 text-amber-800 border-amber-300"}`}>
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${row.original.email_verified_at ? "'bg-emerald-50 text-emerald-600 border-emerald-100'" : "'bg-amber-50 text-amber-600 border-amber-200'"}`}>
           {row.original.email_verified_at ? "Verified" : "Unverified"}
         </span>
       ),
     },
-  ];
+  ], []);
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Customers"
+        title="Pelanggan admin"
         description="Monitoring customer terdaftar."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex-1 max-w-md"><ReportFilter onChange={setReportFilters} value={reportFilters} /></div>
-        <PdfExportButton
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
+        <ReportFilter onChange={setReportFilters} value={reportFilters} />
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
+          <PdfExportButton
           label="Export Customer PDF"
           onExport={async () => {
             validateReportFilters(reportFilters);
@@ -790,11 +807,12 @@ export function CustomersPage() {
               reportFilters,
             );
           }}
-        />
+          />
+        </div>
       </div>
       <FilterBar onSearch={setSearch} search={search} />
       <StatePanel error={error} loading={loading} />
-      {!loading && !error && <DataTable columns={columns} data={filtered} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={filtered} />}
     </section>
   );
 }
@@ -820,9 +838,10 @@ export function RatesPage() {
     await apiDelete(`/api/v2/admin/rates/${id}`);
     setRefresh((value) => value + 1);
   }
-  const columns: ColumnDef<Rate>[] = [
-    { header: "Origin", accessorKey: "origin_city" },
-    { header: "Destination", accessorKey: "destination_city" },
+  const removeCallback = useCallback((id: string) => remove(id), []);
+  const columns = useMemo<ColumnDef<Rate>[]>(() => [
+    { header: "Asal", accessorKey: "origin_city" },
+    { header: "Tujuan", accessorKey: "destination_city" },
     {
       header: "Price/Kg",
       cell: ({ row }) => formatCurrency(row.original.price_per_kg),
@@ -832,20 +851,20 @@ export function RatesPage() {
       header: "Action",
       cell: ({ row }) => (
         <button
-          className="inline-flex h-7 items-center justify-center border border-slate-900 bg-rose-500 px-3 text-3xs font-black uppercase tracking-wider text-white shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] active:translate-x-[0.5px] active:translate-y-[0.5px]"
-          onClick={() => remove(row.original.id)}
+          className="inline-flex h-8 items-center justify-center border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 shadow-sm transition-all rounded-lg cursor-pointer hover:bg-rose-100 focus-visible:outline-none"
+          onClick={() => removeCallback(row.original.id)}
           type="button"
-         >
+        >
           Delete
         </button>
       ),
     },
-  ];
+  ], [removeCallback]);
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Admin rates"
-        description="Kelola tarif rute pengiriman."
+        title="Tarif admin"
+        description="Kelola tarif pengiriman antar kota."
       />
       <MasterForm
         fields={[
@@ -855,14 +874,14 @@ export function RatesPage() {
           "estimatedDays",
         ]}
         onSubmit={create}
-        title="Create rate"
+        title="Tambah tarif"
       />
       <StatePanel
         error={error}
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={data} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={data} />}
     </section>
   );
 }
@@ -887,7 +906,8 @@ export function VehiclesPage() {
     await apiDelete(`/api/v2/admin/vehicles/${id}`);
     setRefresh((value) => value + 1);
   }
-  const columns: ColumnDef<Vehicle>[] = [
+  const removeCallback = useCallback((id: string) => remove(id), []);
+  const columns = useMemo<ColumnDef<Vehicle>[]>(() => [
     { header: "Plate", accessorKey: "plate_number" },
     { header: "Type", accessorKey: "type" },
     {
@@ -898,32 +918,32 @@ export function VehiclesPage() {
       header: "Action",
       cell: ({ row }) => (
         <button
-          className="inline-flex h-7 items-center justify-center border border-slate-900 bg-rose-500 px-3 text-3xs font-black uppercase tracking-wider text-white shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] active:translate-x-[0.5px] active:translate-y-[0.5px]"
-          onClick={() => remove(row.original.id)}
+          className="inline-flex h-8 items-center justify-center border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 shadow-sm transition-all rounded-lg cursor-pointer hover:bg-rose-100 focus-visible:outline-none"
+          onClick={() => removeCallback(row.original.id)}
           type="button"
         >
           Delete
         </button>
       ),
     },
-  ];
+  ], [removeCallback]);
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Admin vehicles"
-        description="Kelola kendaraan kurir."
+        title="Kendaraan admin"
+        description="Kelola armada dan kurir ekspedisi."
       />
       <MasterForm
         fields={["plateNumber", "type", "courierId"]}
         onSubmit={create}
-        title="Create vehicle"
+        title="Tambah kendaraan"
       />
       <StatePanel
         error={error}
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={data} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={data} />}
     </section>
   );
 }
@@ -952,16 +972,16 @@ function ShipmentDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 font-mono backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-auto border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-md">
-        <div className="flex items-start justify-between gap-4 border-b-4 border-slate-900 pb-4">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-auto border border-border/40 bg-surface p-6 shadow-xl rounded-3xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border/40 pb-4">
           <div>
-            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">[ RESI MANIFES DETIL ]</span>
-            <h2 className="text-lg font-black uppercase text-slate-900">Detail Pesanan</h2>
-            <p className="text-xs font-black text-amber-500">KODE TRK: {shipment.tracking_number}</p>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">[ RESI MANIFES DETIL ]</span>
+            <h2 className="text-xl font-bold tracking-tight text-ink">Detail Pesanan</h2>
+            <p className="text-sm font-semibold text-primary">KODE TRK: {shipment.tracking_number}</p>
           </div>
-          <button 
-            className="inline-flex h-9 w-9 items-center justify-center border-2 border-slate-900 bg-slate-950 text-white shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer hover:bg-rose-500"
-            onClick={onClose} 
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-muted hover:bg-rose-50 hover:text-rose-600 transition-colors"
+            onClick={onClose}
             type="button"
           >
             <X size={16} className="stroke-3" />
@@ -1024,37 +1044,37 @@ function ShipmentDetailModal({
         </div>
 
         {item?.photo ? (
-          <div className="mt-5 border-2 border-slate-900 p-2 bg-slate-50">
-            <span className="block text-3xs font-black text-slate-500 uppercase mb-1">[ FOTO SERAH TERIMA AWAL ]</span>
+          <div className="mt-5 border border-border/40 p-3 bg-slate-50/50 rounded-xl">
+            <span className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1">[ FOTO SERAH TERIMA AWAL ]</span>
             <img
               alt="Foto paket saat serah terima"
-              className="h-48 w-full border border-slate-900 object-cover"
+              className="h-48 w-full border border-border/40 object-cover rounded-md"
               src={item.photo}
             />
           </div>
         ) : null}
         {shipment.status === "delivered" && shipment.photo ? (
-          <div className="mt-5 border-2 border-slate-900 p-2 bg-slate-50">
-            <p className="mb-1 text-3xs font-black uppercase text-slate-500">
+          <div className="mt-5 border border-border/40 p-3 bg-slate-50/50 rounded-xl">
+            <p className="mb-1 text-[10px] font-semibold text-muted uppercase tracking-wider">
               [ BUKTI DOKUMENTASI FISIK PENERIMA ]
             </p>
             <img
               alt="Bukti penyerahan kurir"
-              className="h-48 w-full border border-slate-900 object-cover"
+              className="h-48 w-full border border-border/40 object-cover rounded-md"
               src={shipment.photo}
             />
           </div>
         ) : null}
-        
+
         {(shipment.shipment_trackings?.length ?? 0) > 0 ? (
-          <div className="mt-6 border-t-4 border-dashed border-slate-900 pt-4">
-            <h3 className="font-black text-xs text-slate-900 uppercase tracking-wider">
+          <div className="mt-6 border-t border-dashed border-border/40 pt-4">
+            <h3 className="font-semibold text-sm text-ink tracking-tight">
               [ TIMELINE ] Riwayat Tracking & Kurir
             </h3>
             <div className="mt-3 grid gap-2">
               {(shipment.shipment_trackings ?? []).map((tracking) => (
-                <div className="border-2 border-slate-900 bg-slate-50 p-3 rounded-sm" key={tracking.id}>
-                  <div className="font-black text-2xs uppercase text-slate-900 tracking-wide">
+                <div className="border border-border/40 bg-surface p-4 rounded-xl shadow-sm" key={tracking.id}>
+                  <div className="font-semibold text-xs uppercase tracking-wider text-ink">
                     {tracking.status.replaceAll("_", " ")}
                   </div>
                   <div className="text-3xs font-bold text-slate-500 uppercase mt-0.5">
@@ -1084,12 +1104,12 @@ function DetailField({
 }) {
   return (
     <div
-      className={`border-2 border-slate-900 bg-slate-50 p-3 rounded-sm ${wide ? "md:col-span-2" : ""}`}
+      className={`border border-border/40 bg-surface p-4 rounded-xl shadow-sm ${wide ? "md:col-span-2" : ""}`}
     >
-      <div className="text-3xs font-black uppercase tracking-wider text-slate-400">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
         {label}
       </div>
-      <div className="mt-0.5 text-2xs font-black uppercase text-slate-900">{value ?? "-"}</div>
+      <div className="mt-0.5 text-xs font-semibold text-ink">{value ?? "-"}</div>
     </div>
   );
 }
@@ -1101,6 +1121,7 @@ export function ShipmentsPage({
   mode: "admin" | "courier" | "manager";
   filter?: (shipment: Shipment) => boolean;
 }) {
+  const [offlineUpdates, setOfflineUpdates] = useState<Record<string, string>>({});
   const [refresh, setRefresh] = useState(0);
   const [status, setStatus] = useState("");
   const [reportFilters, setReportFilters] = useState<ReportFilters>({});
@@ -1124,10 +1145,10 @@ export function ShipmentsPage({
   const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
   const [deliveryPhotoFiles, setDeliveryPhotoFiles] = useState<
     Record<string, File>
-  >({}); 
+  >({});
   const [deliveryPhotoPreviews, setDeliveryPhotoPreviews] = useState<
     Record<string, string>
-  >({}); 
+  >({});
   const [detailShipment, setDetailShipment] = useState<Shipment | null>(null);
   const currentUser = useQuery({
     queryKey: ["current-staff-user"],
@@ -1143,11 +1164,50 @@ export function ShipmentsPage({
       ? String(currentUser.data.branchId)
       : null;
 
+  // [PWA]: Load Queue from IndexedDB
+  useEffect(() => {
+    if (mode !== "courier") return;
+    const loadQueue = async () => {
+      try {
+        const { getQueuedUpdates } = await import("@/lib/offline-queue");
+        const updates = await getQueuedUpdates();
+        const map: Record<string, string> = {};
+        updates.forEach(u => map[u.trackingNumber] = u.newStatus);
+        setOfflineUpdates(map);
+      } catch (e) {}
+    };
+    loadQueue();
+
+    const onSync = () => {
+      loadQueue();
+      setRefresh(v => v + 1);
+    };
+    window.addEventListener("pwa-queue-updated", onSync);
+    return () => window.removeEventListener("pwa-queue-updated", onSync);
+  }, [mode, refresh]);
+
   async function updateStatus(id: string, nextStatus: string, photo?: string) {
+    const shipment = shipments.find((s) => s.id === id);
+    const trackingNumber = shipment?.tracking_number ?? id;
+    
     const path =
       mode === "courier"
         ? `/api/v2/courier/shipments/${id}/status`
         : `/api/v2/admin/shipments/${id}/status`;
+
+    // [PWA]: Intersepsi Offline untuk Courier
+    if (mode === "courier" && typeof navigator !== "undefined" && !navigator.onLine) {
+      try {
+        await addUpdateToQueue({ trackingNumber, newStatus: nextStatus });
+        toast.info("Tersimpan Luring", { description: "Status masuk antrian dan akan dikirim saat online." });
+        setRefresh((val) => val + 1); // Trigger re-render to show offline badge
+        return;
+      } catch (e) {
+        toast.error("Gagal menyimpan ke antrian offline");
+        return;
+      }
+    }
+
     try {
       await apiPatch(path, {
         status: nextStatus,
@@ -1158,11 +1218,22 @@ export function ShipmentsPage({
       toast.success("Status pengiriman berhasil diperbarui.");
       setRefresh((value) => value + 1);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Status pengiriman gagal diperbarui.",
-      );
+      // Jika jaringan tiba-tiba putus di tengah request (NetworkError)
+      if (mode === "courier" && error instanceof Error && (error.message.includes("Failed to fetch") || error.message.includes("Network Error"))) {
+         try {
+           await addUpdateToQueue({ trackingNumber, newStatus: nextStatus });
+           toast.info("Jaringan putus, masuk antrian offline");
+           setRefresh((val) => val + 1);
+         } catch (e) {
+           toast.error("Gagal menyimpan ke antrian");
+         }
+      } else {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Status pengiriman gagal diperbarui.",
+        );
+      }
     }
   }
 
@@ -1248,7 +1319,7 @@ export function ShipmentsPage({
   const columns: ColumnDef<Shipment>[] = [
     {
       header: "Tracking",
-      cell: ({ row }) => <span className="font-black text-slate-900">{row.original.tracking_number}</span>,
+      cell: ({ row }) => <span className="font-semibold text-ink">{row.original.tracking_number}</span>,
     },
     {
       header: "Courier Code",
@@ -1263,20 +1334,33 @@ export function ShipmentsPage({
       cell: ({ row }) => row.original.customers_shipments_receiver_idTocustomers?.name ?? "-",
     },
     {
-      header: "Origin",
+      header: "Asal",
       cell: ({ row }) => row.original.branches_shipments_origin_branch_idTobranches?.city ?? "-",
     },
     {
-      header: "Destination",
+      header: "Tujuan",
       cell: ({ row }) => row.original.branches_shipments_destination_branch_idTobranches?.city ?? "-",
     },
     {
       header: "Total",
-      cell: ({ row }) => <span className="font-black">{formatCurrency(row.original.total_price)}</span>,
+      cell: ({ row }) => <span className="font-semibold">{formatCurrency(row.original.total_price)}</span>,
     },
     {
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => {
+        const offlineStatus = offlineUpdates[row.original.tracking_number];
+        if (offlineStatus) {
+          return (
+            <div className="flex flex-col gap-1">
+              <StatusBadge status={offlineStatus} />
+              <span className="text-[10px] font-semibold text-amber-600 animate-pulse">
+                Menunggu Sinkronisasi
+              </span>
+            </div>
+          );
+        }
+        return <StatusBadge status={row.original.status} />;
+      },
     },
     {
       header: "Payment",
@@ -1284,33 +1368,33 @@ export function ShipmentsPage({
     },
     ...(mode === "admin"
       ? [
-          {
-            header: "Detail",
-            cell: ({ row }: { row: { original: Shipment } }) => (
-              <button
-                aria-label={`Detail pesanan ${row.original.tracking_number}`}
-                className="inline-flex h-8 w-8 items-center justify-center border border-slate-900 bg-white text-slate-900 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] rounded-sm cursor-pointer hover:bg-amber-400"
-                onClick={async () => {
-                  try {
-                    const response = await apiGet<Shipment>(
-                      `/api/v2/admin/shipments/${row.original.id}`,
-                    );
-                    setDetailShipment(response.data);
-                  } catch (error) {
-                    toast.error(
-                      error instanceof Error
-                        ? error.message
-                        : "Gagal memuat detail pesanan.",
-                    );
-                  }
-                }}
-                type="button"
-              >
-                <Eye size={14} className="stroke-[2.5]" />
-              </button>
-            ),
-          } as ColumnDef<Shipment>,
-        ]
+        {
+          header: "Detail",
+          cell: ({ row }: { row: { original: Shipment } }) => (
+            <button
+              aria-label={`Detail pesanan ${row.original.tracking_number}`}
+              className="inline-flex h-8 w-8 items-center justify-center border border-border/50 bg-surface text-ink shadow-sm rounded-lg cursor-pointer hover:bg-slate-50 focus:outline-none"
+              onClick={async () => {
+                try {
+                  const response = await apiGet<Shipment>(
+                    `/api/v2/admin/shipments/${row.original.id}`,
+                  );
+                  setDetailShipment(response.data);
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Gagal memuat detail pesanan.",
+                  );
+                }
+              }}
+              type="button"
+            >
+              <Eye size={14} className="stroke-[2.5]" />
+            </button>
+          ),
+        } as ColumnDef<Shipment>,
+      ]
       : []),
     {
       header: "Action",
@@ -1361,7 +1445,7 @@ export function ShipmentsPage({
           <ActionMenu>
             {originAdminAction ? (
               <button
-                className="inline-flex h-9 items-center justify-center border-2 border-slate-900 bg-amber-400 px-4 text-3xs font-black uppercase tracking-wider text-slate-950 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,1)]"
+                className="inline-flex h-9 items-center justify-center border border-primary/50 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm rounded-lg cursor-pointer hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 onClick={() => updateStatus(shipment.id, "in_transit")}
                 type="button"
               >
@@ -1370,19 +1454,19 @@ export function ShipmentsPage({
             ) : null}
             {destinationArrivalAction ? (
               <form
-                className="flex flex-col gap-1.5 p-1 bg-white border border-slate-900 rounded-sm"
+                className="flex flex-col gap-1.5 p-2 bg-surface border border-border/40 rounded-xl shadow-sm"
                 onSubmit={(event) => {
                   event.preventDefault();
                   receiveDestinationShipment(shipment.id);
                 }}
               >
-                <span className="text-3xs font-black text-slate-500 uppercase">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
                   Langkah 1: Tiba di Cabang
                 </span>
                 <div className="flex gap-1.5">
                   <input
                     aria-label={`Nomor resi ${shipment.tracking_number}`}
-                    className="h-8 border border-slate-900 bg-white px-2 text-3xs font-bold uppercase tracking-wider text-slate-900 focus:outline-none"
+                    className="h-8 rounded-lg border border-border/40 bg-surface px-3 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary"
                     onChange={(event) =>
                       setArrivalReceipts((current) => ({
                         ...current,
@@ -1393,7 +1477,7 @@ export function ShipmentsPage({
                     value={arrivalReceipts[shipment.id] ?? ""}
                   />
                   <button
-                    className="h-8 border border-slate-900 bg-slate-900 text-amber-400 px-3 text-3xs font-black uppercase tracking-wider disabled:opacity-40"
+                    className="h-8 rounded-lg border border-border/40 bg-slate-50 px-3 text-[10px] font-semibold text-ink disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
                     disabled={rowBusy[shipment.id]}
                     type="submit"
                   >
@@ -1401,25 +1485,25 @@ export function ShipmentsPage({
                   </button>
                 </div>
                 {rowErrors[shipment.id] ? (
-                  <span className="text-3xs font-black text-rose-600 uppercase">// {rowErrors[shipment.id]}</span>
+                  <span className="text-[10px] font-semibold text-rose-600 uppercase tracking-wider">// {rowErrors[shipment.id]}</span>
                 ) : null}
               </form>
             ) : null}
             {destinationAssignAction ? (
               <form
-                className="flex flex-col gap-1.5 p-1 bg-white border border-slate-900 rounded-sm"
+                className="flex flex-col gap-1.5 p-2 bg-surface border border-border/40 rounded-xl shadow-sm"
                 onSubmit={(event) => {
                   event.preventDefault();
                   assignCourier(shipment.id);
                 }}
               >
-                <span className="text-3xs font-black text-slate-500 uppercase">
+                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
                   Langkah 2: Assign Kurir
                 </span>
                 <div className="flex gap-1.5">
                   <input
                     aria-label={`Courier code shipment ${shipment.tracking_number}`}
-                    className="h-8 w-32 border border-slate-900 bg-white px-2 text-3xs font-bold uppercase tracking-wider text-slate-900 focus:outline-none"
+                    className="h-8 w-32 rounded-lg border border-border/40 bg-surface px-3 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary"
                     inputMode="numeric"
                     maxLength={5}
                     onChange={(event) =>
@@ -1434,7 +1518,7 @@ export function ShipmentsPage({
                     value={courierCodes[shipment.id] ?? ""}
                   />
                   <button
-                    className="h-8 border border-slate-900 bg-slate-950 text-white px-3 text-3xs font-black uppercase tracking-wider disabled:opacity-40"
+                    className="h-8 rounded-lg border border-border/40 bg-slate-50 px-3 text-[10px] font-semibold text-ink disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
                     disabled={rowBusy[shipment.id]}
                     type="submit"
                   >
@@ -1442,18 +1526,18 @@ export function ShipmentsPage({
                   </button>
                 </div>
                 {rowErrors[shipment.id] ? (
-                  <span className="text-3xs font-black text-rose-600 uppercase">// {rowErrors[shipment.id]}</span>
+                  <span className="text-[10px] font-semibold text-rose-600 uppercase tracking-wider">// {rowErrors[shipment.id]}</span>
                 ) : null}
               </form>
             ) : null}
             {destinationAwaitingCourierAction ? (
-              <div className="border border-amber-300 bg-amber-50 px-2 py-1.5 text-3xs font-bold text-amber-800 uppercase tracking-wide rounded-sm max-w-50">
+              <div className="border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] font-semibold text-amber-700 uppercase tracking-wider rounded-lg max-w-50">
                 ⚠️ L-3: Menunggu konfirmasi kurir (Out for delivery)
               </div>
             ) : null}
             {courierReadyAction ? (
               <button
-                className="inline-flex h-9 items-center justify-center border-2 border-slate-900 bg-amber-400 px-4 text-3xs font-black uppercase tracking-wider text-slate-950 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm cursor-pointer disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center border border-primary/50 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm rounded-lg cursor-pointer hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 disabled={rowBusy[shipment.id]}
                 onClick={async () => {
                   setRowBusy((current) => ({
@@ -1484,7 +1568,7 @@ export function ShipmentsPage({
             ) : null}
             {courierCompleteAction ? (
               <form
-                className="flex flex-col gap-2 p-2 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-sm"
+                className="flex flex-col gap-2 p-3 bg-surface border border-border/40 shadow-sm rounded-xl"
                 onSubmit={async (event) => {
                   event.preventDefault();
                   const photoFile = deliveryPhotoFiles[shipment.id];
@@ -1544,7 +1628,7 @@ export function ShipmentsPage({
                 }}
               >
                 <label
-                  className="text-3xs font-black text-slate-500 uppercase"
+                  className="text-[10px] font-bold text-muted uppercase tracking-wider"
                   htmlFor={`photo-${shipment.id}`}
                 >
                   Langkah 4: Upload Bukti Tiba
@@ -1575,11 +1659,11 @@ export function ShipmentsPage({
                   <img
                     alt="preview foto bukti"
                     src={deliveryPhotoPreviews[shipment.id]}
-                    className="w-16 h-16 object-cover border border-slate-900 mt-1 rounded-sm"
+                    className="w-16 h-16 object-cover border border-border/40 mt-1 rounded-lg"
                   />
                 ) : null}
                 <button
-                  className="h-8 border border-slate-900 bg-emerald-400 text-slate-950 text-3xs font-black uppercase tracking-wider disabled:opacity-40"
+                  className="h-8 rounded-lg border border-border/40 bg-slate-50 px-3 text-[10px] font-semibold text-ink disabled:opacity-40 focus:outline-none focus:ring-1 focus:ring-primary"
                   disabled={
                     rowBusy[shipment.id] || !deliveryPhotoFiles[shipment.id]
                   }
@@ -1590,7 +1674,7 @@ export function ShipmentsPage({
                     : "KONFIRMASI DELIVERED"}
                 </button>
                 {rowErrors[shipment.id] ? (
-                  <span className="text-3xs font-black text-rose-600 uppercase">// {rowErrors[shipment.id]}</span>
+                  <span className="text-[10px] font-semibold text-rose-600 uppercase tracking-wider">// {rowErrors[shipment.id]}</span>
                 ) : null}
               </form>
             ) : null}
@@ -1607,16 +1691,15 @@ export function ShipmentsPage({
       : "Monitoring shipment dan tracking timeline.";
 
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader title={pageTitle} description={pageDescription} />
-      
+
       {/* Panel Filter dan Export Berdasar Mode Akun */}
       {mode === "admin" && (
-        <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex-1 max-w-lg">
-            <ReportFilter onChange={setReportFilters} showBranch showStatus value={reportFilters} />
-          </div>
-          <PdfExportButton
+        <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
+          <ReportFilter onChange={setReportFilters} showBranch showStatus value={reportFilters} />
+          <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
+            <PdfExportButton
             label="Export Shipment PDF"
             onExport={async () => {
               validateReportFilters(reportFilters);
@@ -1631,14 +1714,15 @@ export function ShipmentsPage({
                 ),
               );
             }}
-          />
+            />
+          </div>
         </div>
       )}
 
       {mode === "manager" && (
-        <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+        <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
           <ReportFilter onChange={setReportFilters} showBranch showStatus value={reportFilters} />
-          <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+          <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
             <PdfExportButton
               label="Export Shipment PDF"
               onExport={async () => {
@@ -1678,20 +1762,21 @@ export function ShipmentsPage({
       {/* Bar Filter Sortir Manifes */}
       <FilterBar>
         <div className="flex flex-col gap-1">
-          <label className="text-3xs font-black text-slate-500 uppercase tracking-wider">[ URUT STATUS ]</label>
-          <select
-            className="h-10 border-2 border-slate-900 bg-white px-3 text-2xs font-black uppercase tracking-wider text-slate-900 focus:outline-none rounded-sm shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]"
-            onChange={(event) => setStatus(event.target.value)}
-            value={status}
-          >
-            <option value="">Semua status</option>
-            <option value="pending">pending</option>
-            <option value="picked_up">picked_up</option>
-            <option value="in_transit">in_transit</option>
-            <option value="arrived_at_branch">arrived_at_branch</option>
-            <option value="out_for_delivery">out_for_delivery</option>
-            <option value="delivered">delivered</option>
-          </select>
+          <h4 className="text-sm font-semibold tracking-tight text-ink">Urutkan status</h4>
+          <Select value={status || "all"} onValueChange={(val) => setStatus(val === "all" ? "" : val)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Semua status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua status</SelectItem>
+              <SelectItem value="pending">Menunggu</SelectItem>
+              <SelectItem value="picked_up">Dijemput</SelectItem>
+              <SelectItem value="in_transit">Dalam proses</SelectItem>
+              <SelectItem value="arrived_at_branch">Tiba di cabang</SelectItem>
+              <SelectItem value="out_for_delivery">Sedang dikirim</SelectItem>
+              <SelectItem value="delivered">Selesai</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </FilterBar>
 
@@ -1700,8 +1785,8 @@ export function ShipmentsPage({
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={shipments} />}
-      
+      {!loading && !error && <EnterpriseTable columns={columns} data={shipments} emptyTitle="Belum ada pengiriman" emptyDescription="Belum ada data pengiriman." />}
+
       {detailShipment ? (
         <ShipmentDetailModal
           onClose={() => setDetailShipment(null)}
@@ -1737,7 +1822,7 @@ export function PaymentsPage({
     },
     {
       header: "Amount",
-      cell: ({ row }) => <span className="font-black text-slate-900">{formatCurrency(row.original.amount)}</span>,
+      cell: ({ row }) => <span className="font-semibold text-ink">{formatCurrency(row.original.amount)}</span>,
     },
     { header: "Method", accessorKey: "payment_method" },
     {
@@ -1746,20 +1831,20 @@ export function PaymentsPage({
     },
     { header: "Reference", accessorKey: "transaction_reference" },
     {
-      header: "Date",
+      header: "Tanggal",
       cell: ({ row }) => formatDate(row.original.payment_date),
     },
   ];
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
         title={`${mode} payments`}
         description="Monitoring status pembayaran."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
         <ReportFilter onChange={setReportFilters} showStatus value={reportFilters} />
-        
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
           {mode === "admin" && (
             <PdfExportButton
               label="Export Payment PDF"
@@ -1819,22 +1904,23 @@ export function PaymentsPage({
 
       <FilterBar>
         <div className="flex flex-col gap-1">
-          <label className="text-3xs font-black text-slate-500 uppercase tracking-wider">[ URUT METODE ]</label>
-          <select
-            className="h-10 border-2 border-slate-900 bg-white px-3 text-2xs font-black uppercase tracking-wider text-slate-900 focus:outline-none rounded-sm shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]"
-            onChange={(event) => setStatus(event.target.value)}
-            value={status}
-          >
-            <option value="">Semua status</option>
-            <option value="pending">pending</option>
-            <option value="paid">paid</option>
-            <option value="failed">failed</option>
-          </select>
+          <h4 className="text-sm font-semibold tracking-tight text-ink">Urutkan status</h4>
+          <Select value={status || "all"} onValueChange={(val) => setStatus(val === "all" ? "" : val)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Semua status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua status</SelectItem>
+              <SelectItem value="pending">Menunggu</SelectItem>
+              <SelectItem value="paid">Lunas</SelectItem>
+              <SelectItem value="failed">Gagal</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </FilterBar>
 
       <StatePanel error={error} loading={loading} />
-      {!loading && !error && <DataTable columns={columns} data={data} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={data} />}
     </section>
   );
 }
@@ -1865,7 +1951,7 @@ export function CashVerificationPage() {
     },
     {
       header: "Amount",
-      cell: ({ row }) => <span className="font-black text-slate-950">{formatCurrency(row.original.amount)}</span>,
+      cell: ({ row }) => <span className="font-semibold text-ink">{formatCurrency(row.original.amount)}</span>,
     },
     {
       header: "Status",
@@ -1875,7 +1961,7 @@ export function CashVerificationPage() {
       header: "Action",
       cell: ({ row }) => (
         <button
-          className="inline-flex h-8 items-center justify-center border border-slate-900 bg-amber-400 px-3 text-3xs font-black uppercase tracking-wider text-slate-950 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] rounded-sm cursor-pointer hover:translate-x-[-0.5px] hover:translate-y-[-0.5px]"
+          className="inline-flex h-8 items-center justify-center border border-primary/50 bg-primary px-3 text-[10px] font-semibold text-primary-foreground shadow-sm rounded-lg cursor-pointer hover:opacity-90 focus:outline-none"
           onClick={() => verify(row.original)}
           type="button"
         >
@@ -1885,14 +1971,15 @@ export function CashVerificationPage() {
     },
   ];
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Cash verification"
+        title="Verifikasi kas admin"
         description="Verifikasi cash payment cabang sendiri."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex-1 max-w-lg"><ReportFilter onChange={setReportFilters} showStatus value={reportFilters} /></div>
-        <PdfExportButton
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
+        <ReportFilter onChange={setReportFilters} showStatus value={reportFilters} />
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
+          <PdfExportButton
           label="Export Cash Verification PDF"
           onExport={async () => {
             validateReportFilters(reportFilters);
@@ -1911,13 +1998,14 @@ export function CashVerificationPage() {
             );
           }}
         />
+        </div>
       </div>
       <StatePanel
         error={error}
         loading={loading}
         onRetry={() => setRefresh((value) => value + 1)}
       />
-      {!loading && !error && <DataTable columns={columns} data={data} />}
+      {!loading && !error && <EnterpriseTable columns={columns} data={data} />}
     </section>
   );
 }
@@ -1936,7 +2024,7 @@ export function CourierDashboardPage() {
     .slice(0, 3);
 
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
         title="Beranda"
         description="Statistik pengiriman dan request terbaru."
@@ -1952,10 +2040,12 @@ export function CourierDashboardPage() {
             <StatCard
               label="Sedang Diantar"
               value={data.filter((shipment) => shipment.status === "out_for_delivery").length}
+              color="warning"
             />
             <StatCard
               label="Terkirim Hari Ini"
               value={data.filter((shipment) => shipment.status === "delivered").length}
+              color="success"
             />
             <StatCard
               label="Aktif"
@@ -1968,11 +2058,11 @@ export function CourierDashboardPage() {
               }
             />
           </div>
-          
-          <section className="w-full border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md">
-            <div className="mb-4 flex items-center gap-2 border-b-2 border-slate-900 pb-2">
-              <Truck className="text-slate-900 stroke-[2.5]" size={16} />
-              <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+
+          <section className="w-full border border-border/40 bg-surface p-6 shadow-sm rounded-2xl">
+            <div className="mb-4 flex items-center gap-2 border-b border-border/40 pb-2">
+              <Truck className="text-muted" size={16} />
+              <h2 className="text-lg font-semibold tracking-tight text-ink">
                 Request Pengiriman Terbaru
               </h2>
             </div>
@@ -2005,14 +2095,14 @@ export function ManagerDashboardPage() {
     },
   );
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Manager dashboard"
+        title="Dashboard manager"
         description="Read only analytics operasional."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
         <ReportFilter onChange={setReportFilters} value={reportFilters} />
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
           <PdfExportButton
             label="Export Revenue PDF"
             onExport={async () => {
@@ -2052,15 +2142,15 @@ export function ManagerDashboardPage() {
       {!loading && !error && (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-5">
-            <StatCard label="Total Revenue" value={formatCurrency(data.totalRevenue)} />
-            <StatCard label="Total Shipment" value={data.totalShipments} />
-            <StatCard label="Total Customer" value={data.totalCustomers} />
-            <StatCard label="Total Branch" value={data.totalBranches} />
-            <StatCard label="Total Courier" value={data.totalVehicles} />
+            <StatCard label="Total pendapatan" value={formatCurrency(data.totalRevenue)} />
+            <StatCard label="Total pengiriman" value={data.totalShipments} />
+            <StatCard label="Total pelanggan" value={data.totalCustomers} />
+            <StatCard label="Total cabang" value={data.totalBranches} />
+            <StatCard label="Total kurir" value={data.totalVehicles} />
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <DashboardChart data={chartData(data.shipmentChart)} title="Shipment by Status" />
-            <DashboardChart data={chartData(data.paymentChart)} title="Payment by Status" />
+            <DashboardChart data={chartData(data.shipmentChart)} title="Pengiriman berdasarkan status" />
+            <DashboardChart data={chartData(data.paymentChart)} title="Pembayaran berdasarkan status" />
           </div>
           <RecentTables payments={data.recentPayments} shipments={data.recentShipments} />
         </>
@@ -2084,14 +2174,14 @@ export function ManagerAnalyticsPage() {
     [data],
   );
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
         title="Manager analytics"
         description="Analisa revenue dan performa cabang."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
         <ReportFilter onChange={setReportFilters} value={reportFilters} />
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
           <PdfExportButton
             label="Export Revenue PDF"
             onExport={async () => {
@@ -2131,12 +2221,12 @@ export function ManagerAnalyticsPage() {
       {!loading && !error && (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <StatCard label="Total Revenue" value={formatCurrency(Number(data.totalRevenue ?? 0))} />
-            <StatCard label="Paid" value={String(data.totalPaid ?? 0)} />
-            <StatCard label="Pending" value={String(data.totalPending ?? 0)} />
-            <StatCard label="Failed" value={String(data.totalFailed ?? 0)} />
+            <StatCard label="Total pendapatan" value={formatCurrency(Number(data.totalRevenue ?? 0))} />
+            <StatCard label="Lunas" value={String(data.totalPaid ?? 0)} color="success" />
+            <StatCard label="Menunggu" value={String(data.totalPending ?? 0)} color="warning" />
+            <StatCard label="Gagal" value={String(data.totalFailed ?? 0)} color="danger" />
           </div>
-          <DashboardChart data={chart} title="Revenue by Branch" />
+          <DashboardChart data={chart} title="Pendapatan berdasarkan cabang" />
         </>
       )}
     </section>
@@ -2164,14 +2254,14 @@ export function OwnerDashboardPage() {
     },
   );
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
-        title="Owner Dashboard"
+        title="Dashboard owner"
         description="Statistik keseluruhan perusahaan ekspedisi — hanya baca."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
         <ReportFilter onChange={setReportFilters} value={reportFilters} />
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
           <PdfExportButton
             label="Export Revenue PDF"
             onExport={async () => {
@@ -2210,19 +2300,21 @@ export function OwnerDashboardPage() {
       <StatePanel error={error} loading={loading} />
       {!loading && !error && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <StatCard label="Total Revenue" value={formatCurrency(data.totalRevenue)} icon={CreditCard} />
-            <StatCard label="Total Shipment" value={data.totalShipments} icon={PackageCheck} />
-            <StatCard label="Pending Shipment" value={data.totalPendingShipment} icon={Truck} />
-            <StatCard label="Delivered" value={data.totalDeliveredShipment} icon={PackageCheck} />
-            <StatCard label="Total Customer" value={data.totalCustomers} icon={Users} />
-            <StatCard label="Total Branch" value={data.totalBranches} icon={Building2} />
-            <StatCard label="Total Staff" value={data.totalStaff} icon={Users} />
-            <StatCard label="Total Kendaraan" value={data.totalVehicles} icon={Truck} />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4 mb-4">
+            <StatCard label="Total pendapatan" value={formatCurrency(data.totalRevenue)} />
+            <StatCard label="Total pengiriman" value={data.totalShipments} />
+            <StatCard label="Pengiriman menunggu" value={data.totalPendingShipment} color="warning" />
+            <StatCard label="Terkirim" value={data.totalDeliveredShipment} color="success" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4 mb-6">
+            <StatCard label="Total pelanggan" value={data.totalCustomers} />
+            <StatCard label="Total cabang" value={data.totalBranches} />
+            <StatCard label="Total staf" value={data.totalStaff} />
+            <StatCard label="Total kendaraan" value={data.totalVehicles} />
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <DashboardChart data={chartData(data.shipmentChart)} title="Shipment by Status" />
-            <DashboardChart data={chartData(data.paymentChart)} title="Payment by Status" />
+            <DashboardChart data={chartData(data.shipmentChart)} title="Pengiriman berdasarkan status" />
+            <DashboardChart data={chartData(data.paymentChart)} title="Pembayaran berdasarkan status" />
           </div>
           <RecentTables payments={data.recentPayments} shipments={data.recentShipments} />
         </>
@@ -2246,14 +2338,14 @@ export function OwnerAnalyticsPage() {
     [data],
   );
   return (
-    <section className="w-full space-y-6 font-mono">
+    <section className="w-full space-y-6 font-body">
       <PageHeader
         title="Owner Analytics"
         description="Analisa revenue dan performa seluruh cabang."
       />
-      <div className="flex flex-col gap-4 border-4 border-slate-900 bg-amber-50/20 p-5 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-md">
+      <div className="flex flex-col gap-4 border border-border/40 bg-surface p-5 shadow-sm rounded-2xl">
         <ReportFilter onChange={setReportFilters} value={reportFilters} />
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/10 pt-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-dashed border-border/40 pt-3">
           <PdfExportButton
             label="Export Revenue PDF"
             onExport={async () => {
@@ -2292,13 +2384,13 @@ export function OwnerAnalyticsPage() {
       <StatePanel error={error} loading={loading} />
       {!loading && !error && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <StatCard label="Total Revenue" value={formatCurrency(Number(data.totalRevenue ?? 0))} icon={CreditCard} />
-            <StatCard label="Paid" value={String(data.totalPaid ?? 0)} icon={BarChart3} />
-            <StatCard label="Pending" value={String(data.totalPending ?? 0)} icon={PackageCheck} />
-            <StatCard label="Failed" value={String(data.totalFailed ?? 0)} icon={Truck} />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <StatCard label="Total pendapatan" value={formatCurrency(Number(data.totalRevenue ?? 0))} />
+            <StatCard label="Lunas" value={String(data.totalPaid ?? 0)} color="success" />
+            <StatCard label="Menunggu" value={String(data.totalPending ?? 0)} color="warning" />
+            <StatCard label="Gagal" value={String(data.totalFailed ?? 0)} color="danger" />
           </div>
-          <DashboardChart data={chart} title="Revenue by Branch" />
+          <DashboardChart data={chart} title="Pendapatan berdasarkan cabang" />
         </>
       )}
     </section>

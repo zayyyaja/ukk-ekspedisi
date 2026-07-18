@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Store } from "lucide-react";
+import { LogOut, Package2, ChevronLeft, ChevronRight, Settings, LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,57 +11,49 @@ import { cn } from "@/lib/utils";
 import type { CurrentUser, StaffRole } from "@/types/customer-portal";
 
 const roleLabel: Record<StaffRole, string> = {
-  admin: "ADMINISTRATOR",
-  cashier: "KASIR HUB",
-  courier: "KURIR LAPANGAN",
-  manager: "MANAJER WILAYAH",
-  owner: "DIREKSI / OWNER",
+  admin: "Administrator",
+  cashier: "Cashier",
+  courier: "Courier",
+  manager: "Manager",
+  owner: "Owner",
 };
 
 function isActive(pathname: string, href: string) {
   return href.endsWith("/dashboard") ? pathname === href : pathname.startsWith(href);
 }
 
-function branchText(user: CurrentUser | null) {
-  if (user?.branchId) {
-    return `KODE CABANG #${user.branchId}`;
-  }
-  return "CABANG STAFF";
-}
-
-function SidebarBrand({ role }: { role: StaffRole }) {
-  const [logoReady, setLogoReady] = useState(false);
-
+function SidebarBrand({ role, user, isCollapsed, onToggle }: { role: StaffRole; user: CurrentUser | null, isCollapsed: boolean, onToggle: () => void }) {
   return (
-    <div className="p-6 pb-4">
-      <div className="flex items-center gap-3 mb-5">
-        {/* Logo Container - Kotak Geometris Tebal */}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-ink bg-cargo-amber rounded-app shadow-stamp-sm">
-          {!logoReady ? <Store size={22} className="text-ink stroke-[2.5]" /> : null}
-          <img
-            alt="Logo Ekspedisi"
-            className={cn("h-10 w-10 object-contain grayscale", logoReady ? "block" : "hidden")}
-            onError={() => setLogoReady(false)}
-            onLoad={() => setLogoReady(true)}
-            src="/images/staff-sidebar-logo.png"
-          />
+    <div className="flex items-center justify-between px-4 py-5 mb-2 relative group">
+      <div className={cn("flex items-center gap-3 overflow-hidden transition-all duration-300", isCollapsed ? "w-8" : "w-full")}>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
+          <Package2 size={15} strokeWidth={2} />
         </div>
-        <div>
-          <div className="font-display text-xs font-black tracking-widest text-steel uppercase">
-            DANISH // STAFF
+        {!isCollapsed && (
+          <div className="flex flex-col min-w-0 animate-in fade-in duration-300">
+            <span className="truncate text-[13px] font-semibold tracking-tight text-ink">DRG Ekspedisi</span>
+            <span className="truncate text-[10px] font-medium text-muted uppercase tracking-wider">
+              {roleLabel[role]}
+            </span>
           </div>
-          <div className="font-display text-sm font-black text-ink uppercase tracking-tight">
-            {roleLabel[role]}
-          </div>
-        </div>
+        )}
       </div>
-      {/* Garis Pembatas Manifes */}
-      <div className="w-full h-0.5 bg-ink" />
+
+      <button
+        onClick={onToggle}
+        className={cn(
+          "absolute -right-3 top-6 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface shadow-sm text-muted hover:text-ink transition-all focus:outline-none focus:ring-2 focus:ring-primary/30",
+          isCollapsed ? "opacity-100 translate-x-1.5" : "opacity-0 group-hover:opacity-100"
+        )}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
     </div>
   );
 }
 
-export function StaffSidebar({ role }: { role: StaffRole }) {
+export function StaffSidebar({ role, isCollapsed, onToggle }: { role: StaffRole, isCollapsed: boolean, onToggle: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -80,57 +72,118 @@ export function StaffSidebar({ role }: { role: StaffRole }) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col bg-paper text-ink border-r-4 border-ink lg:flex">
-      {/* Bagian Identitas Atas */}
-      <SidebarBrand role={role} />
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 hidden flex-col bg-sidebar border-r border-border lg:flex font-body transition-all duration-300 ease-in-out h-screen",
+        isCollapsed ? "w-[72px]" : "w-[260px]"
+      )}
+    >
+      <SidebarBrand role={role} user={user} isCollapsed={isCollapsed} onToggle={onToggle} />
 
-      {/* Navigasi Menu Utama */}
-      <nav className="flex-1 px-4 overflow-y-auto grid gap-1.5 content-start py-2">
-        {staffMenus[role].map((item) => {
-          const Icon = item.icon;
-          const active = isActive(pathname, item.href);
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 space-y-6 flex flex-col">
+        <div>
+          {!isCollapsed && (
+            <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted animate-in fade-in duration-300">
+              Workspace
+            </div>
+          )}
+          <nav className="flex flex-col gap-0.5">
+            {staffMenus[role].map((item: any) => {
+              const Icon = item.icon;
+              const active = isActive(pathname, item.href);
 
-          return (
-            <Link
-              key={`${item.href}-${item.label}`}
-              href={item.href}
-              className={cn(
-                "flex w-full items-center justify-start border-2 px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wider transition-all rounded-app",
-                active
-                  ? "bg-ink text-paper border-ink shadow-stamp-sm"
-                  : "text-ink border-transparent hover:bg-ink/5 hover:border-ink"
-              )}
-            >
-              <Icon className={cn("mr-3 h-4 w-4 stroke-[2.5]", active && "scale-105")} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bagian Informasi Cabang & Tombol Log Keluar */}
-      <div className="p-4 border-t-2 border-ink/10 bg-paper">
-        <div className="flex items-center gap-3 mb-4 px-2 py-2 border-2 border-dashed border-ink/30 rounded-app bg-ink/2">
-          <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse shrink-0" />
-          <div className="min-w-0">
-            <h4 className="font-mono text-[10px] font-bold text-ink truncate">
-              {branchText(user)}
-            </h4>
-            <p className="font-mono text-[9px] text-steel tracking-wide uppercase">
-              GATEWAY SECURE
-            </p>
-          </div>
+              return (
+                <Link
+                  key={`${item.href}-${item.label}`}
+                  href={item.href}
+                  title={isCollapsed ? item.label : undefined}
+                  className={cn(
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    active
+                      ? "bg-sidebar-active text-ink font-semibold"
+                      : "text-muted hover:bg-sidebar-hover hover:text-ink",
+                    isCollapsed && "justify-center px-0"
+                  )}
+                >
+                  {active && !isCollapsed && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+                  )}
+                  <Icon
+                    size={17}
+                    strokeWidth={active ? 2 : 1.5}
+                    className={cn(
+                      "shrink-0 transition-colors",
+                      active ? "text-primary" : "text-muted group-hover:text-ink"
+                    )}
+                  />
+                  {!isCollapsed && (
+                    <span className="truncate animate-in fade-in duration-300">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Button Logout - Neo-Brutalist Stamp Action */}
+        <div className="mt-auto pt-6">
+          {!isCollapsed && (
+            <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted animate-in fade-in duration-300">
+              System
+            </div>
+          )}
+          <nav className="flex flex-col gap-0.5">
+            {[
+              { label: "Settings", icon: Settings },
+              { label: "Support", icon: LifeBuoy }
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  title={isCollapsed ? item.label : undefined}
+                  className={cn(
+                    "w-full group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-muted hover:bg-sidebar-hover hover:text-ink",
+                    isCollapsed && "justify-center px-0"
+                  )}
+                >
+                  <Icon size={17} strokeWidth={1.5} className="shrink-0 text-muted group-hover:text-ink transition-colors" />
+                  {!isCollapsed && <span className="truncate animate-in fade-in duration-300">{item.label}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      <div className="border-t border-border p-4 mt-auto">
+        {!isCollapsed && (
+          <div className="mb-4 flex items-center gap-3 px-2 animate-in fade-in duration-300">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-hover text-muted font-semibold text-xs border border-border">
+              {(user?.name ?? roleLabel[role]).slice(0, 1).toUpperCase()}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-[13px] font-semibold text-ink">
+                {user?.name ?? roleLabel[role]}
+              </span>
+              <span className="truncate text-[10px] font-medium text-muted uppercase tracking-wider">
+                {roleLabel[role]}
+              </span>
+            </div>
+          </div>
+        )}
+
         <button
-          className="flex w-full items-center justify-center border-2 border-ink bg-cargo-amber py-2.5 font-display text-xs font-bold uppercase tracking-wider text-ink shadow-stamp-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm rounded-app disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-muted transition-colors hover:bg-danger-soft hover:text-danger disabled:pointer-events-none disabled:opacity-50",
+            isCollapsed ? "justify-center px-0" : "px-3 animate-in fade-in duration-300"
+          )}
+          title={isCollapsed ? "Log Out" : undefined}
           disabled={busy}
           onClick={handleLogout}
           type="button"
         >
-          <LogOut className="mr-2 h-4 w-4 stroke-[2.5]" />
-          Keluar Sistem
+          <LogOut size={17} strokeWidth={1.5} className="shrink-0" />
+          {!isCollapsed && <span>Log Out</span>}
         </button>
       </div>
     </aside>

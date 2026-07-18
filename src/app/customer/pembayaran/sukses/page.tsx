@@ -3,78 +3,81 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check, ArrowRight, Package, Search } from "lucide-react";
+import { BentoHeader } from "@/components/customer/bento-header";
 
-import { CustomerNavbarShell } from "@/components/customer/customer-navbar-shell";
 
 export default function CustomerPaymentSuccessPage() {
   const searchParams = useSearchParams();
   const shipmentId = searchParams.get("shipmentId");
 
   return (
-    <CustomerNavbarShell>
-      <div className="mx-auto max-w-2xl font-mono select-none py-8">
-        
-        {/* Kontainer Utama Bergaya Tiket Kontainer Manifes */}
-        <div className="border-4 border-slate-900 bg-white shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
-          
+    <div className="w-full font-body">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6 mb-8">
+        <BentoHeader />
+      </div>
+      <div className="mx-auto max-w-2xl font-body py-12 px-4 sm:px-6">
+
+        {/* Kontainer Utama Bergaya Neo Minimalist */}
+        <div className="border border-border/50 bg-surface/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl overflow-hidden relative">
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-green-500/10 blur-[80px] pointer-events-none" />
+
           {/* Header Status Bar */}
-          <div className="border-b-4 border-slate-900 bg-emerald-400 px-6 py-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-900 text-emerald-400 rounded-sm">
-              <Check size={20} className="stroke-[3]" />
+          <div className="border-b border-border/60 bg-green-500/5 px-10 py-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left relative z-10">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-green-500 text-white rounded-2xl shadow-sm">
+              <Check size={32} className="stroke-[3]" />
             </div>
             <div>
-              <p className="text-3xs font-black uppercase tracking-[0.2em] text-slate-950">// TRANSACTION_AUTHORIZED</p>
-              <h1 className="text-sm font-black uppercase tracking-wider text-slate-950">PESANAN BERHASIL REGRISTRASI</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-green-700">Order Created Successfully</h1>
+              <p className="mt-2 text-sm font-medium text-green-600/80">Payment is in verification process</p>
             </div>
           </div>
 
           {/* Isi Pesan Konten */}
-          <div className="p-6 sm:p-8 space-y-6">
-            <div className="space-y-2">
-              <p className="text-3xs font-black text-amber-600 uppercase tracking-widest">// NET_CALLBACK_STATUS_OK</p>
-              <p className="text-xs font-bold text-slate-700 uppercase leading-relaxed">
-                Pembayaran Anda sedang diproses dan diverifikasi secara berkala oleh jaringan Midtrans. 
-                Setelah status berubah menjadi <span className="font-black bg-emerald-100 text-emerald-950 px-1">SUKSES</span>, 
-                silakan tunjukkan nomor resi kargo ke cashier cabang tujuan untuk validasi fisik muatan paket Anda.
+          <div className="p-10 space-y-10 relative z-10">
+            <div className="space-y-4">
+              <p className="text-base text-muted leading-relaxed">
+                Your payment is being processed and verified by the system.
+                Once the status changes to <span className="font-bold text-green-700 bg-green-500/10 px-2 py-1 rounded-md tracking-tight">SUCCESS</span>,
+                please show the receipt number to the destination branch officer to hand over your package.
               </p>
             </div>
 
-            {/* Garis Potong Manifes Kargo (Dashed Line Decorator) */}
-            <div className="border-t-2 border-dashed border-slate-300 my-4" />
+            {/* Garis Pembatas */}
+            <div className="border-t border-border/60" />
 
             {/* Tombol Aksi Navigasi */}
             <div className="flex flex-col sm:flex-row gap-4">
               {shipmentId && (
-                <Link 
+                <Link
                   href={`/customer/pesanan/${shipmentId}`}
-                  className="flex flex-1 h-12 items-center justify-center gap-2 border-2 border-slate-950 bg-amber-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm"
+                  className="flex flex-1 h-14 items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold text-sm shadow-sm transition-all hover:bg-primary/90 rounded-2xl"
                 >
-                  <Package size={14} className="stroke-[2.5]" />
-                  LIHAT DETAIL PESANAN
-                  <ArrowRight size={12} />
+                  <Package size={20} />
+                  Order Details
+                  <ArrowRight size={18} />
                 </Link>
               )}
-              
-              <Link 
-                href="/customer/lacak-paket"
-                className="flex flex-1 h-12 items-center justify-center gap-2 border-2 border-slate-900 bg-white font-black text-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:bg-slate-50 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm"
+
+              <Link
+                href="/customer/lacak-resi"
+                className="flex flex-1 h-14 items-center justify-center gap-2 border border-border/60 bg-background/50 text-ink font-semibold text-sm transition-all hover:bg-slate-50 rounded-2xl"
               >
-                <Search size={14} className="stroke-[2.5]" />
-                LIHAT RIWAYAT PAKET
+                <Search size={20} />
+                Order List
               </Link>
             </div>
 
           </div>
 
-          {/* Footer Pengaman Mini */}
-          <div className="bg-slate-50 px-6 py-2.5 border-t-2 border-slate-900 flex justify-between items-center text-[9px] font-bold uppercase text-slate-400">
-            <span>SECURE GATEWAY ENCRYPTION</span>
-            <span>ID: {shipmentId ? `SHPMNT_${shipmentId}` : "UNKNOWN_ID"}</span>
+          {/* Footer Info */}
+          <div className="bg-background/80 backdrop-blur-md px-10 py-5 border-t border-border/60 flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-muted relative z-10">
+            <span>Secure Transaction</span>
+            <span>ID: {shipmentId ? `SHPMNT_${shipmentId}` : "UNKNOWN"}</span>
           </div>
 
         </div>
 
       </div>
-    </CustomerNavbarShell>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import { useState } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { StaffSidebar } from "@/components/layout/staff-sidebar";
 import { StaffTopbar } from "@/components/layout/staff-topbar";
+import { OpsStatusBar } from "@/components/staff/enterprise/ops-status-bar";
+import { cn } from "@/lib/utils";
 import type { StaffRole } from "@/types/customer-portal";
 
 function roleFromPath(pathname: string): StaffRole | undefined {
@@ -26,13 +28,14 @@ export function StaffLayoutClient({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            refetchInterval: 4_000,
             refetchOnWindowFocus: true,
             staleTime: 2_000,
           },
         },
       }),
   );
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (!role) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
@@ -41,25 +44,28 @@ export function StaffLayoutClient({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <RoleGuard allowedRoles={[role]}>
-        {/* Kontainer Utama Arsitektur Gudang (Industrial Grid Layout) */}
-        <div className="min-h-screen bg-slate-100 font-mono text-slate-950 selection:bg-amber-400 selection:text-slate-950">
-          
-          {/* Komponen Navigasi Samping */}
-          <StaffSidebar role={role} />
-          
-          {/* Sisi Kanan Layout: Area Topbar dan Ruang Kerja Konten */}
-          <div className="min-h-screen lg:pl-67.5 transition-all duration-300">
-            {/* Topbar Utama */}
+        <div className="min-h-screen bg-background font-body text-ink antialiased">
+          <StaffSidebar
+            role={role}
+            isCollapsed={isCollapsed}
+            onToggle={() => setIsCollapsed(!isCollapsed)}
+          />
+
+          <div
+            className={cn(
+              "min-h-screen transition-all duration-300 ease-in-out",
+              isCollapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
+            )}
+          >
             <StaffTopbar role={role} />
-            
-            {/* Ruang Konten Kerja Manifes (Gaya Kotak Kargo) */}
-            <main className="min-w-0 p-4 sm:p-6 lg:p-8">
-              <div className="mx-auto max-w-[1600px] animate-fade-in">
+            <OpsStatusBar />
+
+            <main className="w-full px-4 py-6 md:px-8 lg:px-10 lg:py-8">
+              <div className="mx-auto w-full max-w-[1400px] animate-in fade-in duration-500">
                 {children}
               </div>
             </main>
           </div>
-
         </div>
       </RoleGuard>
     </QueryClientProvider>

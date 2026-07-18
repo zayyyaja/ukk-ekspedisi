@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { CustomerNavbarShell } from "@/components/customer/customer-navbar-shell";
 import { apiGet, apiPatch } from "@/lib/api-client";
 import { formatDate } from "@/lib/customer-format";
+import { BentoHeader } from "@/components/customer/bento-header";
 
 type NotificationItem = {
   id: string;
@@ -55,36 +55,41 @@ export default function CustomerInboxPage() {
   }
 
   return (
-    <CustomerNavbarShell>
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
-            <Bell size={24} />
+    <div className="w-full font-body">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6 mb-8">
+        <BentoHeader />
+      </div>
+      <div className="mx-auto max-w-4xl p-4 sm:p-6 font-body pb-16">
+        <header className="mb-10 flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm border border-primary/20">
+            <Bell size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Inbox / Pesan</h1>
-            <p className="mt-1 text-slate-500">
-              Notifikasi paket yang ditujukan ke email akun Anda. Hanya baca — tidak perlu membalas.
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">Notifications</h1>
+            <p className="mt-2 text-sm font-medium text-muted">
+              Order updates and latest information.
             </p>
           </div>
         </header>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-            Memuat pesan...
+          <div className="rounded-3xl border border-border/50 bg-surface/80 backdrop-blur-xl p-16 text-center text-muted font-medium shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            Loading inbox...
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <MailOpen className="mx-auto h-10 w-10 text-slate-300" />
-            <p className="mt-4 font-medium text-slate-700">Belum ada pesan</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Notifikasi muncul jika seseorang mengirim paket dan mencantumkan email akun Anda sebagai penerima.
+          <div className="rounded-3xl border border-dashed border-border/60 bg-background/50 p-20 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center bg-slate-100 text-muted rounded-2xl mb-6">
+              <MailOpen size={32} />
+            </div>
+            <p className="text-lg font-semibold text-ink">No new notifications</p>
+            <p className="mt-2 text-sm text-muted max-w-sm mx-auto leading-relaxed">
+              Order and delivery notifications will appear here.
             </p>
           </div>
         ) : (
@@ -92,49 +97,59 @@ export default function CustomerInboxPage() {
             {items.map((notification) => (
               <article
                 key={notification.id}
-                className={`rounded-2xl border bg-white p-5 shadow-sm transition-colors ${
-                  notification.is_read ? "border-slate-200" : "border-orange-200 bg-orange-50/40"
+                className={`rounded-3xl border p-6 sm:p-8 transition-all duration-300 ${
+                  notification.is_read ? "border-border/50 bg-surface/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]" : "border-primary/20 bg-primary/5 shadow-sm ring-1 ring-primary/10"
                 }`}
               >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Package size={16} className="text-orange-500" />
-                      <h2 className="font-bold text-slate-900">{notification.title}</h2>
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                        notification.is_read ? "bg-background/80 text-muted border border-border/60" : "bg-primary/20 text-primary border border-primary/20"
+                      }`}>
+                        <Package size={20} />
+                      </div>
+                      <h2 className="text-base font-semibold text-ink leading-tight">{notification.title}</h2>
                       {!notification.is_read && (
-                        <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                          Baru
+                        <span className="rounded-lg bg-primary/20 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-primary shrink-0">
+                          New
                         </span>
                       )}
                     </div>
-                    <p className="text-sm leading-relaxed text-slate-600">{notification.message}</p>
+                    <p className="text-sm font-medium leading-relaxed text-muted pl-14">{notification.message}</p>
                     {notification.shipments && (
-                      <p className="text-xs font-medium text-slate-500">
-                        Resi: {notification.shipments.tracking_number} · Status: {notification.shipments.status.replaceAll("_", " ")}
-                      </p>
+                      <div className="pl-14">
+                        <div className="inline-flex items-center gap-3 bg-background/50 border border-border/60 px-4 py-2 rounded-xl text-xs font-semibold text-ink">
+                          <span className="text-muted font-medium uppercase tracking-wider text-[10px]">Tracking</span>
+                          <span>{notification.shipments.tracking_number}</span>
+                          <span className="w-1 h-1 rounded-full bg-border" />
+                          <span className="text-muted font-medium uppercase tracking-wider text-[10px]">Status</span>
+                          <span className="text-primary">{notification.shipments.status.replaceAll("_", " ")}</span>
+                        </div>
+                      </div>
                     )}
-                    <p className="text-xs text-slate-400">{formatDate(notification.created_at)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted pl-14">{formatDate(notification.created_at)}</p>
                   </div>
 
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 gap-3 sm:flex-col sm:items-end">
                     {!notification.is_read && (
                       <button
-                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        className="rounded-2xl border border-border/60 bg-background/50 px-5 py-3 text-xs font-semibold text-ink hover:bg-slate-50 transition-colors shadow-sm"
                         onClick={() => markAsRead(notification)}
                         type="button"
                       >
-                        Tandai dibaca
+                        Mark as read
                       </button>
                     )}
                     {notification.shipments && (
                       <Link
-                        className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+                        className="rounded-2xl bg-primary px-5 py-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
                         href={`/customer/pesanan/${notification.shipments.id}`}
                         onClick={() => {
                           void markAsRead(notification);
                         }}
                       >
-                        Lihat tracking
+                        View Order
                       </Link>
                     )}
                   </div>
@@ -144,6 +159,6 @@ export default function CustomerInboxPage() {
           </div>
         )}
       </div>
-    </CustomerNavbarShell>
+    </div>
   );
 }

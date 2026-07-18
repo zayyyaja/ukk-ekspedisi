@@ -19,16 +19,16 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
   // ==========================================
   doc.setFillColor(251, 191, 36); // Amber 400 (Kuning Solid)
   doc.setDrawColor(15, 23, 42);   // Slate 900
-  doc.setLineWidth(1);
+  doc.setLineWidth(0.5);
   doc.rect(14, 14, pageWidth - 28, 24, "FD"); // Kotak border pejal tebal
 
   // Text Judul Dokumen
   doc.setTextColor(15, 23, 42);
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text(options.title.toUpperCase(), 20, 24);
   
-  doc.setFont("courier", "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   const currentIsoDate = new Date().toISOString().split('T')[0];
   doc.text(`// REVENUE_MANIFEST_DATE: ${currentIsoDate} | ACCESS_LEVEL: MANAGER_EXECUTIVE`, 20, 31);
@@ -63,7 +63,7 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
     // Background Card Kotak Solid
     doc.setFillColor(metric.bg[0], metric.bg[1], metric.bg[2]);
     doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(0.5);
     doc.rect(x, y, cardWidth, cardHeight, "FD");
 
     // Sub-Label Atas Kotak
@@ -72,7 +72,7 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
     } else {
       doc.setTextColor(100, 116, 139); // Teks abu gelap untuk bg cerah
     }
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(5.5);
     doc.text(metric.label, x + 3, y + 5);
 
@@ -81,7 +81,7 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
     const txG = metric.textColor[1];
     const txB = metric.textColor[2];
     doc.setTextColor(txR, txG, txB);
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(metric.fontSize);
     doc.text(metric.value, x + 3, y + 11);
   });
@@ -108,21 +108,21 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
     margin: { left: 14, right: 14 },
     head: [tableHeaders],
     body: tableRows,
-    theme: "plain", // Menghapus styling gradasi default jsPDF yang monoton
+    theme: "grid", // Menghapus styling gradasi default jsPDF yang monoton
     styles: {
-      font: "courier",
+      font: "helvetica",
       fontSize: 8,
       fontStyle: "bold",
       textColor: [15, 23, 42],
-      lineColor: [15, 23, 42],
-      lineWidth: 0.5,
+      lineColor: [226, 232, 240],
+      lineWidth: 0.1,
       cellPadding: 3,
     },
     headStyles: {
       fillColor: [15, 23, 42], // Kepala tabel hitam legam kaku
       textColor: [255, 255, 255],
-      lineWidth: 0.5,
-      lineColor: [15, 23, 42],
+      lineWidth: 0.1,
+      lineColor: [226, 232, 240],
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
@@ -141,7 +141,7 @@ export function exportManagerRevenuePdf(data: Record<string, unknown>, options: 
   // ==========================================
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   if (finalY < pageHeight - 15) {
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.text(`[ END_OF_FINANCIAL_REVENUE_METRICS_RAW - SYSTEM AUTOMATION LOGS ]`, 14, finalY);

@@ -12,12 +12,33 @@ type CreateCustomerData = {
 export function findCustomerByEmail(email: string) {
   return prisma.customers.findUnique({
     where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      password: true, // required for loginCustomer
+      email_verified_at: true,
+      address: true,
+      city: true,
+      phone: true,
+      photo: true,
+    }
   });
 }
 
 export function findCustomerById(id: bigint) {
   return prisma.customers.findUnique({
     where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      email_verified_at: true,
+      address: true,
+      city: true,
+      phone: true,
+      photo: true,
+    }
   });
 }
 
@@ -34,11 +55,30 @@ export function createVerifiedCustomer(data: CreateCustomerData) {
 export function findStaffByEmail(email: string) {
   return prisma.users.findUnique({
     where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      password: true, // required for loginStaff
+      role: true,
+      branch_id: true,
+      is_active: true,
+      email_verified_at: true,
+    }
   });
 }
 
 export function findStaffById(id: bigint) {
   return prisma.users.findUnique({
     where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      branch_id: true,
+      is_active: true,
+      email_verified_at: true,
+    }
   });
 }

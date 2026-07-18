@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export function FilterBar({
   search,
@@ -11,34 +12,60 @@ export function FilterBar({
   onSearch?: (value: string) => void;
   children?: React.ReactNode;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <section className="flex w-full flex-col gap-4 border-4 border-slate-900 bg-amber-50/50 p-5 font-mono shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-md md:flex-row md:items-center">
+    <section className="flex w-full flex-col gap-4 border border-border/40 bg-surface p-4 font-body shadow-sm rounded-2xl md:flex-row md:items-center">
       
-      {/* Input Pencarian Utama Gaya Neo-Brutalist */}
+      {/* Search Input */}
       {onSearch && (
-        <div className="relative flex flex-1 items-center">
-          <div className="absolute left-3.5 text-slate-900 pointer-events-none">
-            <Search size={16} className="stroke-[2.5]" />
+        <div className="relative flex flex-1 items-center max-w-md">
+          <div className="absolute left-3.5 text-muted pointer-events-none">
+            <Search size={16} strokeWidth={1.5} />
           </div>
           <input
+            ref={inputRef}
             className="
-              h-12 w-full border-2 border-slate-900 bg-white pl-11 pr-4 
-              text-xs font-black uppercase tracking-wider text-slate-900 
-              shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all 
-              placeholder:text-slate-400 focus:-translate-x-px 
-              focus:-translate-y-px focus:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] 
-              focus:outline-none rounded-sm
+              h-10 w-full rounded-xl border border-border/40 bg-slate-50/50 pl-10 pr-24 
+              text-sm font-medium text-ink transition-colors
+              placeholder:text-muted focus:bg-surface focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none
             "
             onChange={(event) => onSearch(event.target.value)}
-            placeholder="[ CARI DATA MANIFES / RESI ]"
+            placeholder="Cari data..."
             value={search ?? ""}
           />
+          <div className="absolute right-3 flex items-center gap-1.5">
+            {search ? (
+              <button
+                onClick={() => onSearch("")}
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200/50 text-muted hover:bg-slate-200 hover:text-ink transition-colors"
+                type="button"
+                aria-label="Clear search"
+              >
+                <X size={12} strokeWidth={2} />
+              </button>
+            ) : null}
+            <div className="pointer-events-none hidden select-none items-center gap-1 rounded border border-border/60 bg-surface px-1.5 font-mono text-[10px] font-medium text-muted opacity-100 sm:flex">
+              <span>⌘</span>K
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Kontainer untuk Children Filter Tambahan (Jika ada) */}
+      {/* Children Filter Container */}
       {children && (
-        <div className="flex flex-wrap items-center gap-3 border-t-2 border-dashed border-slate-900/20 pt-4 md:border-t-0 md:pt-0">
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/40 pt-4 md:border-t-0 md:pt-0">
           {children}
         </div>
       )}

@@ -28,7 +28,7 @@ export default async function PublicTrackingPage({ params }: TrackingPageProps) 
           Masuk ke portal customer untuk melihat detail tracking dan timeline
           terakhir.
         </p>
-        <Link className="button primary" href="/customer/lacak-paket">
+        <Link className="button primary" href="/customer/lacak-resi">
           Buka tracking
         </Link>
       </section>

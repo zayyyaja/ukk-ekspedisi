@@ -20,16 +20,16 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
   // ==========================================
   doc.setFillColor(251, 191, 36); // Amber 400 (Kuning Solid)
   doc.setDrawColor(15, 23, 42);   // Slate 900
-  doc.setLineWidth(1);
+  doc.setLineWidth(0.5);
   doc.rect(14, 14, pageWidth - 28, 24, "FD"); // Border kotak tebal pejal
 
   // Text Header Utama
   doc.setTextColor(15, 23, 42);
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text(options.title.toUpperCase(), 20, 24);
   
-  doc.setFont("courier", "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`// CASHIER_MANIFEST_DATE: ${formatDate(new Date().toISOString())} | RENDER_NODE: STATION_TERMINAL`, 20, 31);
 
@@ -62,7 +62,7 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
     // Background Card Kotak Solid
     doc.setFillColor(metric.bg[0], metric.bg[1], metric.bg[2]);
     doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(0.5);
     doc.rect(x, startY, cardWidth, cardHeight, "FD");
 
     // Sub-Label Atas Kotak
@@ -71,7 +71,7 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
     } else {
       doc.setTextColor(100, 116, 139); // Teks abu gelap jika latar cerah
     }
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(5.5);
     doc.text(metric.label, x + 3, startY + 6);
 
@@ -80,7 +80,7 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
     const txG = metric.textColor[1];
     const txB = metric.textColor[2];
     doc.setTextColor(txR, txG, txB);
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(metric.fontSize);
     doc.text(metric.value.toUpperCase(), x + 3, startY + 14);
   });
@@ -109,21 +109,21 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
     margin: { left: 14, right: 14 },
     head: [tableHeaders],
     body: tableRows,
-    theme: "plain", // Menghapus styling default jspdf bawaan yang soft
+    theme: "grid", // Menghapus styling default jspdf bawaan yang soft
     styles: {
-      font: "courier",
+      font: "helvetica",
       fontSize: 8,
       fontStyle: "bold",
       textColor: [15, 23, 42],
-      lineColor: [15, 23, 42],
-      lineWidth: 0.5,
+      lineColor: [226, 232, 240],
+      lineWidth: 0.1,
       cellPadding: 3,
     },
     headStyles: {
       fillColor: [15, 23, 42], // Header Hitam Legam
       textColor: [255, 255, 255],
-      lineWidth: 0.5,
-      lineColor: [15, 23, 42],
+      lineWidth: 0.1,
+      lineColor: [226, 232, 240],
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
@@ -154,7 +154,7 @@ export function exportCashierPaymentPdf(data: Payment[], options: PdfReportOptio
   // ==========================================
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   if (finalY < pageHeight - 20) {
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.text(`[ END_OF_CASHIER_MANIFEST_BATCH_RAW - VERIFIED BY AUTHORIZED NODE SYSTEM ]`, 14, finalY);

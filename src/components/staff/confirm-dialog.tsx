@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertOctagon, X, Check } from "lucide-react";
+import { AlertOctagon } from "lucide-react";
 
 export function ConfirmDialog({
   open,
@@ -21,61 +21,56 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-fade-in">
-      {/* Kotak Dialog Utama Gaya Neo-Brutalist / Kotak Kargo */}
-      <section className="w-full max-w-md border-4 border-slate-900 bg-amber-400 p-6 font-mono shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-md animate-scale-in">
+      <section className="w-full max-w-md border border-border/40 bg-surface p-6 font-body shadow-xl rounded-2xl animate-scale-in">
         
-        {/* Header Protokol Konfirmasi */}
-        <div className="flex items-center gap-3 border-b-2 border-slate-900 pb-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center border-2 border-slate-900 bg-slate-900 text-amber-400">
-            <AlertOctagon size={16} className="stroke-[2.5]" />
+        {/* Header Konfirmasi */}
+        <div className="flex items-center gap-3 border-b border-border/40 pb-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-rose-100 text-rose-600 rounded-full">
+            <AlertOctagon size={20} strokeWidth={1.5} />
           </div>
           <div>
-            <span className="block text-[10px] font-black uppercase tracking-wider text-slate-800">
-              PROTOKOL OTORISASI
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted">
+              Konfirmasi Sistem
             </span>
-            <h2 className="text-xs font-black uppercase tracking-wide text-slate-900">
+            <h2 className="text-base font-semibold tracking-tight text-ink">
               {title}
             </h2>
           </div>
         </div>
 
         {/* Isi Deskripsi Peringatan */}
-        <p className="my-5 text-2xs font-bold uppercase leading-relaxed tracking-wide text-slate-800 bg-amber-500/20 border-2 border-dashed border-amber-600/30 p-3 rounded-sm">
+        <p className="my-5 text-sm font-medium leading-relaxed text-muted bg-slate-50/50 border border-border/40 p-4 rounded-xl">
           {message}
         </p>
 
-        {/* Baris Tombol Aksi Kaku */}
-        <div className="grid grid-cols-2 gap-3 border-t-2 border-slate-900 pt-4">
-          {/* Tombol Batal / Interupsi */}
+        {/* Baris Tombol Aksi */}
+        <div className="grid grid-cols-2 gap-3 border-t border-border/40 pt-5">
+          {/* Tombol Batal */}
           <button 
             className="
-              inline-flex h-11 items-center justify-center gap-1.5 border-2 border-slate-900 
-              bg-white text-2xs font-black uppercase tracking-wider text-slate-900 
-              shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer
-              hover:-translate-x-pxver:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]
-              active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)]
+              inline-flex h-10 items-center justify-center gap-2 border border-border/40 
+              bg-surface text-xs font-semibold tracking-tight text-ink 
+              shadow-sm transition-colors rounded-xl cursor-pointer
+              hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1
             " 
             onClick={onCancel} 
             type="button"
           >
-            <X size={14} className="stroke-[2.5]" />
-            BATAL
+            Batal
           </button>
 
           {/* Tombol Eksekusi / Konfirmasi */}
           <button 
             className="
-              inline-flex h-11 items-center justify-center gap-1.5 border-2 border-slate-900 
-              bg-red-500 text-2xs font-black uppercase tracking-wider text-white 
-              shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm cursor-pointer
-              hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)]
-              active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)]
+              inline-flex h-10 items-center justify-center gap-2 border border-transparent 
+              bg-rose-600 text-xs font-semibold tracking-tight text-white 
+              shadow-sm transition-colors rounded-xl cursor-pointer
+              hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-1
             " 
             onClick={onConfirm} 
             type="button"
           >
-            <Check size={14} className="stroke-[2.5]" />
-            YA, LANJUTKAN
+            Lanjutkan
           </button>
         </div>
 

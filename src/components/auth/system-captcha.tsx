@@ -1,10 +1,7 @@
 "use client";
 
-import { RefreshCcw } from "lucide-react";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import ReCAPTCHA from "react-google-recaptcha";
+import { useEffect, useState, useRef } from "react";
 
 export type SystemCaptchaProps = {
   value: string;
@@ -13,56 +10,51 @@ export type SystemCaptchaProps = {
 };
 
 export function SystemCaptcha({ value, error, onChange }: SystemCaptchaProps) {
-  const [version, setVersion] = useState(0);
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  function refreshCaptcha() {
-    onChange("");
-    setVersion(Date.now());
+  useEffect(() => {
+    // Only access NEXT_PUBLIC variable in client to avoid hydration issues if not strictly bound
+    const key = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (key) {
+      setSiteKey(key);
+    } else {
+      console.error("Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY");
+    }
+  }, []);
+
+  if (!siteKey) {
+    return (
+      <div className="space-y-1.5">
+        <label className="block text-xs font-semibold text-slate-700">
+          Verifikasi Keamanan
+        </label>
+        <div className="rounded-xl border border-border bg-slate-50/50 p-4 text-xs font-medium text-muted animate-pulse">
+          Memuat modul keamanan...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-2">
-      {/* Label - Menggunakan format huruf kapital manifes logistik */}
-      <label className="block font-mono text-[10px] font-black uppercase tracking-widest text-steel">
-        VERIFIKASI CAPTCHA // SECURITY CHECK
+    <div className="flex flex-col space-y-1.5">
+      <label className="block text-xs font-semibold text-slate-700">
+        Verifikasi Keamanan
       </label>
       
-      {/* Kontainer Panel Utama - Box Tebal Neo-Brutalist */}
-      <div className="border-2 border-ink bg-paper p-4 rounded-app shadow-stamp-xs">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Gambar Captcha - Dibuat berbingkai hitam tegas */}
-          <img
-            alt="Captcha login"
-            className="h-13.5 w-45 border-2 border-ink bg-white object-contain rounded-app"
-            src={`/api/v2/auth/captcha?v=${version}`}
-          />
-          
-          {/* Tombol Refresh - Menggunakan style penekanan stamp tanpa warna oranye */}
-          <Button 
-            onClick={refreshCaptcha} 
-            size="sm" 
-            type="button" 
-            variant="outline"
-            className="h-10 border-2 border-ink bg-paper text-ink font-display text-xs font-black uppercase tracking-wider shadow-stamp-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp active:translate-x-0 active:translate-y-0 active:shadow-stamp-sm rounded-app cursor-pointer gap-2"
-          >
-            <RefreshCcw size={14} className="stroke-[2.5]" />
-            Generate Ulang
-          </Button>
-        </div>
-        
-        {/* Input Jawaban - Box Bergaris Tebal Menyesuaikan Tema Input Utama */}
-        <Input
-          className="mt-4 h-12 w-full border-2 border-ink bg-paper px-4 font-body text-xs font-bold uppercase tracking-wider text-ink outline-none placeholder:text-steel/50 rounded-app focus:shadow-stamp-sm transition-all"
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="MASUKKAN KODE CAPTCHA DI ATAS..."
-          value={value}
+      <div className="self-start overflow-hidden rounded-xl border border-border shadow-sm">
+        <ReCAPTCHA
+          ref={recaptchaRef}
+          sitekey={siteKey}
+          onChange={(token) => onChange(token || "")}
+          onExpired={() => onChange("")}
+          theme="light"
         />
       </div>
       
-      {/* Alert Pesan Error - Menggunakan format error box merah putus-putus */}
       {error ? (
-        <span className="block font-mono text-[10px] font-bold uppercase tracking-wide text-red-600">
-          [!] {error}
+        <span className="block text-xs font-semibold text-red-600">
+          {error}
         </span>
       ) : null}
     </div>

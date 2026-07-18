@@ -103,6 +103,14 @@ export function findCustomerById(id: number) {
     where: {
       id: BigInt(id),
     },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      address: true,
+      city: true,
+    }
   });
 }
 
@@ -111,6 +119,14 @@ export function findCustomerByEmail(email: string) {
     where: {
       email,
     },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      address: true,
+      city: true,
+    }
   });
 }
 
@@ -146,6 +162,12 @@ export function findCourierById(id: number) {
       role: users_role.courier,
       is_active: true,
     },
+    select: {
+      id: true,
+      name: true,
+      courier_code: true,
+      branch_id: true,
+    }
   });
 }
 
@@ -156,6 +178,12 @@ export function findCourierByCode(courierCode: string) {
       role: users_role.courier,
       is_active: true,
     },
+    select: {
+      id: true,
+      name: true,
+      courier_code: true,
+      branch_id: true,
+    }
   });
 }
 

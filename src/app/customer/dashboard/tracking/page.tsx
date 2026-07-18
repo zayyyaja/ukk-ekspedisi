@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function CustomerTrackingLegacyPage() {
-  redirect("/customer/lacak-paket");
+  redirect("/customer/lacak-resi");
 }

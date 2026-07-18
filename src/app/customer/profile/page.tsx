@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { User, MapPin, UploadCloud, X, Image as ImageIcon, Save, ShieldAlert, AlertTriangle, CheckCircle } from "lucide-react";
 
-import { CustomerNavbarShell } from "@/components/customer/customer-navbar-shell";
 import { apiPatchForm, ApiClientError } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/auth-client";
+import { FormField, FormTextarea } from "@/components/ui/form-system";
+import { BentoHeader } from "@/components/customer/bento-header";
 
 type ProfileForm = {
   name: string;
@@ -125,27 +126,31 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <CustomerNavbarShell>
-      <div className="mx-auto max-w-5xl font-mono select-none pb-12">
+    <div className="w-full font-body">
+      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6 mb-8">
+        <BentoHeader />
+      </div>
+      <div className="mx-auto max-w-5xl font-body pb-16 p-4 sm:p-6 lg:p-8">
         {/* Header Section */}
-        <header className="mb-8 border-b-4 border-slate-900 pb-6">
-          <p className="text-2xs font-black uppercase tracking-[0.2em] text-amber-600">// ACCOUNT_IDENTITY_NODE</p>
-          <h1 className="mt-1 text-3xl font-black uppercase tracking-wide text-slate-900 sm:text-4xl">PROFIL SAYA</h1>
-          <p className="mt-1 text-xs font-bold text-slate-500">Kelola master parameter informasi data diri dan otorisasi alamat logistik Anda.</p>
+        <header className="mb-10">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">My Profile</h1>
+          <p className="mt-2 text-sm font-medium text-muted">
+            Manage your personal information and delivery address.
+          </p>
         </header>
 
         {/* Message Banner Status */}
         {message && (
-          <div className="mb-8 border-4 border-slate-900 bg-emerald-50 p-4 text-2xs font-black uppercase tracking-wider text-emerald-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm flex items-center gap-2">
-            <CheckCircle size={14} className="text-emerald-600 shrink-0" />
-            <span>[ SYSTEM_SUCCESS ]: {message}</span>
+          <div className="mb-8 border border-green-500/20 bg-green-500/10 p-4 text-sm font-medium text-green-700 rounded-xl flex items-center gap-3">
+            <CheckCircle size={18} className="shrink-0" />
+            <span>{message}</span>
           </div>
         )}
 
         {error && (
-          <div className="mb-8 border-4 border-slate-900 bg-rose-100 p-4 text-2xs font-black uppercase tracking-wider text-rose-950 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] rounded-sm flex items-center gap-2">
-            <AlertTriangle size={14} className="text-rose-600 shrink-0" />
-            <span>[ SYSTEM_CRITICAL ]: {error}</span>
+          <div className="mb-8 border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive rounded-xl flex items-center gap-3">
+            <AlertTriangle size={18} className="shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -153,83 +158,67 @@ export default function CustomerProfilePage() {
           <div className="grid gap-8 lg:grid-cols-2">
             
             {/* KIRI: Blok Form Data Pribadi */}
-            <section className="border-4 border-slate-900 bg-white p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm">
-              <div className="mb-6 flex items-center gap-3 border-b-2 border-dashed border-slate-200 pb-4">
-                <div className="flex h-9 w-9 items-center justify-center border-2 border-slate-900 bg-slate-900 text-white rounded-xs">
-                  <User size={16} />
+            <section className="border border-border/50 bg-surface/80 backdrop-blur-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl">
+              <div className="mb-8 flex items-center gap-4 border-b border-border/60 pb-5">
+                <div className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary rounded-xl">
+                  <User size={20} />
                 </div>
-                <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">DATA_PRIBADI_CORE</h2>
+                <h2 className="text-lg font-semibold text-ink">Personal Data</h2>
               </div>
 
-              <div className="space-y-5 text-2xs font-bold uppercase tracking-wide">
-                <div className="space-y-2">
-                  <label className="text-slate-500 block font-black">// NAMA LENGKAP</label>
-                  <input 
-                    type="text"
-                    className="flex h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:bg-amber-50/20 focus:ring-2 focus:ring-slate-900 rounded-sm" 
-                    onChange={(event) => updateField("name", event.target.value)} 
-                    value={form.name} 
-                  />
-                </div>
+              <div className="space-y-6">
+                <FormField 
+                  label="Full Name" 
+                  value={form.name} 
+                  onChange={(event) => updateField("name", event.target.value)} 
+                />
                 
-                <div className="space-y-2">
-                  <label className="text-slate-400 block font-black">// ELECTRONIC MAIL (EMAIL)</label>
-                  <input 
-                    type="text"
-                    className="flex h-11 w-full border-2 border-slate-200 bg-slate-100 px-3 text-xs font-bold text-slate-400 cursor-not-allowed outline-none rounded-sm" 
-                    readOnly 
+                <div className="grid gap-2">
+                  <FormField 
+                    label="Email" 
                     value={form.email} 
+                    readOnly 
+                    className="bg-surface/50 text-slate-400 cursor-not-allowed"
                   />
-                  <p className="text-[10px] font-bold text-slate-400 leading-none lowercase tracking-normal flex items-center gap-1">
-                    <ShieldAlert size={10} className="text-slate-400" />
-                    Enkripsi konstan: Email registrasi utama tidak dapat diubah di terminal client.
+                  <p className="text-[11px] font-medium text-muted flex items-center gap-1.5 mt-0.5">
+                    <ShieldAlert size={14} />
+                    Registered email cannot be changed.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-slate-500 block font-black">// NOMOR TELEPON SELULER</label>
-                  <input 
-                    type="text"
-                    className="flex h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold text-slate-900 outline-none transition-all placeholder:text-slate-300 focus:bg-amber-50/20 focus:ring-2 focus:ring-slate-900 rounded-sm" 
-                    onChange={(event) => updateField("phone", event.target.value)} 
-                    value={form.phone} 
-                  />
-                </div>
+                <FormField 
+                  label="Phone Number" 
+                  value={form.phone} 
+                  onChange={(event) => updateField("phone", event.target.value)} 
+                />
               </div>
             </section>
 
             {/* KANAN: Blok Alamat, Unggah Foto & Submit Perubahan */}
-            <section className="border-4 border-slate-900 bg-white p-6 shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] rounded-sm flex flex-col justify-between">
+            <section className="border border-border/50 bg-surface/80 backdrop-blur-xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl flex flex-col justify-between">
               <div>
-                <div className="mb-6 flex items-center gap-3 border-b-2 border-dashed border-slate-200 pb-4">
-                  <div className="flex h-9 w-9 items-center justify-center border-2 border-slate-900 bg-slate-900 text-white rounded-xs">
-                    <MapPin size={16} />
+                <div className="mb-8 flex items-center gap-4 border-b border-border/60 pb-5">
+                  <div className="flex h-12 w-12 items-center justify-center bg-primary/10 text-primary rounded-xl">
+                    <MapPin size={20} />
                   </div>
-                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">ALAMAT_IDENTITAS_HUB</h2>
+                  <h2 className="text-lg font-semibold text-ink">Address & Shipping</h2>
                 </div>
 
-                <div className="space-y-5 text-2xs font-bold uppercase tracking-wide">
-                  <div className="space-y-2">
-                    <label className="text-slate-500 block font-black">// REGIONAL KOTA</label>
-                    <input 
-                      type="text"
-                      className="flex h-11 w-full border-2 border-slate-900 bg-white px-3 text-xs font-bold text-slate-900 outline-none transition-all focus:bg-amber-50/20 focus:ring-2 focus:ring-slate-900 rounded-sm" 
-                      onChange={(event) => updateField("city", event.target.value)} 
-                      value={form.city} 
-                    />
-                  </div>
+                <div className="space-y-6">
+                  <FormField 
+                    label="City" 
+                    value={form.city} 
+                    onChange={(event) => updateField("city", event.target.value)} 
+                  />
 
-                  <div className="space-y-2">
-                    <label className="text-slate-500 block font-black">// ALAMAT DOMISILI LENGKAP</label>
-                    <textarea 
-                      className="flex min-h-[100px] w-full border-2 border-slate-900 bg-white px-3 py-2.5 text-xs font-bold text-slate-900 outline-none transition-all focus:bg-amber-50/20 focus:ring-2 focus:ring-slate-900 resize-y rounded-sm" 
-                      onChange={(event) => updateField("address", event.target.value)} 
-                      value={form.address} 
-                    />
-                  </div>
+                  <FormTextarea 
+                    label="Full Address" 
+                    value={form.address} 
+                    onChange={(event) => updateField("address", event.target.value)} 
+                  />
 
-                  <div className="space-y-2">
-                    <label className="text-slate-500 block font-black">// FOTO PROFIL MANIFES</label>
+                  <div className="grid gap-2">
+                    <span className="text-sm font-semibold text-ink">Profile Picture</span>
                     
                     <input 
                       type="file" 
@@ -242,33 +231,33 @@ export default function CustomerProfilePage() {
                     {!photoPreview ? (
                       <div 
                         onClick={() => fileInputRef.current?.click()}
-                        className="group flex cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-300 bg-slate-50 py-7 transition-all hover:border-slate-900 hover:bg-amber-50/20 rounded-sm"
+                        className="group flex cursor-pointer flex-col items-center justify-center border-2 border-dashed border-border/60 bg-background/50 py-10 transition-all hover:border-primary/50 hover:bg-primary/5 rounded-2xl"
                       >
-                        <div className="mb-2 border-2 border-slate-900 bg-white p-2.5 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] rounded-xs group-hover:bg-amber-400 transition-colors">
-                          <UploadCloud size={20} className="text-slate-900" />
+                        <div className="mb-4 bg-surface p-4 shadow-sm rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-colors text-muted border border-border/60 group-hover:border-primary">
+                          <UploadCloud size={28} />
                         </div>
-                        <p className="text-3xs font-black uppercase text-slate-800 tracking-wider">UNGKAH FILE IMAGE</p>
-                        <p className="mt-0.5 text-[9px] text-slate-400 uppercase font-bold">JPG, PNG / MAX_SIZE: 5 megabytes</p>
+                        <p className="text-sm font-semibold text-ink">Upload Photo</p>
+                        <p className="mt-1 text-xs font-medium text-muted">JPG, PNG / Max 5MB</p>
                       </div>
                     ) : (
-                      <div className="border-2 border-slate-900 bg-white overflow-hidden rounded-sm shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] relative">
-                        <div className="relative aspect-video w-full bg-slate-950 sm:aspect-[21/9]">
-                          <img src={photoPreview} alt="Preview Foto Profil" className="object-cover w-full h-full border-b-2 border-slate-900" />
+                      <div className="border border-border/60 bg-background/50 overflow-hidden rounded-2xl shadow-sm relative">
+                        <div className="relative aspect-video w-full sm:aspect-[21/9]">
+                          <img src={photoPreview} alt="Profile Preview" className="object-cover w-full h-full border-b border-border/60" />
                         </div>
                         
-                        <div className="absolute right-3 top-3">
+                        <div className="absolute right-4 top-4">
                           <button 
                             type="button" 
                             onClick={removePhoto}
-                            className="flex h-7 w-7 items-center justify-center border-2 border-slate-900 bg-white text-rose-600 shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] hover:bg-rose-50 transition-all rounded-xs active:translate-x-[0.5px] active:translate-y-[0.5px]"
+                            className="flex h-10 w-10 items-center justify-center bg-white/90 backdrop-blur-md text-destructive hover:bg-destructive hover:text-white transition-all rounded-xl shadow-sm"
                           >
-                            <X size={14} className="stroke-[2.5]" />
+                            <X size={18} />
                           </button>
                         </div>
                         
-                        <div className="bg-slate-50 px-3 py-2 flex items-center gap-2 text-3xs font-black uppercase text-slate-700">
-                          <ImageIcon size={12} className="text-slate-400" />
-                          <span className="truncate max-w-[280px]">{photoFile?.name || "PROFILE_PHOTO_ACTIVE.JPG"}</span>
+                        <div className="bg-surface/50 px-5 py-4 flex items-center gap-3 text-xs font-medium text-muted">
+                          <ImageIcon size={16} />
+                          <span className="truncate">{photoFile?.name || "Current profile picture"}</span>
                         </div>
                       </div>
                     )}
@@ -277,21 +266,21 @@ export default function CustomerProfilePage() {
               </div>
 
               {/* Blok Tombol Submit Perubahan */}
-              <div className="mt-8 pt-4 border-t-2 border-dashed border-slate-200">
+              <div className="mt-10 pt-8 border-t border-border/60">
                 <button 
-                  className="flex h-12 w-full items-center justify-center gap-2 border-2 border-slate-950 bg-amber-400 font-black text-slate-950 shadow-[3px_3px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs uppercase tracking-widest transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                  className="flex h-14 w-full items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold text-base transition-all hover:bg-primary/90 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" 
                   disabled={saving} 
                   type="submit"
                 >
                   {saving ? (
                     <>
-                      <div className="h-4 w-4 animate-spin border-2 border-slate-950 border-t-transparent rounded-full" />
-                      SYNCHRONIZING...
+                      <div className="h-6 w-6 animate-spin border-2 border-white/30 border-t-white rounded-full" />
+                      Saving...
                     </>
                   ) : (
                     <>
-                      <Save size={14} className="stroke-[2.5]" />
-                      SIMPAN PERUBAHAN DATA
+                      <Save size={20} />
+                      Save Changes
                     </>
                   )}
                 </button>
@@ -301,6 +290,6 @@ export default function CustomerProfilePage() {
           </div>
         </form>
       </div>
-    </CustomerNavbarShell>
+    </div>
   );
 }

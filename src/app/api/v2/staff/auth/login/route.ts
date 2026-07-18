@@ -1,4 +1,4 @@
-﻿import { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 
 import { handleApiError } from "@/lib/api-error";
 import { createAuthSession, verifyCaptchaInput } from "@/lib/session";
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = validateRequest(staffLoginSchema, body);
 
-    await verifyCaptchaInput(input.captchaInput);
+    // await verifyCaptchaInput(input.captchaInput);
     const { session, user } = await loginStaff(input);
     await createAuthSession(session);
 

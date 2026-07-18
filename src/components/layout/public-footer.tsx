@@ -3,90 +3,64 @@
 import Link from "next/link";
 
 const navItems = [
-  { href: "/", label: "BERANDA" },
-  { href: "/tracking", label: "TRACKING" },
-  { href: "/cek-ongkir", label: "CEK ONGKIR" },
-  { href: "/cabang", label: "CABANG" },
-  { href: "/tentang-kami", label: "TENTANG KAMI" },
-  { href: "/kontak", label: "KONTAK" },
+  { href: "/", label: "Beranda" },
+  { href: "/cek-ongkir", label: "Cek ongkir" },
+  { href: "/tracking", label: "Lacak resi" },
+  { href: "/cabang", label: "Cabang" },
 ];
 
 export function PublicFooter() {
   return (
-    <footer className="border-t-4 border-slate-900 bg-white text-slate-900 font-mono select-none">
+    <footer className="border-t border-border bg-white text-ink font-body select-none">
       
-      {/* Kontainer Utama dengan gap-x-16 (Horizontal) dan gap-y-10 (Vertikal) */}
-      <div className="mx-auto grid max-w-7xl gap-x-16 gap-y-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4 lg:px-10">
+      {/* Kontainer Utama */}
+      <div className="mx-auto grid max-w-7xl gap-x-16 gap-y-12 px-6 py-16 sm:grid-cols-3 lg:px-10">
         
         {/* Kolom 1: Profil Ekspedisi */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-3 border-2 border-slate-900 bg-amber-400 rounded-sm shadow-[1px_1px_0px_0px_rgba(15,23,42,1)]" />
-            <h2 className="text-2xs font-black uppercase tracking-wider text-slate-900">
-              Tentang Kami
-            </h2>
-          </div>
-          <p className="text-3xs font-bold uppercase text-slate-500 leading-relaxed">
-            <span className="font-black text-slate-900">Danish Ekspedisi</span> adalah aplikasi penyedia jasa pengiriman paket logistik. Kami siap membantu mengirimkan barang Anda dengan aman, cek ongkir murah, serta pelacakan resi yang akurat.
+        <section className="space-y-4">
+          <h2 className="text-[14px] font-medium tracking-tight text-muted">
+            Tentang kami
+          </h2>
+          <p className="text-[15px] font-normal text-muted leading-[1.8]">
+            <span className="font-semibold text-ink">DRG-EKSPEDISI</span> adalah aplikasi penyedia jasa pengiriman paket logistik. Kami siap membantu mengirimkan barang Anda dengan aman, cek ongkir murah, serta pelacakan resi yang akurat.
           </p>
         </section>
 
-        {/* Kolom 2: Navigasi Menu Utama */}
-        <section className="space-y-3">
-          <h2 className="text-2xs font-black uppercase tracking-wider text-slate-900 pl-2 border-l-4 border-amber-400">
-            Menu Navigasi
+        {/* Kolom 2: Layanan Utama (Gabungan Navigasi & Layanan) */}
+        <section className="space-y-4">
+          <h2 className="text-[14px] font-medium tracking-tight text-muted">
+            Layanan utama
           </h2>
-          <nav className="grid grid-cols-2 gap-2 text-3xs font-black tracking-wide">
+          <nav className="flex flex-col gap-y-3">
             {navItems.map((item) => (
               <Link 
-                className="text-slate-500 hover:text-slate-900 transition-colors w-fit uppercase" 
+                className="text-[15px] font-normal text-muted hover:text-[#0C447C] transition-colors w-fit" 
                 href={item.href} 
                 key={item.href}
               >
-                // {item.label}
+                {item.label}
               </Link>
             ))}
           </nav>
         </section>
 
-        {/* Kolom 3: Jenis Layanan Pengiriman */}
-        <section className="space-y-3">
-          <h2 className="text-2xs font-black uppercase tracking-wider text-slate-900 pl-2 border-l-4 border-amber-400">
-            Layanan Utama
+        {/* Kolom 3: Hubungi Kantor Hub */}
+        <section className="space-y-4">
+          <h2 className="text-[14px] font-medium tracking-tight text-muted">
+            Kontak kantor
           </h2>
-          <ul className="grid gap-2 text-3xs font-black tracking-wide text-slate-500 uppercase">
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-slate-900 rounded-full" />
-              Kirim Barang Domestik
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-slate-900 rounded-full" />
-              Cek Resi Real-Time
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-slate-900 rounded-full" />
-              Hitung Ongkir Akurat
-            </li>
-          </ul>
-        </section>
-
-        {/* Kolom 4: Hubungi Kantor Hub */}
-        <section className="space-y-3">
-          <h2 className="text-2xs font-black uppercase tracking-wider text-slate-900 pl-2 border-l-4 border-amber-400">
-            Kontak Kantor
-          </h2>
-          <ul className="grid gap-2 text-3xs font-bold text-slate-500 uppercase">
+          <ul className="flex flex-col gap-y-4 text-[15px] font-normal text-muted">
             <li className="flex flex-col">
-              <span className="font-black text-slate-900">Email Hubungan</span>
-              <span className="normal-case font-black text-slate-600 mt-0.5 break-all">support@danishekspedisi.com</span>
+              <span className="text-ink text-[14px] font-medium">Email</span>
+              <span className="mt-0.5 break-all">support@drgekspedisi.com</span>
             </li>
             <li className="flex flex-col">
-              <span className="font-black text-slate-900">Nomor Telepon</span>
-              <span className="font-black text-slate-600 mt-0.5">021-555-0199</span>
+              <span className="text-ink text-[14px] font-medium">Telepon</span>
+              <span className="mt-0.5">021-555-0199</span>
             </li>
             <li className="flex flex-col">
-              <span className="font-black text-slate-900">Alamat Pusat</span>
-              <span className="font-black text-slate-600 mt-0.5 normal-case leading-normal">Jl. Logistik Raya No. 10, Hub Utara, Jakarta</span>
+              <span className="text-ink text-[14px] font-medium">Alamat kantor</span>
+              <span className="mt-0.5 leading-[1.8]">Jl. Logistik Raya No. 10, Hub Utara, Jakarta</span>
             </li>
           </ul>
         </section>
@@ -94,11 +68,11 @@ export function PublicFooter() {
       </div>
 
       {/* Baris Hak Cipta Terbawah */}
-      <div className="border-t-2 border-slate-200 bg-slate-50 px-4 py-4 text-center sm:px-6 lg:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row text-3xs font-black text-slate-400 uppercase tracking-wider">
-          <p>© 2026 Danish Ekspedisi. Hak Cipta Dilindungi Undang-Undang.</p>
-          <p className="bg-slate-900 text-amber-400 px-2 py-0.5 rounded-sm text-[10px] font-black shadow-[2px_2px_0px_0px_rgba(244,63,94,1)]">
-            APLIKASI LOGISTIK v2.0.4
+      <div className="border-t border-border/50 bg-transparent px-4 py-6 text-center sm:px-6 lg:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row text-[13px] font-normal text-muted">
+          <p>© 2026 DRG-EKSPEDISI. Hak cipta dilindungi undang-undang.</p>
+          <p className="opacity-70">
+            Versi aplikasi 2.0.4
           </p>
         </div>
       </div>

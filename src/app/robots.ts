@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { env } from "@/config/env";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.APP_URL || "http://localhost:3000";
+  const baseUrl = env.APP_URL;
 
   return {
     rules: {

@@ -39,7 +39,7 @@ const DropdownMenuSubContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.SubContent
-    className={cn("z-50 min-w-32 rounded-md border border-border bg-card p-1 text-card-foreground shadow-lg", className)}
+    className={cn("z-50 min-w-32 rounded-xl border border-border bg-surface/90 backdrop-blur-md p-1 text-ink shadow-lg", className)}
     ref={ref}
     {...props}
   />
@@ -52,7 +52,7 @@ const DropdownMenuContent = React.forwardRef<
 >(({ className, sideOffset = 4, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
-      className={cn("z-50 min-w-36 overflow-hidden rounded-md border border-border bg-card p-1 text-card-foreground shadow-md", className)}
+      className={cn("z-50 min-w-36 overflow-hidden rounded-xl border border-border bg-surface/90 backdrop-blur-md p-1 text-ink shadow-lg", className)}
       ref={ref}
       sideOffset={sideOffset}
       {...props}
@@ -69,7 +69,7 @@ const DropdownMenuItem = React.forwardRef<
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
     )}
@@ -141,7 +141,7 @@ const DropdownMenuSeparator = React.forwardRef<
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 const DropdownMenuShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
-  <span className={cn("ml-auto text-xs tracking-widest text-muted-foreground", className)} {...props} />
+  <span className={cn("ml-auto text-xs tracking-tight text-muted-foreground", className)} {...props} />
 );
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 

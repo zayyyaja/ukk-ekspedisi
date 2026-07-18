@@ -3,7 +3,6 @@ import path from "node:path";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   outputFileTracingRoot: path.join(process.cwd()),
   reactStrictMode: true,
   images: {
@@ -32,6 +31,7 @@ export default withPWA({
     document: "/offline",
   },
   runtimeCaching: [
+    // Static assets
     {
       urlPattern: /^https?.*\.(?:js|css|woff2?|png|jpg|jpeg|svg|gif|ico)$/i,
       handler: "CacheFirst",
@@ -43,8 +43,9 @@ export default withPWA({
         },
       },
     },
+    // API Endpoints (Strict NetworkFirst)
     {
-      urlPattern: /^https?:\/\/.*\/api\/v1\/.*$/i,
+      urlPattern: /^https?:\/\/.*\/api\/.*$/i,
       handler: "NetworkFirst",
       options: {
         cacheName: "api-cache",
@@ -55,19 +56,30 @@ export default withPWA({
         },
       },
     },
+    // Authenticated Pages (Strict NetworkFirst to prevent session leak)
     {
-      urlPattern: /^https?:\/\/.*$/i,
+      urlPattern: /^https?:\/\/.*\/(?:staff|customer)\/?.*$/i,
       handler: "NetworkFirst",
       options: {
-        cacheName: "pages-cache",
+        cacheName: "auth-pages-cache",
         networkTimeoutSeconds: 4,
         expiration: {
-          maxEntries: 80,
-          maxAgeSeconds: 60 * 60 * 24 * 7,
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24,
+        },
+      },
+    },
+    // Public Pages (StaleWhileRevalidate)
+    {
+      urlPattern: /^https?:\/\/.*$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "public-pages-cache",
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24,
         },
       },
     },
   ],
 })(nextConfig);
-
-module.exports = nextConfig;

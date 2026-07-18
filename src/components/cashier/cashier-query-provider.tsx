@@ -9,7 +9,6 @@ export function CashierQueryProvider({ children }: { children: React.ReactNode }
       new QueryClient({
         defaultOptions: {
           queries: {
-            refetchInterval: 4_000,
             refetchOnWindowFocus: true,
             staleTime: 2_000,
           },

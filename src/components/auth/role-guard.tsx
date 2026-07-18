@@ -46,7 +46,7 @@ export function RoleGuard({
   }, [allowedRoles, router]);
 
   if (status === "loading") {
-    return <LoadingState title="Memuat akses staff" />;
+    return <LoadingState title="Preparing workspace" />;
   }
 
   if (status === "forbidden") {

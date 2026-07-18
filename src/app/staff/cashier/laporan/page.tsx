@@ -76,10 +76,10 @@ function ReportContent() {
     <CashierShell branchName={data?.branch?.name}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Laporan</h1>
-          <p className="mt-2 text-slate-500">Chart pemasukan dan rekap transaksi cabang.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-ink">Laporan</h1>
+          <p className="mt-2 text-sm font-medium text-muted">Chart pemasukan dan rekap transaksi cabang.</p>
         </div>
-        <button className="button primary" onClick={exportPdf} type="button">
+        <button className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90" onClick={exportPdf} type="button">
           <Download size={18} />
           Unduh PDF
         </button>
@@ -129,8 +129,8 @@ function RevenueChart({
   title: string;
 }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-bold">{title}</h2>
+    <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <h2 className="text-xl font-semibold tracking-tight text-ink">{title}</h2>
       <div className="mt-6 h-80">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart data={data}>
@@ -148,9 +148,9 @@ function RevenueChart({
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-semibold text-slate-500">{label}</p>
-      <div className="mt-2 text-xl font-bold">{value}</div>
+    <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+      <p className="text-sm font-semibold text-muted">{label}</p>
+      <div className="mt-2 text-2xl font-bold tracking-tight text-ink">{value}</div>
     </div>
   );
 }

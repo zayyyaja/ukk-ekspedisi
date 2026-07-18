@@ -1,23 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { env } from "@/config/env";
 import "./globals.css";
 
 // Memastikan halaman selalu dirender dinamis di server
 export const dynamic = "force-dynamic";
 
 // Inisialisasi konfigurasi font dengan penamaan variabel baru
-const fontDisplay = Space_Grotesk({
+const fontDisplay = Inter({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["500", "700"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
 const fontBody = Inter({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -29,14 +30,14 @@ const fontMono = JetBrains_Mono({
 });
 
 // Pembersihan fallback URL menggunakan operator Nullish Coalescing (??)
-const siteUrl = process.env.APP_URL ?? "http://localhost:3000";
+const siteUrl = env.APP_URL;
 
 // Objek Metadata dengan penambahan sistem Favicon otomatis bawaan Next.js
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Danish Ekspedisi | Cek Resi & Logistik",
-    template: "%s | Danish Ekspedisi",
+    default: "DRG-EKSPEDISI | Cek Resi & Logistik",
+    template: "%s | DRG-EKSPEDISI",
   },
   description: "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
   keywords: ["ekspedisi online", "sistem informasi ekspedisi", "tracking resi", "pengiriman barang", "logistik"],
@@ -50,21 +51,21 @@ export const metadata: Metadata = {
   },
   
   openGraph: {
-    title: "Danish Ekspedisi",
+    title: "DRG-EKSPEDISI",
     description: "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
     url: "/",
-    siteName: "Danish Ekspedisi",
+    siteName: "DRG-EKSPEDISI",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Danish Ekspedisi",
+    title: "DRG-EKSPEDISI",
     description: "Sistem Informasi Ekspedisi Online untuk pengiriman barang antar cabang secara cepat dan transparan.",
   },
   appleWebApp: {
     capable: true,
-    title: "Danish Ekspedisi",
+    title: "DRG-EKSPEDISI",
     statusBarStyle: "default",
   },
 };
@@ -78,6 +79,8 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
+import { PwaProvider } from "@/components/pwa-provider";
+
 // Mengubah gaya penulisan komponen menjadi Arrow Function Component
 const RootLayout = ({ children }: RootLayoutProps) => {
   // Menggabungkan seluruh CSS Variable font menggunakan metode Array Join
@@ -90,7 +93,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="id" className={coreFontVariables}>
       <head />
-      <body className="w-full min-h-screen m-0 p-0 overflow-x-hidden bg-slate-100 text-slate-900 font-mono antialiased">
+      <body suppressHydrationWarning className="w-full min-h-screen m-0 p-0 overflow-x-hidden antialiased">
+        <PwaProvider />
         {children}
         <Toaster />
       </body>

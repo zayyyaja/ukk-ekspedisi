@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 
 import { verifyEmail } from "@/lib/auth-client";
 import { Loader2, Package2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -32,75 +33,65 @@ function VerifyEmailContent() {
   }, [token]);
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-slate-50 font-mono select-none p-4">
-      {/* Pola Grid Latar Belakang */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:24px_24px] opacity-60" />
+    <main className="relative flex min-h-screen items-center justify-center bg-background font-body select-none p-6">
+      {/* Neo-Minimalist Glow Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] bg-primary/5 blur-[120px] rounded-full" />
+      </div>
 
-      <section className="relative z-10 w-full max-w-md border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-sm">
+      <section className="relative z-10 w-full max-w-md border border-border/50 bg-surface/80 backdrop-blur-xl shadow-[0_20px_60px_rgb(0,0,0,0.08)] rounded-3xl p-8 text-center">
         
         {/* Header Branding */}
-        <div className="mb-6 flex items-center gap-2 border-b-2 border-slate-900 pb-4">
-          <div className="border-2 border-slate-900 bg-amber-400 p-1 rounded-sm">
-            <Package2 size={18} className="text-slate-950 stroke-[2.5]" />
-          </div>
-          <div>
-            <div className="text-3xs font-black uppercase tracking-[0.2em] text-slate-400">ANTERIN // LOGISTIK</div>
-            <div className="text-2xs font-black uppercase text-slate-900 tracking-wide">TERMINAL_OTORISASI</div>
-          </div>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center bg-primary/10 rounded-2xl mb-6">
+          <Package2 className="h-7 w-7 text-primary" />
         </div>
 
-        <h1 className="mb-4 text-lg font-black text-slate-900 uppercase tracking-wide">
-          [ STATUS_VERIFIKASI_EMAIL ]
+        <h1 className="text-2xl font-semibold leading-tight text-ink tracking-tight mb-8">
+          Verification Status
         </h1>
         
         {/* STATUS: VERIFYING */}
         {status === "verifying" && (
-          <div className="mb-6 flex items-center gap-3 border-2 border-slate-900 bg-amber-50 p-4 text-3xs font-black uppercase tracking-wider text-amber-950 rounded-sm">
-            <Loader2 className="h-4 w-4 animate-spin text-slate-950 stroke-[2.5]" />
-            <p>// {message}</p>
+          <div className="mb-8 flex flex-col items-center justify-center p-6 border border-border/60 bg-slate-50/50 rounded-2xl">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-sm font-medium text-ink">{message}</p>
           </div>
         )}
 
         {/* STATUS: FAILED */}
         {status === "failed" && (
-          <div className="mb-6 flex items-start gap-3 border-2 border-slate-900 bg-rose-100 p-4 text-3xs font-black uppercase tracking-wider text-rose-950 rounded-sm">
-            <ShieldAlert className="h-4 w-4 text-rose-600 shrink-0 stroke-[2.5]" />
-            <div>
-              <p className="text-rose-600">[ LOG_ERROR ]</p>
-              <p className="mt-1 normal-case font-bold text-slate-700">{message}</p>
-            </div>
+          <div className="mb-8 flex flex-col items-center justify-center p-6 border border-destructive/20 bg-destructive/5 rounded-2xl">
+            <ShieldAlert className="h-10 w-10 text-destructive mb-4" />
+            <p className="text-base font-semibold text-destructive mb-1">Verification Failed</p>
+            <p className="text-sm text-destructive/80 font-medium">{message}</p>
           </div>
         )}
 
         {/* STATUS: SUCCESS */}
         {status === "success" && (
-          <div className="mb-6 flex items-start gap-3 border-2 border-slate-900 bg-emerald-50 p-4 text-3xs font-black uppercase tracking-wider text-emerald-950 rounded-sm">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 stroke-[2.5]" />
-            <div>
-              <p className="text-emerald-600">[ LOG_SUCCESS ]</p>
-              <p className="mt-1 text-slate-900">{message}</p>
-            </div>
+          <div className="mb-8 flex flex-col items-center justify-center p-6 border border-emerald-500/20 bg-emerald-50 rounded-2xl">
+            <ShieldCheck className="h-10 w-10 text-emerald-600 mb-4" />
+            <p className="text-base font-semibold text-emerald-600 mb-1">Verification Successful</p>
+            <p className="text-sm text-emerald-600/80 font-medium">{message}</p>
           </div>
         )}
 
         {/* ACTION BUTTON JIKA SUKSES */}
         {status === "success" && (
-          <Link 
-            className="flex h-11 w-full items-center justify-center bg-amber-400 text-slate-950 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(15,23,42,1)] text-2xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer" 
-            href="/customer/login"
-          >
-            MASUK TERMINAL LOGIN
-          </Link>
+          <Button asChild size="lg" className="w-full">
+            <Link href="/customer/login">
+              Continue to Login
+            </Link>
+          </Button>
         )}
 
         {/* ACTION BUTTON JIKA GAGAL UNTUK REGISTRASI ULANG */}
         {status === "failed" && (
-          <Link 
-            className="flex h-11 w-full items-center justify-center bg-slate-900 text-white border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.2)] hover:-translate-x-[1px] hover:-translate-y-[1px] text-2xs font-black uppercase tracking-widest rounded-sm transition-all cursor-pointer" 
-            href="/customer/register"
-          >
-            KEMBALI KE REGISTRASI
-          </Link>
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link href="/customer/register">
+              Return to Registration
+            </Link>
+          </Button>
         )}
       </section>
     </main>
@@ -111,12 +102,14 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <main className="relative flex min-h-screen items-center justify-center bg-slate-50 font-mono select-none">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:24px_24px] opacity-60" />
-          <div className="relative z-10 flex flex-col items-center justify-center gap-3 border-4 border-slate-900 bg-white p-8 shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] rounded-sm">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-950 stroke-[2.5]" />
-            <p className="text-3xs font-black tracking-[0.2em] text-slate-900 uppercase animate-pulse">
-              // MEMUAT_MANIFES_OTORISASI...
+        <main className="relative flex min-h-screen items-center justify-center bg-background font-body select-none px-4">
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] bg-primary/5 blur-[120px] rounded-full" />
+          </div>
+          <div className="relative z-10 flex flex-col items-center justify-center gap-4 border border-border/50 bg-surface/80 backdrop-blur-xl p-12 shadow-[0_20px_60px_rgb(0,0,0,0.08)] rounded-3xl">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-sm font-medium text-muted animate-pulse">
+              Loading...
             </p>
           </div>
         </main>

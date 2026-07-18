@@ -16,8 +16,8 @@ Aplikasi web manajemen ekspedisi/logistik berbasis **Next.js** dengan portal cus
 | ORM / Database | Prisma 6 + MySQL 8 |
 | Autentikasi | JWT (jose) + HTTP-only session cookie |
 | Pembayaran | Midtrans |
-| Email | Nodemailer (SMTP) |
-| Captcha | Cloudflare Turnstile |
+| Email | Nodemailer (SMTP/Mailtrap) |
+| Captcha | Google reCAPTCHA v2 |
 | PDF Report | jsPDF + jspdf-autotable |
 | PWA | next-pwa |
 | Upload File | Local storage (`public/uploads`) |
@@ -109,8 +109,8 @@ Edit `.env` dan isi nilai sesuai environment Anda.
 | `JWT_EMAIL_VERIFICATION_SECRET` | Secret verifikasi email |
 | `MIDTRANS_SERVER_KEY` | Server key Midtrans |
 | `MIDTRANS_CLIENT_KEY` | Client key Midtrans |
-| `TURNSTILE_SECRET_KEY` | Secret key Cloudflare Turnstile |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site key Turnstile (client) |
+| `RECAPTCHA_SECRET_KEY` | Secret key Google reCAPTCHA |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Site key Google reCAPTCHA (client) |
 
 #### Variabel opsional
 
@@ -209,8 +209,8 @@ JWT_EMAIL_VERIFICATION_SECRET=<random-secret-panjang>
 MIDTRANS_SERVER_KEY=<production-server-key>
 MIDTRANS_CLIENT_KEY=<production-client-key>
 MIDTRANS_IS_PRODUCTION=true
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site-key>
-TURNSTILE_SECRET_KEY=<secret-key>
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=<site-key>
+RECAPTCHA_SECRET_KEY=<secret-key>
 ```
 
 > Di Docker Compose, host database adalah `db` (nama service), bukan `localhost`.

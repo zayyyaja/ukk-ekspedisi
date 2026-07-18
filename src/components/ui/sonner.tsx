@@ -6,13 +6,13 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => (
   <Sonner
-    position="top-right"
+    position="bottom-right"
     toastOptions={{
       classNames: {
-        toast: "border border-border bg-card text-card-foreground",
-        description: "text-muted-foreground",
-        actionButton: "bg-primary text-primary-foreground",
-        cancelButton: "bg-muted text-foreground",
+        toast: "group border border-border/40 bg-surface text-ink shadow-lg rounded-xl font-body",
+        description: "text-muted text-[13px]",
+        actionButton: "bg-primary text-white hover:bg-primary/90 transition-colors rounded-lg",
+        cancelButton: "bg-surface border border-border/40 text-ink hover:bg-slate-50 transition-colors rounded-lg",
       },
     }}
     {...props}

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { getCurrentUser } from "@/lib/auth-client";
 import type { CurrentUser, StaffRole } from "@/types/customer-portal";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
 
 const roleHome: Record<StaffRole, string> = {
   admin: "/staff/admin/dashboard",
@@ -72,7 +73,7 @@ export function StaffGuard({
   }, [allowedRole, pathname, router]);
 
   if (loading) {
-    return <div className="staff-state">Memuat dashboard staff...</div>;
+    return <FullPageLoader label="Preparing workspace..." />;
   }
 
   if (forbidden) {

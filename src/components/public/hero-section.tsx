@@ -1,122 +1,214 @@
 "use client";
 
-import { ArrowRight, Search, Ship, Truck, Box } from "lucide-react";
-import Image from "next/image";
-
+import { Search, Truck, Box, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AuthModal } from "./auth-modal";
+import { useState } from "react";
+import { apiGet } from "@/lib/api-client";
+import { labels } from "@/components/status-badge";
+import { cn } from "@/lib/utils";
+
+type TrackingResult = {
+  trackingNumber: string;
+  status: string;
+  originBranch: { name: string; city: string };
+  destinationBranch: { name: string; city: string };
+  shipmentDate: string;
+  sender: { name: string; city: string };
+  receiver: { name: string; city: string };
+  trackings: {
+    status: string;
+    location: string;
+    description: string;
+    trackedAt: string;
+  }[];
+};
 
 export function HeroSection() {
-  return (
-    <section className="relative min-h-screen w-full flex items-center justify-center bg-slate-100 py-16 lg:py-24 font-mono select-none overflow-hidden">
-      {/* Pola Garis Grid Latar Belakang Gudang Logistik */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:30px_30px] opacity-70" />
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<TrackingResult | null>(null);
 
-      {/* Main Container dengan Grid 2 Kolom */}
-      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* KOLOM KIRI: Teks Utama & Tombol Akses (Rata Kiri) */}
-          <div className="lg:col-span-7 text-left space-y-6 order-2 lg:order-1">
-            
-            {/* Tag Pengenal Maskapai */}
-            <div className="inline-flex items-center gap-2 border-2 border-slate-900 bg-amber-400 px-3 py-1 text-3xs font-black uppercase tracking-widest text-slate-900 rounded-sm shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]">
-              <span className="h-2 w-2 bg-rose-600 rounded-full animate-pulse" />
-              <span>DANISH EKSPEDISI // PORTAL UTAMA</span>
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!trackingNumber.trim()) return;
+
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const response = await apiGet<TrackingResult>(
+        `/api/v2/public/tracking/${trackingNumber}`
+      );
+      setResult(response.data);
+    } catch (err: any) {
+      setError(err.message || "Resi tidak ditemukan.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Tracking data to display
+  const displayTrackings = result?.trackings?.length
+    ? result.trackings.slice(0, 2)
+    : [];
+
+  return (
+    <section className="relative min-h-screen w-full flex items-center justify-center pt-24 pb-16 lg:py-32 font-body select-none">
+      {/* Neo-Minimalist Glow Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[800px] w-[1000px] bg-primary/5 blur-[120px] rounded-full" />
+      </div>
+
+      <div className="page-container relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-center">
+          {/* KOLOM KIRI: Editorial Typography */}
+          <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-8 order-2 lg:order-1">
+            <div className="inline-flex items-center gap-2 border border-border bg-surface px-3 py-1.5 text-xs font-semibold uppercase tracking-tight text-muted rounded-full shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span>DRG-EKSPEDISI Logistics</span>
             </div>
 
-            {/* Judul Gede Gahar Maksimal */}
-            <h1 className="text-4xl font-black leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-7xl uppercase">
-              KIRIM PAKET <br />
-              <span className="bg-slate-900 text-amber-400 px-3 inline-block my-1 shadow-[4px_4px_0px_0px_rgba(244,63,94,1)]">
-                TANPA RIBET
-              </span>
+            <h1 className="text-5xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-6xl lg:text-7xl">
+              Pengiriman modern, <br />
+              <span className="text-primary">Disederhanakan.</span>
             </h1>
 
-            {/* Deskripsi Kalimat yang Lebih Sederhana */}
-            <p className="max-w-xl text-2xs font-bold uppercase text-slate-500 leading-relaxed pt-2">
-              Kirim paket barang ke mana saja jadi lebih mudah. Cek harga ongkir transparan, pantau posisi nomor resi paket, dan buat order pengiriman langsung dari rumah Anda.
+            <p className="max-w-xl text-lg text-muted leading-relaxed">
+              Rasakan era baru logistik. Harga transparan, pelacakan akurat
+              secara real-time, dan kemudahan manajemen pesanan langsung dari
+              meja Anda.
             </p>
 
-            {/* Grup Tombol Aksi (Tetap dibungkus AuthModal bawaan lu brayy) */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
-              
-              <AuthModal>
-                <Button 
-                  size="lg" 
-                  className="h-12 bg-amber-400 text-slate-950 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] px-8 text-2xs font-black uppercase tracking-wider rounded-sm transition-all cursor-pointer"
-                >
-                  <Search className="mr-2 h-4 w-4 stroke-[3] text-slate-950" />
-                  Lacak Paket Saya
-                </Button>
-              </AuthModal>
+            <form
+              onSubmit={handleSearch}
+              className="flex w-full max-w-md items-center gap-2 rounded-2xl border border-border/60 bg-surface/80 p-1.5 shadow-sm backdrop-blur-md transition-all focus-within:border-primary focus-within:ring-1 focus-within:ring-primary"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center text-primary/70">
+                <Search size={20} />
+              </div>
+              <input
+                type="text"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Masukkan nomor resi..."
+                className="h-12 w-full bg-transparent text-sm font-medium text-ink outline-none placeholder:text-muted"
+                required
+              />
+              <Button type="submit" className="h-12 rounded-xl px-6" disabled={loading}>
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Lacak"}
+              </Button>
+            </form>
 
-              <AuthModal>
-                <Button 
-                  size="lg" 
-                  className="h-12 bg-white text-slate-900 border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] px-8 text-2xs font-black uppercase tracking-wider rounded-sm transition-all cursor-pointer"
-                >
-                  Buat Pesanan Baru
-                  <ArrowRight className="ml-2 h-4 w-4 stroke-[3]" />
-                </Button>
-              </AuthModal>
-
-            </div>
+            {error && (
+              <p className="text-sm font-medium text-red-500">{error}</p>
+            )}
           </div>
 
-          {/* KOLOM KANAN: Panel Visual Neo-Brutalist Replika Manifes Kargo */}
-          <div className="lg:col-span-5 w-full order-1 lg:order-2">
-            <div className="relative border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
-              
-              {/* Garis Hazard Kuning Hitam Atas Kotak */}
-              <div className="absolute top-0 left-0 right-0 h-3 bg-[linear-gradient(-45deg,#0f172a_25%,#fbbf24_25%,#fbbf24_50%,#0f172a_50%,#0f172a_75%,#fbbf24_75%,#fbbf24)] bg-[size:16px_16px] border-b-2 border-slate-900" />
-              
-              {/* Isian Mockup Fitur Mini Dalam Kotak */}
-              <div className="space-y-4 mt-3">
-                
-                {/* Baris Informasi 1 */}
-                <div className="border-2 border-slate-900 bg-slate-50 p-3 rounded-sm flex items-center gap-3">
-                  <div className="h-9 w-9 bg-rose-400 border-2 border-slate-900 rounded-sm flex items-center justify-center text-slate-900">
-                    <Truck size={18} className="stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <div className="text-3xs font-black uppercase text-slate-400">STATUS PENGIRIMAN</div>
-                    <div className="text-2xs font-black uppercase text-slate-900">Kurir Siap Jemput Paket</div>
-                  </div>
-                </div>
+          {/* KOLOM KANAN: Floating Bento Widget */}
+          <div className="lg:col-span-6 w-full order-1 lg:order-2 flex justify-center lg:justify-end relative">
+            <div className="relative w-full max-w-md">
+              {/* Main Card */}
+              <div className="relative z-20 border border-border/50 bg-surface/80 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgb(0,0,0,0.08)] rounded-3xl overflow-hidden min-h-[260px] flex flex-col justify-center">
+                {result ? (
+                  <div className="space-y-6">
+                    {/* Status Header */}
+                    <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold tracking-tight text-muted uppercase">
+                          Lacak langsung
+                        </p>
+                        <p className="text-sm font-semibold text-ink uppercase">
+                          {result.trackingNumber}
+                        </p>
+                      </div>
+                      <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                        <Navigation size={18} className="rotate-45" />
+                      </div>
+                    </div>
 
-                {/* Baris Informasi 2 */}
-                <div className="border-2 border-slate-900 bg-slate-50 p-3 rounded-sm flex items-center gap-3">
-                  <div className="h-9 w-9 bg-amber-400 border-2 border-slate-900 rounded-sm flex items-center justify-center text-slate-900">
-                    <Box size={18} className="stroke-[2.5]" />
+                    {/* Progress Timeline Mini */}
+                    <div className="space-y-4 pt-2">
+                      {displayTrackings.map((t, i) => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex items-start gap-4",
+                            i !== 0 && "opacity-50"
+                          )}
+                        >
+                          <div className="flex flex-col items-center gap-2 mt-1">
+                            {i === 0 ? (
+                              <>
+                                <div className="h-3 w-3 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
+                                {displayTrackings.length > 1 && (
+                                  <div className="w-px h-10 bg-primary/30" />
+                                )}
+                              </>
+                            ) : (
+                              <div className="h-3 w-3 rounded-full border-2 border-muted" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-ink">
+                              {labels[t.status?.toLowerCase()] || t.status}
+                            </p>
+                            <p className="text-xs text-muted mt-0.5">
+                              {t.description || t.location}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-3xs font-black uppercase text-slate-400">LAYANAN TIMBANG</div>
-                    <div className="text-2xs font-black uppercase text-slate-900">Tarif Ongkir Pas & Akurat</div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center space-y-4 text-center opacity-70">
+                    <div className="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center">
+                      <Search size={24} className="text-slate-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-ink">Belum ada pencarian</p>
+                      <p className="text-xs text-muted">Masukkan nomor resi di form <br/> untuk melacak pengiriman Anda.</p>
+                    </div>
                   </div>
-                </div>
+                )}
+              </div>
 
-                {/* Simulasi Widget Live Tracking Mini */}
-                <div className="border-2 border-slate-900 bg-slate-950 p-4 rounded-sm text-white space-y-2.5">
-                  <div className="flex justify-between items-center text-3xs font-black tracking-wider text-amber-400 uppercase">
-                    <span>RESI: DNX-99812</span>
-                    <span className="text-emerald-400 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                      LIVE_PETA
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-slate-800 rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 h-full w-3/4 bg-amber-400" />
-                  </div>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 leading-normal">
-                    Paket kargo Anda berhasil dimuat ke truk dan sedang menuju gudang transit utama.
+              {/* Floating Element 1 */}
+              <div className="absolute -left-10 top-24 z-30 border border-border/50 bg-surface/90 backdrop-blur-xl p-4 shadow-[0_12px_40px_rgb(0,0,0,0.08)] rounded-2xl animate-in slide-in-from-bottom-8 duration-700 hidden sm:flex items-center gap-4">
+                <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                  <Box size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold tracking-tight text-muted uppercase">
+                    Berat
+                  </p>
+                  <p className="text-sm font-semibold text-ink">
+                    {result ? "Sesuai resi" : "- kg"}
                   </p>
                 </div>
+              </div>
 
+              {/* Floating Element 2 */}
+              <div className="absolute -right-8 -bottom-8 z-30 border border-border/50 bg-surface/90 backdrop-blur-xl p-4 shadow-[0_12px_40px_rgb(0,0,0,0.08)] rounded-2xl animate-in slide-in-from-bottom-12 duration-1000 hidden sm:flex items-center gap-4">
+                <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                  <Truck size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold tracking-tight text-muted uppercase">
+                    Armada
+                  </p>
+                  <p className="text-sm font-semibold text-ink">
+                    {result ? "Aktif" : "-"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </section>

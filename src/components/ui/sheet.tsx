@@ -16,12 +16,12 @@ const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <SheetPrimitive.Overlay className={cn("fixed inset-0 z-50 bg-slate-950/55", className)} ref={ref} {...props} />
+  <SheetPrimitive.Overlay className={cn("fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm", className)} ref={ref} {...props} />
 ));
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-card p-6 text-card-foreground shadow-lg",
+  "fixed z-50 gap-4 bg-surface p-6 text-ink shadow-[0_12px_40px_rgb(0,0,0,0.08)] border-border",
   {
     variants: {
       side: {
@@ -76,7 +76,7 @@ const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title className={cn("text-lg font-semibold", className)} ref={ref} {...props} />
+  <SheetPrimitive.Title className={cn("text-lg font-semibold text-ink", className)} ref={ref} {...props} />
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
@@ -84,7 +84,7 @@ const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <SheetPrimitive.Description className={cn("text-sm text-muted-foreground", className)} ref={ref} {...props} />
+  <SheetPrimitive.Description className={cn("text-sm text-muted", className)} ref={ref} {...props} />
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 

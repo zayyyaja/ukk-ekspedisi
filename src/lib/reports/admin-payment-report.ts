@@ -22,15 +22,15 @@ export function exportAdminPaymentPdf(data: Payment[], options: PdfReportOptions
   // ==========================================
   doc.setFillColor(251, 191, 36); // Amber 400
   doc.setDrawColor(15, 23, 42);   // Slate 900
-  doc.setLineWidth(1);
+  doc.setLineWidth(0.5);
   doc.rect(14, 14, pageWidth - 28, 24, "FD");
 
   doc.setTextColor(15, 23, 42);
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text(options.title.toUpperCase(), 20, 24);
   
-  doc.setFont("courier", "normal");
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`// SYSTEM_GEN_DATE: ${formatDate(new Date().toISOString())} | RENDER_MODE: SYSTEM_MANIFEST`, 20, 31);
 
@@ -56,7 +56,7 @@ export function exportAdminPaymentPdf(data: Payment[], options: PdfReportOptions
     // Kotak Kard latar belakang
     doc.setFillColor(metric.bg[0], metric.bg[1], metric.bg[2]);
     doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(0.5);
     doc.rect(x, startY, cardWidth, cardHeight, "FD");
 
     // Cetak Label (Gunakan warna abu netral untuk sub-label)
@@ -65,13 +65,13 @@ export function exportAdminPaymentPdf(data: Payment[], options: PdfReportOptions
     } else {
       doc.setTextColor(100, 116, 139); // Teks gelap untuk bg cerah
     }
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.text(metric.label, x + 4, startY + 6);
 
     // Cetak Nilai Utama (Aman dari eror parameter terbaca banyak)
     doc.setTextColor(metric.textColor[0], metric.textColor[1], metric.textColor[2]);
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(metric.fontSize);
     doc.text(metric.value, x + 4, startY + 14);
   });
@@ -101,21 +101,21 @@ export function exportAdminPaymentPdf(data: Payment[], options: PdfReportOptions
     margin: { left: 14, right: 14 },
     head: [tableHeaders],
     body: tableRows,
-    theme: "plain",
+    theme: "grid",
     styles: {
-      font: "courier",
+      font: "helvetica",
       fontSize: 8,
       fontStyle: "bold",
       textColor: [15, 23, 42],
-      lineColor: [15, 23, 42],
-      lineWidth: 0.5,
+      lineColor: [226, 232, 240],
+      lineWidth: 0.1,
       cellPadding: 3,
     },
     headStyles: {
       fillColor: [15, 23, 42],
       textColor: [255, 255, 255],
-      lineWidth: 0.5,
-      lineColor: [15, 23, 42],
+      lineWidth: 0.1,
+      lineColor: [226, 232, 240],
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
@@ -141,7 +141,7 @@ export function exportAdminPaymentPdf(data: Payment[], options: PdfReportOptions
 
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   if (finalY < pageHeight - 20) {
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184);
     doc.text(`[ END_OF_MANIFEST_DATA_RAW - SECURITY LOG SECURITY CONSOLE ]`, 14, finalY);

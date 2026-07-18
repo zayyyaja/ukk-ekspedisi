@@ -40,7 +40,7 @@ export function CustomerGuard({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   if (status === "loading") {
-    return <FullPageLoader label="Memuat portal customer..." />;
+    return <FullPageLoader label="Loading your shipments..." />;
   }
 
   if (status === "forbidden") {

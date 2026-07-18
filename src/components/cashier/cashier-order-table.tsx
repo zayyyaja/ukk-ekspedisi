@@ -1,28 +1,28 @@
 "use client";
 
-import { Banknote, CheckCircle2, Eye, Truck, X } from "lucide-react";
+import { Banknote, CheckCircle2, Eye, PackageSearch, Truck, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ApiListMeta, CashierOrder } from "@/components/cashier/cashier-types";
+import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency, formatDate } from "@/lib/customer-format";
 import {
   getShipmentDeliveryProof,
   getShipmentPackagePhoto,
 } from "@/lib/shipment-photos";
 
-// Pewarnaan status yang dikonversi ke skema Neo-Brutalist kontras tinggi
 function paymentStatusClass(status?: string | null) {
-  if (status === "paid") return "border-2 border-ink bg-emerald-400 text-ink";
-  if (status === "failed") return "border-2 border-ink bg-red-400 text-white";
-  return "border-2 border-ink bg-amber-400 text-ink";
+  if (status === "paid") return "bg-emerald-100/50 text-emerald-700 border-emerald-200";
+  if (status === "failed") return "bg-rose-100/50 text-rose-700 border-rose-200";
+  return "bg-amber-100/50 text-amber-700 border-amber-200";
 }
 
 function shipmentStatusClass(status?: string | null) {
-  if (status === "delivered") return "border-2 border-ink bg-emerald-400 text-ink";
-  if (status === "cancelled") return "border-2 border-ink bg-red-400 text-white";
-  if (status === "arrived_at_branch") return "border-2 border-ink bg-cyan-400 text-ink";
-  if (status === "picked_up") return "border-2 border-ink bg-blue-400 text-ink";
-  return "border-2 border-ink bg-paper text-steel";
+  if (status === "delivered") return "bg-emerald-100/50 text-emerald-700 border-emerald-200";
+  if (status === "cancelled") return "bg-rose-100/50 text-rose-700 border-rose-200";
+  if (status === "arrived_at_branch") return "bg-cyan-100/50 text-cyan-700 border-cyan-200";
+  if (status === "picked_up") return "bg-blue-100/50 text-blue-700 border-blue-200";
+  return "bg-slate-100/50 text-slate-600 border-slate-200";
 }
 
 function canConfirm(order: CashierOrder) {
@@ -85,34 +85,43 @@ export function CashierOrderTable({
 
   return (
     <>
-      {/* Kontainer Manifes Tabel Utama */}
-      <section className="overflow-hidden border-2 border-ink bg-paper rounded-app shadow-stamp">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-275 border-collapse text-left text-xs font-body">
-            <thead className="border-b-2 border-ink bg-paper text-ink">
-              <tr className="font-mono font-black uppercase tracking-wider">
-                <th className="border-r-2 border-ink px-4 py-3.5 text-center w-35">Status Bayar</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Pelanggan</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Nama Paket</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Total Harga</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Metode Bayar</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Penyerahan</th>
-                <th className="border-r-2 border-ink px-4 py-3.5 text-center w-35">Status Paket</th>
-                <th className="border-r-2 border-ink px-4 py-3.5">Waktu Pesan</th>
-                <th className="px-4 py-3.5">Aksi Tindakan Manifes</th>
+      {/* Main Table Container */}
+      <div className="w-full space-y-4">
+        <div className="w-full overflow-x-auto overflow-y-auto max-h-[680px] border border-border/40 bg-surface rounded-2xl shadow-sm">
+          <table className="w-full min-w-275 border-collapse text-left relative">
+            <thead>
+              <tr className="border-b border-border/40 bg-slate-50/90 backdrop-blur-md sticky top-0 z-10">
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap text-center w-35">Status Bayar</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Pelanggan</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Nama Paket</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Total Harga</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Metode Bayar</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Penyerahan</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap text-center w-35">Status Paket</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Waktu Pesan</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-ink">
+            <tbody className="divide-y divide-border/40">
               {loading ? (
                 <tr>
-                  <td className="px-5 py-12 text-center font-mono text-xs font-bold uppercase tracking-wide text-steel bg-paper" colSpan={9}>
-                    [!] MENYINKRONKAN DATA MANIFES...
+                  <td className="px-5 py-16 text-center text-sm font-medium text-muted" colSpan={9}>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
+                      Memuat data pesanan...
+                    </div>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-12 text-center font-mono text-xs font-bold uppercase tracking-wide text-steel bg-paper" colSpan={9}>
-                    [?] BELUM ADA PESANAN MASUK DALAM SISTEM.
+                  <td className="p-0" colSpan={9}>
+                    <div className="p-10">
+                      <EmptyState
+                        title="Belum ada pesanan"
+                        description="Tidak ada data pesanan yang sesuai dengan filter atau pencarian Anda."
+                        icon={PackageSearch}
+                      />
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -122,38 +131,38 @@ export function CashierOrderTable({
                   const needsCourier = needsCourierAssignment(order);
 
                   return (
-                    <tr className="bg-paper hover:bg-slate-50/50 transition-colors" key={order.id}>
-                      <td className="border-r-2 border-ink px-4 py-3 text-center">
-                        <span className={`inline-block w-full rounded-app px-2 py-1 text-[10px] font-mono font-black uppercase tracking-wide text-center ${paymentStatusClass(order.payments?.payment_status)}`}>
+                    <tr className="bg-transparent hover:bg-slate-50/50 transition-colors duration-200" key={order.id}>
+                      <td className="py-3 px-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center justify-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${paymentStatusClass(order.payments?.payment_status)}`}>
                           {order.payments?.payment_status ?? "UNPAID"}
                         </span>
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 font-bold text-ink">
+                      <td className="py-3 px-4 text-sm font-medium text-ink whitespace-nowrap">
                         {order.customers_shipments_sender_idTocustomers?.name ?? "-"}
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 text-steel font-medium">
+                      <td className="py-3 px-4 text-sm font-medium text-muted whitespace-nowrap">
                         {order.shipment_items?.[0]?.item_name ?? "-"}
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 font-mono font-black text-ink">
+                      <td className="py-3 px-4 text-sm font-semibold text-ink whitespace-nowrap">
                         {formatCurrency(order.total_price)}
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 font-mono font-bold uppercase tracking-wide text-ink">
+                      <td className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-ink whitespace-nowrap">
                         {order.payments?.payment_method ?? "-"}
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3">
-                        <span className="inline-block rounded-app border-2 border-ink bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-ink">
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-slate-100/50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                           {order.handover_method === "pickup" ? "PICKUP" : "DROP OFF"}
                         </span>
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 text-center">
-                        <span className={`inline-block w-full rounded-app px-2 py-1 text-[10px] font-mono font-black uppercase tracking-wide text-center ${shipmentStatusClass(order.status)}`}>
+                      <td className="py-3 px-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center justify-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${shipmentStatusClass(order.status)}`}>
                           {order.status?.replace(/_/g, " ")}
                         </span>
                       </td>
-                      <td className="border-r-2 border-ink px-4 py-3 font-mono text-steel">
+                      <td className="py-3 px-4 text-sm text-muted whitespace-nowrap">
                         {formatDate(order.shipment_date)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex flex-col gap-2">
                           <form
                             className="flex items-center gap-2"
@@ -163,42 +172,42 @@ export function CashierOrderTable({
                               setTrackingInputs((current) => ({ ...current, [order.id]: "" }));
                             }}
                           >
-                            {/* Tombol Detail */}
+                            {/* Detail Button */}
                             <button
                               aria-label="Lihat detail pesanan"
-                              className="grid h-9 w-9 shrink-0 place-items-center rounded-app border-2 border-ink bg-paper text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs cursor-pointer"
+                              className="inline-flex h-8 w-8 items-center justify-center border border-border/50 bg-surface text-muted shadow-sm transition-all rounded-lg hover:bg-slate-50 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                               onClick={() => setDetail(order)}
                               title="Lihat detail"
                               type="button"
                             >
-                              <Eye size={15} className="stroke-[2.5]" />
+                              <Eye size={15} strokeWidth={2} />
                             </button>
 
-                            {/* Tombol Cash Verifikasi */}
+                            {/* Cash Verification Button */}
                             {order.payments?.payment_method === "cash" && order.payments.payment_status === "pending" ? (
                               <button
                                 aria-label="Konfirmasi pembayaran cash"
-                                className="grid h-9 w-9 shrink-0 place-items-center rounded-app border-2 border-ink bg-amber-400 text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs cursor-pointer"
+                                className="inline-flex h-8 w-8 items-center justify-center border border-amber-200 bg-amber-50 text-amber-700 shadow-sm transition-all rounded-lg hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                                 onClick={() => onVerifyCash?.(order)}
                                 title="Konfirmasi pembayaran cash"
                                 type="button"
                               >
-                                <Banknote size={15} className="stroke-[2.5]" />
+                                <Banknote size={15} strokeWidth={2} />
                               </button>
                             ) : null}
 
-                            {/* Alur Form Pengisian Aksi Kasir */}
+                            {/* Cashier Action Forms */}
                             {needsCourier ? (
                               <>
                                 <input
-                                  className="h-9 w-24 border-2 border-ink bg-paper px-2 font-mono text-xs font-bold uppercase text-ink outline-none placeholder:text-steel/40 rounded-app focus:bg-amber-50/50"
+                                  className="h-8 w-24 rounded-lg border border-border/40 bg-slate-50/50 px-2 text-[11px] font-medium uppercase text-ink transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary"
                                   maxLength={5}
                                   onChange={(event) => setCourierInputs((current) => ({ ...current, [order.id]: event.target.value }))}
                                   placeholder="ID KURIR"
                                   value={courierInput(order.id)}
                                 />
                                 <button
-                                  className="h-9 rounded-app border-2 border-ink bg-amber-400 px-3 font-display text-[10px] font-black uppercase tracking-wider text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs disabled:opacity-40 disabled:pointer-events-none cursor-pointer flex items-center gap-1"
+                                  className="inline-flex h-8 items-center justify-center gap-1 border border-amber-200 bg-amber-50 px-3 text-[11px] font-semibold tracking-tight text-amber-700 shadow-sm transition-all rounded-lg cursor-pointer hover:bg-amber-100 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40"
                                   disabled={!courierInput(order.id)}
                                   onClick={() => {
                                     if (courierInput(order.id)) onAssignCourier?.(order, courierInput(order.id));
@@ -206,32 +215,32 @@ export function CashierOrderTable({
                                   title="Tugaskan kurir untuk menjemput paket ke rumah pengirim"
                                   type="button"
                                 >
-                                  <Truck size={12} className="stroke-[2.5]" />
-                                  TUGASKAN
+                                  <Truck size={12} strokeWidth={2} />
+                                  Tugaskan
                                 </button>
                               </>
                             ) : awaitingReturn ? (
                               <>
                                 <input
-                                  className="h-9 w-36 border-2 border-ink bg-paper px-2 font-mono text-xs font-bold uppercase text-ink outline-none placeholder:text-steel/40 rounded-app focus:border-emerald-500"
+                                  className="h-8 w-36 rounded-lg border border-border/40 bg-slate-50/50 px-2 text-[11px] font-medium uppercase text-ink transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary"
                                   onChange={(event) => setTrackingInputs((current) => ({ ...current, [order.id]: event.target.value }))}
                                   placeholder="NO. RESI MANIFES"
                                   value={currentInput}
                                 />
                                 <button
                                   aria-label="Konfirmasi paket diterima dari kurir"
-                                  className="grid h-9 w-9 shrink-0 place-items-center rounded-app border-2 border-ink bg-emerald-400 text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                  className="inline-flex h-8 w-8 items-center justify-center border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm transition-all rounded-lg hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-40"
                                   disabled={!currentInput.trim()}
                                   title="Konfirmasi paket sudah diterima dari kurir (status: Picked Up)"
                                   type="submit"
                                 >
-                                  <CheckCircle2 size={15} className="stroke-[2.5]" />
+                                  <CheckCircle2 size={15} strokeWidth={2} />
                                 </button>
                               </>
                             ) : (
                               <>
                                 <input
-                                  className="h-9 w-36 border-2 border-ink bg-paper px-2 font-mono text-xs font-bold uppercase text-ink outline-none placeholder:text-steel/40 rounded-app disabled:opacity-40 focus:border-ink"
+                                  className="h-8 w-36 rounded-lg border border-border/40 bg-slate-50/50 px-2 text-[11px] font-medium uppercase text-ink transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:bg-surface focus:ring-1 focus:ring-primary disabled:opacity-50"
                                   disabled={!canConfirm(order)}
                                   onChange={(event) => setTrackingInputs((current) => ({ ...current, [order.id]: event.target.value }))}
                                   placeholder="INPUT RESI BARU"
@@ -239,34 +248,34 @@ export function CashierOrderTable({
                                 />
                                 <button
                                   aria-label="Konfirmasi paket"
-                                  className="grid h-9 w-9 shrink-0 place-items-center rounded-app border-2 border-ink bg-emerald-400 text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                  className="inline-flex h-8 w-8 items-center justify-center border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm transition-all rounded-lg hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:pointer-events-none disabled:opacity-40"
                                   disabled={!canConfirm(order) || !currentInput.trim()}
                                   title="Konfirmasi paket"
                                   type="submit"
                                 >
-                                  <CheckCircle2 size={15} className="stroke-[2.5]" />
+                                  <CheckCircle2 size={15} strokeWidth={2} />
                                 </button>
                               </>
                             )}
 
-                            {/* Tombol Tolak */}
+                            {/* Reject Button */}
                             <button
                               aria-label="Tolak pesanan"
-                              className="grid h-9 w-9 shrink-0 place-items-center rounded-app border-2 border-ink bg-red-400 text-white shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 active:shadow-stamp-xs disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                              className="inline-flex h-8 w-8 items-center justify-center border border-rose-200 bg-rose-50 text-rose-700 shadow-sm transition-all rounded-lg hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:pointer-events-none disabled:opacity-40"
                               disabled={order.status === "cancelled" || order.status === "delivered"}
                               onClick={() => setRejecting(order)}
                               title="Tolak pesanan"
                               type="button"
                             >
-                              <X size={15} className="stroke-[2.5]" />
+                              <X size={15} strokeWidth={2} />
                             </button>
                           </form>
 
-                          {/* Pemberitahuan Kondisional Penjemputan */}
+                          {/* Courier Status Indicator */}
                           {awaitingReturn ? (
-                            <div className="flex items-center gap-1.5 rounded-app border-2 border-dashed border-ink bg-amber-50 px-2 py-1 text-[10px] font-mono font-bold uppercase text-ink">
-                              <Truck size={12} className="stroke-[2.5]" />
-                              <span>KURIR SEDANG MENJEMPUT — INPUT RESI JIKA BARANG TIBA</span>
+                            <div className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700">
+                              <Truck size={12} strokeWidth={2} />
+                              <span>Kurir sedang menjemput — input resi jika tiba</span>
                             </div>
                           ) : null}
                         </div>
@@ -279,19 +288,25 @@ export function CashierOrderTable({
           </table>
         </div>
 
-        {/* Kontrol Navigasi Halaman / Pagination */}
+        {/* Pagination */}
         {meta ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t-2 border-ink bg-paper px-4 py-3.5 text-xs font-mono font-bold uppercase text-ink">
-            <span>
-              Menampilkan {orders.length === 0 ? 0 : (meta.page - 1) * meta.perPage + 1} - {(meta.page - 1) * meta.perPage + orders.length} dari {meta.total} Entri Manifes
-            </span>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
+            <div className="text-sm font-medium text-muted">
+              Menampilkan{" "}
+              <strong className="text-ink font-semibold">{orders.length === 0 ? 0 : (meta.page - 1) * meta.perPage + 1}</strong>
+              {" – "}
+              <strong className="text-ink font-semibold">{(meta.page - 1) * meta.perPage + orders.length}</strong>
+              {" dari "}
+              <strong className="text-ink font-semibold">{meta.total}</strong>
+              {" pesanan"}
+            </div>
             <div className="flex items-center gap-2">
               {Array.from({ length: Math.min(meta.totalPages || 1, 5) }, (_, index) => index + 1).map((page) => (
                 <button
-                  className={`h-8 w-8 rounded-app border-2 border-ink font-mono font-black text-xs transition-all shadow-stamp-xs cursor-pointer ${
+                  className={`inline-flex h-9 w-9 items-center justify-center border text-xs font-semibold shadow-sm transition-all rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                     page === meta.page
-                      ? "bg-ink text-paper shadow-none translate-x-0 translate-y-0"
-                      : "bg-paper text-ink hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0"
+                      ? "bg-primary text-primary-foreground border-primary pointer-events-none"
+                      : "bg-surface text-ink border-border/50 hover:bg-slate-50"
                   }`}
                   key={page}
                   onClick={() => onPageChange?.(page)}
@@ -303,31 +318,31 @@ export function CashierOrderTable({
             </div>
           </div>
         ) : null}
-      </section>
+      </div>
 
-      {/* MODAL WINDOW 1: DETAIL PESANAN KASIR */}
+      {/* MODAL 1: ORDER DETAIL */}
       {detail ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs animate-in fade-in duration-100">
-          <div className="max-h-[85vh] w-full max-w-3xl overflow-auto border-4 border-ink bg-paper p-6 shadow-stamp rounded-app">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b-2 border-ink pb-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/20 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="max-h-[85vh] w-full max-w-3xl overflow-auto border border-border/40 bg-surface p-6 sm:p-8 shadow-xl rounded-3xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-border/40 pb-5">
               <div>
-                <h2 className="font-display text-xl font-black uppercase tracking-wide text-ink">
-                  MANIFES DETAILED LOG
+                <h2 className="text-xl font-bold tracking-tight text-ink">
+                  Detail Pesanan
                 </h2>
-                <p className="font-mono text-[11px] font-bold uppercase text-steel">
-                  Pemeriksaan mendalam berkas logistik internal customer
+                <p className="mt-1 text-sm font-medium text-muted">
+                  Pemeriksaan mendalam berkas logistik customer
                 </p>
               </div>
               <button
-                className="h-10 border-2 border-ink bg-paper px-4 font-display text-xs font-black uppercase tracking-wider text-ink shadow-stamp-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-stamp active:translate-x-0 active:translate-y-0 rounded-app cursor-pointer"
+                className="inline-flex h-9 items-center justify-center border border-border/50 bg-surface px-4 text-xs font-semibold text-ink shadow-sm transition-all rounded-lg cursor-pointer hover:bg-slate-50 focus-visible:outline-none"
                 onClick={() => setDetail(null)}
                 type="button"
               >
-                TUTUP JENDELA
+                Tutup
               </button>
             </div>
 
-            {/* Grid Informasi Grid Utama */}
+            {/* Detail Info Grid */}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Info label="Nama Pengirim" value={detail.customers_shipments_sender_idTocustomers?.name} />
               <Info label="Email Pengirim" value={detail.customers_shipments_sender_idTocustomers?.email} />
@@ -343,7 +358,7 @@ export function CashierOrderTable({
               <Info label="Berat Muatan" value={`${detail.total_weight} kg`} />
               <Info label="Hub Cabang Asal" value={detail.branches_shipments_origin_branch_idTobranches?.name} />
               <Info label="Hub Cabang Tujuan" value={detail.branches_shipments_destination_branch_idTobranches?.name} />
-              <Info label="Metode Penyerahan" value={detail.handover_method === "pickup" ? "JEMPUT PAKET (PICKUP)" : "DROP OFF MANDIRI"} />
+              <Info label="Metode Penyerahan" value={detail.handover_method === "pickup" ? "Jemput Paket (Pickup)" : "Drop Off Mandiri"} />
               <Info label="Sistem Pembayaran" value={detail.payments?.payment_method} />
               <Info label="Status Pembayaran" value={detail.payments?.payment_status} />
               <Info label="Status Lokasi Paket" value={detail.status} />
@@ -351,34 +366,34 @@ export function CashierOrderTable({
               <Info label="Total Harga Final" value={formatCurrency(detail.total_price)} />
             </div>
 
-            {/* Foto Lampiran Paket Manifes */}
+            {/* Package Photo */}
             {getShipmentPackagePhoto(detail) ? (
-              <div className="mt-5 border-2 border-ink p-2 bg-white rounded-app shadow-stamp-xs">
-                <p className="mb-2 font-mono text-[10px] font-black uppercase text-ink tracking-wide">// LAMPIRAN FOTO ITEM FISIK</p>
-                <img alt="Foto Paket" className="h-48 w-full border border-ink object-cover rounded-app" src={getShipmentPackagePhoto(detail) ?? ""} />
+              <div className="mt-6 border border-border/40 p-4 bg-slate-50/50 rounded-2xl shadow-sm">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">Foto Paket</p>
+                <img alt="Foto Paket" className="h-48 w-full border border-border/40 object-cover rounded-xl shadow-sm" src={getShipmentPackagePhoto(detail) ?? ""} />
               </div>
             ) : null}
 
-            {/* Bukti Penerapan Delivery / Paket Tiba */}
+            {/* Delivery Proof */}
             {getShipmentDeliveryProof(detail) ? (
-              <div className="mt-5 border-2 border-ink p-2 bg-white rounded-app shadow-stamp-xs">
-                <p className="mb-2 font-mono text-[10px] font-black uppercase text-ink tracking-wide">// BUKTI SERAH TERIMA VALID</p>
-                <img alt="Bukti penyerahan" className="h-48 w-full border border-ink object-cover rounded-app" src={getShipmentDeliveryProof(detail) ?? ""} />
+              <div className="mt-4 border border-border/40 p-4 bg-slate-50/50 rounded-2xl shadow-sm">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">Bukti Serah Terima</p>
+                <img alt="Bukti penyerahan" className="h-48 w-full border border-border/40 object-cover rounded-xl shadow-sm" src={getShipmentDeliveryProof(detail) ?? ""} />
               </div>
             ) : null}
 
-            {/* Pelacakan Histori Logistik */}
-            <h3 className="mt-6 font-display font-black text-sm uppercase tracking-wider text-ink">
-              TIMELINE PELACAKAN RUTE MANIFES
+            {/* Tracking Timeline */}
+            <h3 className="mt-8 text-base font-semibold tracking-tight text-ink">
+              Timeline Pelacakan
             </h3>
             <div className="mt-3 grid gap-3">
               {(detail.shipment_trackings ?? []).map((tracking) => (
-                <div className="border-2 border-ink bg-white p-4 rounded-app shadow-stamp-xs" key={tracking.id}>
-                  <div className="font-mono text-xs font-black uppercase text-ink tracking-wide">[STATUS]: {tracking.status?.replace(/_/g, " ")}</div>
-                  <div className="mt-0.5 font-mono text-[10px] font-bold uppercase text-steel">
-                    LOKASI: {tracking.location} — {formatDate(tracking.tracked_at)}
+                <div className="border border-border/40 bg-surface p-5 rounded-2xl shadow-sm" key={tracking.id}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-ink">{tracking.status?.replace(/_/g, " ")}</div>
+                  <div className="mt-1 text-sm font-medium text-muted">
+                    {tracking.location} — {formatDate(tracking.tracked_at)}
                   </div>
-                  <p className="mt-2 text-xs font-body font-medium text-ink bg-slate-50 border border-ink/20 p-2 rounded-app">
+                  <p className="mt-3 text-sm font-medium text-ink bg-slate-50/50 border border-border/40 p-3 rounded-xl leading-relaxed">
                     {tracking.description}
                   </p>
                 </div>
@@ -388,11 +403,11 @@ export function CashierOrderTable({
         </div>
       ) : null}
 
-      {/* MODAL WINDOW 2: PENOLAKAN PESANAN */}
+      {/* MODAL 2: REJECT ORDER */}
       {rejecting ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-xs animate-in fade-in duration-100">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/20 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <form
-            className="w-full max-w-md border-4 border-ink bg-paper p-6 shadow-stamp rounded-app"
+            className="w-full max-w-md border border-border/40 bg-surface p-6 sm:p-8 shadow-xl rounded-3xl"
             onSubmit={(event) => {
               event.preventDefault();
               onReject(rejecting, reason);
@@ -400,19 +415,19 @@ export function CashierOrderTable({
               setReason("");
             }}
           >
-            <h2 className="font-display text-lg font-black uppercase tracking-wide text-ink">
-              TOLAK PESANAN MASUK
+            <h2 className="text-lg font-bold tracking-tight text-ink">
+              Tolak Pesanan
             </h2>
-            <p className="mt-1 font-mono text-[11px] font-bold uppercase text-steel">
-              Berikan parameter alasan penolakan manifes logistik secara terperinci.
+            <p className="mt-1 text-sm font-medium text-muted">
+              Berikan alasan penolakan pesanan secara terperinci.
             </p>
 
             <div className="mt-5 space-y-1.5">
-              <label className="block font-mono text-[10px] font-black uppercase tracking-wider text-ink">
-                ALASAN PENOLAKAN INTERNAL
+              <label className="text-xs font-semibold uppercase tracking-tight text-muted block">
+                Alasan Penolakan
               </label>
               <textarea
-                className="w-full min-h-25 border-2 border-ink bg-white p-3 font-body text-xs font-semibold text-ink outline-none placeholder:text-steel/40 rounded-app focus:shadow-stamp-sm transition-all"
+                className="w-full min-h-[100px] rounded-xl border border-border/40 bg-slate-50/50 p-3 text-sm font-medium text-ink outline-none transition-colors focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary resize-none placeholder:text-muted"
                 onChange={(event) => setReason(event.target.value)}
                 placeholder="Contoh: Alamat pengirim di luar jangkauan armada, paket melanggar ketentuan SOP logistik, barang berbahaya..."
                 required
@@ -422,17 +437,17 @@ export function CashierOrderTable({
 
             <div className="mt-6 flex justify-end gap-3">
               <button
-                className="h-10 border-2 border-ink bg-paper px-4 font-display text-xs font-black uppercase tracking-wider text-ink shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 rounded-app cursor-pointer"
+                className="inline-flex h-9 items-center justify-center border border-border/50 bg-surface px-4 text-xs font-semibold text-ink shadow-sm transition-all rounded-lg cursor-pointer hover:bg-slate-50 focus-visible:outline-none"
                 onClick={() => setRejecting(null)}
                 type="button"
               >
-                BATALKAN
+                Batalkan
               </button>
               <button
-                className="h-10 border-2 border-ink bg-red-400 px-4 font-display text-xs font-black uppercase tracking-wider text-white shadow-stamp-xs transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-stamp-sm active:translate-x-0 active:translate-y-0 rounded-app cursor-pointer"
+                className="inline-flex h-9 items-center justify-center border border-rose-200 bg-rose-600 px-4 text-xs font-semibold text-white shadow-sm transition-all rounded-lg cursor-pointer hover:bg-rose-700 focus-visible:outline-none"
                 type="submit"
               >
-                TOLAK MANIFES
+                Tolak Pesanan
               </button>
             </div>
           </form>
@@ -442,14 +457,13 @@ export function CashierOrderTable({
   );
 }
 
-// Sub-komponen Info Panel dengan sentuhan Box Manifes Kargo Tebal
 function Info({ label, value, wide }: { label: string; value?: string | number | null; wide?: boolean }) {
   return (
-    <div className={`border-2 border-ink bg-white p-3 rounded-app shadow-stamp-xs ${wide ? "sm:col-span-2" : ""}`}>
-      <div className="font-mono text-[9px] font-black uppercase tracking-widest text-steel">
+    <div className={`flex flex-col gap-1.5 border border-border/40 bg-surface p-4 rounded-xl shadow-sm ${wide ? "sm:col-span-2" : ""}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">
         {label}
       </div>
-      <div className="mt-1 font-body text-xs font-black text-ink uppercase tracking-wide wrap-break-word">
+      <div className="text-sm font-medium text-ink">
         {value ?? "-"}
       </div>
     </div>

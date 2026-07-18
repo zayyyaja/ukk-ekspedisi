@@ -1,4 +1,5 @@
 import { jwtVerify, SignJWT } from "jose";
+import { env } from "@/config/env";
 
 export type CustomerRegistrationVerificationPayload = {
   type: "customer_registration_verification";
@@ -14,7 +15,7 @@ const TOKEN_EXPIRES_IN = "1h";
 export const EMAIL_VERIFICATION_EXPIRES_IN_SECONDS = 3600;
 
 function getEmailVerificationSecret() {
-  const secret = process.env.JWT_EMAIL_VERIFICATION_SECRET;
+  const secret = env.JWT_EMAIL_VERIFICATION_SECRET;
 
   if (!secret) {
     throw new Error("JWT_EMAIL_VERIFICATION_SECRET is not configured");

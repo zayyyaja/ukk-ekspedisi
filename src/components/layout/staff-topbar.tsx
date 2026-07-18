@@ -1,29 +1,26 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, Bell, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import { MobileSidebar } from "@/components/layout/mobile-sidebar";
 import { staffMenus } from "@/components/layout/navigation";
 import { getCurrentUser } from "@/lib/auth-client";
 import type { CurrentUser, StaffRole } from "@/types/customer-portal";
+import { CommandMenu } from "@/components/shared/command-menu";
 
-// Kamus Label Peran - Diubah ke format kapital manifes agar serasi dengan sistem
+import { NotificationDrawer } from "@/components/staff/notification-drawer";
+
 const roleLabel: Record<StaffRole, string> = {
-  admin: "ADMINISTRATOR",
-  cashier: "KASIR HUB",
-  courier: "KURIR LAPANGAN",
-  manager: "MANAJER WILAYAH",
-  owner: "DIREKSI / OWNER",
+  admin: "Administrator",
+  cashier: "Cashier",
+  courier: "Courier",
+  manager: "Manager",
+  owner: "Owner",
 };
-
-function roleStatus(role: StaffRole, user: CurrentUser | null) {
-  const branch = user?.branchId ? `Cabang #${user.branchId}` : "Staff";
-  return `${roleLabel[role]} ${branch} - ${roleLabel[role]}`;
-}
 
 export function StaffTopbar({ role }: { role: StaffRole }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     getCurrentUser()
@@ -32,39 +29,48 @@ export function StaffTopbar({ role }: { role: StaffRole }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between gap-4 border-b-4 border-ink bg-paper px-4 text-ink lg:px-10">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        {/* Trigger Sidebar Mobile */}
-        <MobileSidebar menu={staffMenus[role]} title={`${roleLabel[role]} MENU`} />
-        
-        {/* Search Bar - Format Kotak Bergaris Tebal & Efek Bayangan Stamp */}
-        <div className="hidden h-12 w-full max-w-xl items-center gap-3 border-2 border-ink bg-paper px-4 text-ink rounded-app shadow-stamp-sm focus-within:shadow-stamp focus-within:-translate-x-px focus-within:-translate-y-px transition-all sm:flex">
-          <Search size={18} className="text-steel stroke-[2.5] shrink-0" />
-          <input 
-            className="w-full bg-transparent font-body text-xs font-bold uppercase tracking-wider text-ink outline-none placeholder:text-steel/60" 
-            placeholder="CARI DATA OPERASIONAL MANIFEST..." 
-            type="search" 
-          />
-        </div>
-      </div>
+    <>
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-6 border-b border-border bg-surface/95 backdrop-blur-md px-4 md:px-8 text-ink">
+        <div className="flex min-w-0 flex-1 items-center gap-4 lg:gap-6">
+            <MobileSidebar menu={staffMenus[role]} title={`${roleLabel[role]} Menu`} />
 
-      {/* Sisi Kanan: Profil Informasi Pengguna Aktif */}
-      <div className="flex items-center gap-3.5 shrink-0">
-        {/* Teks Identitas - Tipografi Tegas Berbasis Grid */}
-        <div className="text-right hidden sm:block">
-          <strong className="block font-display text-xs font-black uppercase tracking-tight text-ink">
-            {user?.name ?? roleLabel[role]}
-          </strong>
-          <span className="mt-0.5 block font-mono text-[9px] font-bold uppercase tracking-wide text-steel">
-            {roleStatus(role, user)}
-          </span>
-        </div>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="hidden sm:flex h-8 w-full max-w-md items-center gap-2 rounded-lg border border-border bg-background/80 px-3 text-sm text-muted transition-colors hover:border-border/80 hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <Search size={15} strokeWidth={1.5} className="shrink-0" />
+              <span className="flex-1 text-left font-medium text-[13px]">Cari...</span>
+              <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border/60 bg-surface px-1.5 font-mono text-[9px] font-medium text-muted">
+                <span className="text-xs">&#8984;</span>K
+              </kbd>
+            </button>
+          </div>
 
-        {/* Avatar Inisial - Kotak Geometris Tebal Berwarna Cargo Amber (Tanpa Oranye) */}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-ink bg-cargo-amber font-display text-sm font-black text-ink rounded-app shadow-stamp-sm">
-          {(user?.name ?? roleLabel[role]).slice(0, 1).toUpperCase()}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden md:flex items-center gap-1 text-muted">
+              <NotificationDrawer />
+              <button className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-sidebar-hover transition-colors" aria-label="Settings">
+                <Settings size={17} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2.5 border-l border-border pl-3">
+              <div className="text-right hidden sm:block">
+                <span className="block text-[13px] font-semibold tracking-tight text-ink leading-tight">
+                  {user?.name ?? roleLabel[role]}
+                </span>
+                <span className="block text-[10px] font-medium text-muted uppercase tracking-wider leading-tight">
+                  {roleLabel[role]}
+                </span>
+              </div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-sidebar-hover text-muted font-semibold text-xs border border-border rounded-lg">
+                {(user?.name ?? roleLabel[role]).slice(0, 1).toUpperCase()}
+              </div>
+            </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <CommandMenu open={searchOpen} onOpenChange={setSearchOpen} role={role} />
+    </>
   );
 }

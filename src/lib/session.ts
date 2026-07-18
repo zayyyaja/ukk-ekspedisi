@@ -1,19 +1,17 @@
-﻿import { cookies } from "next/headers";
+import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 
 import { UnauthorizedError, ValidationError } from "@/lib/errors";
+import { env } from "@/config/env";
 import type { AuthRole, IdentityType } from "@/types/auth";
 
 export const SESSION_COOKIE_NAME = "session_id";
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 const CAPTCHA_MAX_AGE_MS = 5 * 60 * 1000;
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV === "production";
 
-type CaptchaState = {
-  answer: string;
-  expiresAt: number;
-};
+// CaptchaState is removed as reCAPTCHA handles state externally
 
 export type SessionUser = {
   userId: number;
@@ -24,7 +22,6 @@ export type SessionUser = {
 
 type ServerSession = {
   user?: SessionUser;
-  captcha?: CaptchaState;
   expiresAt: number;
 };
 
@@ -74,50 +71,35 @@ export async function getOrCreateSessionId() {
   return sessionId;
 }
 
-export async function setCaptchaAnswer(answer: string) {
-  const sessionId = await getOrCreateSessionId();
-  const session = sessions.get(sessionId);
-
-  if (!session) {
-    throw new UnauthorizedError("Invalid session");
-  }
-
-  session.captcha = {
-    answer: answer.toLowerCase(),
-    expiresAt: Date.now() + CAPTCHA_MAX_AGE_MS,
-  };
-  session.expiresAt = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
-  sessions.set(sessionId, session);
-
-  return sessionId;
-}
-
-export async function verifyCaptchaInput(captchaInput: string) {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-
-  if (!sessionId) {
-    throw new ValidationError("Captcha belum dibuat", {
-      captchaInput: ["Generate captcha terlebih dahulu."],
+export async function verifyCaptchaInput(token: string) {
+  if (!token) {
+    throw new ValidationError("Captcha wajib diisi", {
+      captchaInput: ["Silakan centang verifikasi captcha terlebih dahulu."],
     });
   }
 
-  const session = sessions.get(sessionId);
+  try {
+    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `secret=${env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    });
 
-  if (!session?.captcha || session.captcha.expiresAt <= Date.now()) {
-    throw new ValidationError("Captcha sudah kedaluwarsa", {
-      captchaInput: ["Generate captcha ulang."],
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new ValidationError("Validasi captcha gagal", {
+        captchaInput: ["Captcha tidak valid atau sudah kedaluwarsa. Silakan muat ulang halaman."],
+      });
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new ValidationError("Gagal terhubung ke layanan Captcha", {
+      captchaInput: ["Terjadi kesalahan sistem saat memvalidasi captcha."],
     });
   }
-
-  if (captchaInput.trim().toLowerCase() !== session.captcha.answer) {
-    throw new ValidationError("Captcha salah", {
-      captchaInput: ["Captcha salah."],
-    });
-  }
-
-  delete session.captcha;
-  sessions.set(sessionId, session);
 }
 
 export async function createAuthSession(user: SessionUser) {

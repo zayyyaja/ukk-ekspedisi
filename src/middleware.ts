@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
 
   if (
     !isCustomerAuthPage &&
-    ["/customer", "/customer/lacak-paket", "/customer/buat-pesanan", "/customer/profile"].some(
+    ["/customer", "/customer/lacak-resi", "/customer/buat-pesanan", "/customer/profile"].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     ) &&
     !hasSession

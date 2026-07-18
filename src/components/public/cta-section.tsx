@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, KeyRound, UserPlus, Radio } from "lucide-react";
+import { ArrowRight, KeyRound, UserPlus, Radio, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -14,79 +14,58 @@ interface CtaSectionProps {
 
 export function CtaSection({
   primaryLink = "/customer/register",
-  primaryText = "REGISTRASI CUSTOMER",
+  primaryText = "Buat Akun",
   secondaryLink = "/customer/login",
-  secondaryText = "AKSES PORTAL UTAMA",
+  secondaryText = "Masuk Portal",
 }: CtaSectionProps) {
   return (
-    <section className="relative bg-slate-50 py-20 font-mono select-none overflow-hidden">
-      {/* Garis Grid Latar Belakang Desain Industri */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:30px_30px] opacity-60" />
+    <section className="relative bg-[#0C447C] py-32 font-body select-none overflow-hidden">
+      
+      {/* Background Soft Glow Effect */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] bg-white/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 z-10">
-        
-        {/* Kontainer Utama Kotak Pejal Neo-Brutalist */}
-        <div className="relative bg-white border-4 border-slate-900 p-8 sm:p-12 text-center shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] rounded-sm overflow-hidden">
+      <div className="page-container relative z-10">
+        <div className="max-w-3xl mx-auto text-center space-y-8">
           
-          {/* Top Decorative Hazard Bar (Barikade Kargo Atas) */}
-          <div className="absolute top-0 left-0 right-0 h-3 bg-[linear-gradient(-45deg,#0f172a_25%,#fbbf24_25%,#fbbf24_50%,#0f172a_50%,#0f172a_75%,#fbbf24_75%,#fbbf24)] bg-[size:15px_15px] border-b-2 border-slate-900" />
-          
-          {/* Header Text - Taktis & Padat */}
-          <div className="max-w-2xl mx-auto mt-2">
-            <div className="inline-flex items-center gap-2 bg-slate-950 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-400 rounded-xs">
-              <Radio size={10} className="animate-pulse text-rose-500" />
-              <span>TERMINAL_AKHIR // INTERKONEKSI PORTAL</span>
-            </div>
-
-            <h2 className="mt-5 text-2xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl uppercase tracking-tight">
-              Inisiasi Manifes Baru & Distribusi Kargo
-            </h2>
-
-            <p className="mt-4 max-w-lg mx-auto text-2xs font-bold uppercase tracking-wide text-slate-400 leading-relaxed">
-              Buka jalur pengiriman, pantau pergerakan armada secara presisi, dan akses kalkulasi tarif kargo domestik real-time dalam satu integrasi komando.
-            </p>
+          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-tight text-white/90 rounded-full backdrop-blur-md">
+            <Radio size={14} className="animate-pulse" />
+            <span>Portal Klien Terpadu</span>
           </div>
 
-          {/* Tombol Aksi Taktis Gahar */}
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            {/* Tombol Utama: Registrasi Kustomer (Amber) */}
+          <h2 className="text-4xl font-semibold leading-[1.1] text-white sm:text-5xl lg:text-6xl tracking-tight">
+            Siap mengoptimalkan <br /> logistik Anda?
+          </h2>
+
+          <p className="max-w-xl mx-auto text-lg text-white/80 leading-relaxed">
+            Bergabunglah dengan ribuan bisnis yang telah mempercayakan manajemen rantai pasok dan pengiriman kargo domestik mereka bersama kami.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
             <Button
               asChild
               size="lg"
-              className="
-                w-full sm:w-auto h-12 bg-amber-400 text-slate-950 border-2 border-slate-900 
-                shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm text-2xs font-black 
-                uppercase tracking-wider px-8 cursor-pointer
-                hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] 
-                active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]
-              "
+              className="w-full sm:w-auto h-12 shadow-[0_8px_30px_rgb(0,0,0,0.2)] px-8 bg-white text-[#0C447C] hover:bg-white/90"
             >
               <Link href={primaryLink}>
-                <UserPlus className="mr-2 h-4 w-4 stroke-[2.5]" />
+                <UserPlus className="mr-2 h-4 w-4" />
                 {primaryText}
-                <ArrowRight className="ml-2 h-3.5 w-3.5 stroke-[3]" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
 
-            {/* Tombol Sekunder: Masuk Portal (Putih Semen) */}
             <Button
               asChild
+              variant="outline"
               size="lg"
-              className="
-                w-full sm:w-auto h-12 bg-slate-100 text-slate-900 border-2 border-slate-900 
-                shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] transition-all rounded-sm text-2xs font-black 
-                uppercase tracking-wider px-8 cursor-pointer
-                hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_rgba(15,23,42,1)] 
-                active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]
-              "
+              className="w-full sm:w-auto h-12 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-md px-8"
             >
               <Link href={secondaryLink}>
-                <KeyRound className="mr-2 h-4 w-4 stroke-[2.5]" />
+                <KeyRound className="mr-2 h-4 w-4" />
                 {secondaryText}
+                <ArrowUpRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
-
         </div>
       </div>
     </section>

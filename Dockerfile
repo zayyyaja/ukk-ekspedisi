@@ -1,12 +1,14 @@
 # ============================================================
-# BASE
-# Digunakan oleh stage deps, builder, dan runner
+# BASE IMAGE
+# Debian slim dipilih agar Prisma dan OpenSSL lebih stabil
 # ============================================================
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 
-RUN apk add --no-cache \
-    libc6-compat \
-    openssl
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -33,9 +35,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Variabel NEXT_PUBLIC harus tersedia saat build
+ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Prisma Client sudah dibuat pada stage deps
 RUN npm run build
 
 
@@ -50,7 +55,6 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
-# Salin seluruh file yang dibutuhkan saat runtime
 COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/.next ./.next
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
@@ -58,8 +62,10 @@ COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/entrypoint.sh ./entrypoint.sh
 
-# Mengatasi CRLF dari Windows dan memberikan izin eksekusi
-RUN sed -i 's/\r$//' ./entrypoint.sh \
+# Folder persistent untuk file aplikasi atau upload
+RUN mkdir -p /app/public/uploads \
+    && chown -R node:node /app/public/uploads \
+    && sed -i 's/\r$//' ./entrypoint.sh \
     && chmod +x ./entrypoint.sh \
     && chown node:node ./entrypoint.sh
 

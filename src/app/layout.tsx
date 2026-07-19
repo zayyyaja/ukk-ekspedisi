@@ -44,11 +44,6 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   
   // FIX DISINI: Mendaftarkan logo.png sebagai favicon resmi aplikasi lu
-  icons: {
-    icon: "/images/logo.png",
-    shortcut: "/images/logo.png",
-    apple: "/images/logo.png",
-  },
   
   openGraph: {
     title: "DRG-EKSPEDISI",

@@ -1,5 +1,8 @@
 services:
-  database:
+  # ==========================================================
+  # MYSQL DATABASE
+  # ==========================================================
+  db:
     image: mysql:8.0
     restart: unless-stopped
 
@@ -13,10 +16,10 @@ services:
       - "3306:3306"
 
     volumes:
-      - volume-ujikom:/var/lib/mysql
+      - db-volume:/var/lib/mysql
 
     networks:
-      - network-ujikom
+      - ujikom-net
 
     healthcheck:
       test:
@@ -27,73 +30,134 @@ services:
       retries: 20
       start_period: 20s
 
+
+  # ==========================================================
+  # PRISMA DATABASE INITIALIZATION
+  # Berjalan satu kali lalu berhenti dengan status exited 0
+  # ==========================================================
   migrate:
     image: ekspedisi-app:ukk
-    build:
-      context: .
-      dockerfile: Dockerfile
     restart: "no"
+
     environment:
-      DATABASE_URL: mysql://ekspedisi:ekspedisi_secret@database:3306/ekspedisi_aja
+      DATABASE_URL: mysql://ekspedisi:ekspedisi_secret@db:3306/ekspedisi_aja
+
     depends_on:
-      database:
+      db:
         condition: service_healthy
+
     entrypoint:
       - /bin/sh
       - -c
+
     command:
       - |
         set -eu
-        echo "Menyiapkan schema database..."
-        npx prisma db push --skip-generate
-        echo "Menjalankan seed database..."
-        npx prisma db seed
-        echo "Database berhasil disiapkan."
-    networks:
-      - network-ujikom
 
-  web:
+        echo "============================================"
+        echo " Menyiapkan schema database dengan Prisma"
+        echo "============================================"
+
+        npx prisma db push --skip-generate
+
+        echo "============================================"
+        echo " Menjalankan seed database"
+        echo "============================================"
+
+        npx prisma db seed
+
+        echo "============================================"
+        echo " Database berhasil disiapkan"
+        echo "============================================"
+
+    networks:
+      - ujikom-net
+
+
+  # ==========================================================
+  # NEXT.JS APPLICATION
+  # Jalankan sebanyak dua container dengan --scale app=2
+  # ==========================================================
+  app:
     image: ekspedisi-app:ukk
+
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+
     restart: unless-stopped
+
     env_file:
       - .env
+
     environment:
-      DATABASE_URL: mysql://ekspedisi:ekspedisi_secret@database:3306/ekspedisi_aja
-      APP_URL: http://IP_VM1:8080
+      # Nilai ini menimpa DATABASE_URL lokal dari .env
+      DATABASE_URL: mysql://ekspedisi:ekspedisi_secret@db:3306/ekspedisi_aja
+
+      # IP VM2 dari soal real
+      APP_URL: http://192.168.12.94:8080
+
       NODE_ENV: production
-      DB_HOST: database
+
+      DB_HOST: db
       DB_PORT: "3306"
+
+    # Tidak boleh menggunakan ports
     expose:
       - "3000"
+
+    # Shared persistent storage untuk kedua replica aplikasi
+    volumes:
+      - app-volume:/app/public/uploads
+
     depends_on:
-      database:
+      db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    networks:
-      - network-ujikom
 
+    networks:
+      - ujikom-net
+
+
+  # ==========================================================
+  # NGINX LOAD BALANCER
+  # ==========================================================
   loadbalancer:
     image: nginx:alpine
     restart: unless-stopped
+
     ports:
       - "8080:80"
+
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
     depends_on:
-      web:
+      app:
         condition: service_started
+
     networks:
-      - network-ujikom
+      - ujikom-net
 
+
+# ============================================================
+# NAMED VOLUMES SESUAI SOAL
+# ============================================================
 volumes:
-  volume-ujikom:
-    name: volume-ujikom
+  app-volume:
+    name: app-volume
 
+  db-volume:
+    name: db-volume
+
+
+# ============================================================
+# DOCKER NETWORK SESUAI SOAL
+# ============================================================
 networks:
-  network-ujikom:
-    name: network-ujikom
+  ujikom-net:
+    name: ujikom-net
     driver: bridge

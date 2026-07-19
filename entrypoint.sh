@@ -2,7 +2,8 @@
 
 set -eu
 
-DB_HOST="${DB_HOST:-database}"
+# Nama service database pada docker-compose.yml adalah "db"
+DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-3306}"
 
 DB_RETRY_INTERVAL="${DB_RETRY_INTERVAL:-2}"
@@ -17,7 +18,10 @@ check_database() {
     const host = process.env.DB_HOST;
     const port = Number(process.env.DB_PORT);
 
-    const socket = net.createConnection({ host, port });
+    const socket = net.createConnection({
+      host,
+      port,
+    });
 
     socket.setTimeout(2000);
 
@@ -55,8 +59,9 @@ done
 
 echo "================================================"
 echo " Database sudah dapat diakses"
-echo " Container web: $(hostname)"
-echo " Menjalankan aplikasi Next.js pada port 3000"
+echo " Container aplikasi: $(hostname)"
+echo " Menjalankan Next.js pada port 3000"
 echo "================================================"
 
+# exec memastikan proses Next.js menerima signal Docker
 exec npm run start

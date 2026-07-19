@@ -1,29 +1,18 @@
-# ============================================================
-# .dockerignore
-# File yang tidak dimasukkan ke Docker build context
-# ============================================================
-
-# Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Next.js build output
 .next/
 out/
 
-# Environment files and secrets
 .env*
-!.env.example
 
-# Version control
 .git/
 .github/
 .gitignore
 
-# Docker orchestration files
 Dockerfile
 Dockerfile.*
 docker-compose.yml
@@ -32,11 +21,8 @@ compose.yml
 compose.yaml
 .dockerignore
 
-# Nginx and database configuration are used by separate containers
 nginx/
 mysql/
-
-# SSL certificates and private keys
 ssl/
 *.pem
 *.key
@@ -44,19 +30,16 @@ ssl/
 *.p12
 *.pfx
 
-# Development and temporary folders
 .agents/
 scratch/
 .vscode/
 .idea/
 
-# Logs and build cache
 *.log
 *.tsbuildinfo
 .eslintcache
 lighthouse-report.json
 
-# Testing
 __tests__/
 coverage/
 *.test.ts
@@ -64,16 +47,10 @@ coverage/
 *.spec.ts
 *.spec.tsx
 
-# Operating system files
 .DS_Store
 Thumbs.db
-
-# Editor temporary files
 *.swp
 *.swo
 
-# Project documentation not required inside image
 README.md
-
-# Local setup files
 setup.sh

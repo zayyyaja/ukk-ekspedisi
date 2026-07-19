@@ -1,7 +1,4 @@
 services:
-  # ==========================================================
-  # MYSQL DATABASE
-  # ==========================================================
   db:
     image: mysql:8.0
     restart: unless-stopped
@@ -31,10 +28,6 @@ services:
       start_period: 20s
 
 
-  # ==========================================================
-  # PRISMA DATABASE INITIALIZATION
-  # Berjalan satu kali lalu berhenti dengan status exited 0
-  # ==========================================================
   migrate:
     image: ekspedisi-app:ukk
     restart: "no"
@@ -54,30 +47,18 @@ services:
       - |
         set -eu
 
-        echo "============================================"
-        echo " Menyiapkan schema database dengan Prisma"
-        echo "============================================"
-
+        echo "Menyiapkan schema database..."
         npx prisma db push --skip-generate
 
-        echo "============================================"
-        echo " Menjalankan seed database"
-        echo "============================================"
-
+        echo "Menjalankan seed database..."
         npx prisma db seed
 
-        echo "============================================"
-        echo " Database berhasil disiapkan"
-        echo "============================================"
+        echo "Database berhasil disiapkan."
 
     networks:
       - ujikom-net
 
 
-  # ==========================================================
-  # NEXT.JS APPLICATION
-  # Jalankan sebanyak dua container dengan --scale app=2
-  # ==========================================================
   app:
     image: ekspedisi-app:ukk
 
@@ -93,22 +74,15 @@ services:
       - .env
 
     environment:
-      # Nilai ini menimpa DATABASE_URL lokal dari .env
       DATABASE_URL: mysql://ekspedisi:ekspedisi_secret@db:3306/ekspedisi_aja
-
-      # IP VM2 dari soal real
       APP_URL: http://192.168.12.94:8080
-
       NODE_ENV: production
-
       DB_HOST: db
       DB_PORT: "3306"
 
-    # Tidak boleh menggunakan ports
     expose:
       - "3000"
 
-    # Shared persistent storage untuk kedua replica aplikasi
     volumes:
       - app-volume:/app/public/uploads
 
@@ -122,9 +96,6 @@ services:
       - ujikom-net
 
 
-  # ==========================================================
-  # NGINX LOAD BALANCER
-  # ==========================================================
   loadbalancer:
     image: nginx:alpine
     restart: unless-stopped
@@ -143,9 +114,6 @@ services:
       - ujikom-net
 
 
-# ============================================================
-# NAMED VOLUMES SESUAI SOAL
-# ============================================================
 volumes:
   app-volume:
     name: app-volume
@@ -154,9 +122,6 @@ volumes:
     name: db-volume
 
 
-# ============================================================
-# DOCKER NETWORK SESUAI SOAL
-# ============================================================
 networks:
   ujikom-net:
     name: ujikom-net
